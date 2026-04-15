@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fitness Tracker</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #080C0E; color: #E8F0F2; font-family: sans-serif; overflow-x: hidden; }
+::-webkit-scrollbar { width: 3px }
+::-webkit-scrollbar-thumb { background: #1C2730; border-radius: 2px }
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+select { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+// Mock window.storage with localStorage
+window.storage = {
+  get: async (key) => {
+    try {
+      const val = localStorage.getItem(key);
+      return val ? { key, value: val } : null;
+    } catch(e) { return null; }
+  },
+  set: async (key, value) => {
+    try { localStorage.setItem(key, value); return { key, value }; } catch(e) { return null; }
+  },
+  delete: async (key) => {
+    try { localStorage.removeItem(key); return { key, deleted: true }; } catch(e) { return null; }
+  }
+};
+
+// Recharts components
+const { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } = Recharts;
+
+
+
+
+const PROFILE = {
+  weight: 100, height: 175, age: 30, gender: 'male',
+  goalWeight: 80, startWeight: 100,
+  tdee: 3021, dailyCalories: 2100, dailyProtein: 160,
+};
+
+const EXERCISES_AR = [
+  // صدر
+  'بنش بريس','إنكلاين بريس','ديكلاين بريس','دمبل بريس','دمبل فلايز','فلايز','كيبل كروسوفر','بوش أب',
+  // ظهر
+  'ديدليفت','لات بول داون','رو بالعقلة','رو بالبار','بول أب','تي-بار رو','سيتد كيبل رو','فيس بول','هايبر اكستنشن',
+  // كتف
+  'كتف عسكري','لاترال ريز','فرونت ريز','ريير ديلت فلايز','أرنولد بريس','أبرايت رو',
+  // بايسبس
+  'كيرل بايسبس','هامر كيرل','كونسنتريشن كيرل','إنكلاين كيرل','كيبل كيرل','بار كيرل','ريفيرس كيرل',
+  // ترايسبس
+  'ترايسبس بوشداون','أوفرهيد ترايسبس','سكال كراشر','ترايسبس ديبس','كلوز جريب بريس','كيك باك',
+  // أرجل
+  'سكوات','ليج بريس','لانجز','ليج اكستنشن','ليج كيرل','رومانيان ديدليفت','هاك سكوات','بولغاريان سبليت سكوات','ووكينج لانج',
+  // جلوتس
+  'هيب ثراست','جلوت برج',
+  // كالف
+  'كالف رايز','سيتد كالف رايز','دونكي كالف رايز',
+  // كور
+  'بلانك','كرانش','ليج ريز','ماونتن كليمبر','رشيان تويست','AB رولر','هانجينج نيز ريز','روتاري تورسو','أبدومينال',
+  // شراغز
+  'شراغز',
+  'أخرى'
+];
+
+const CARDIO_TYPES = [
+  {ar:'جري',icon:'🏃',met:8.0,k:1.04},{ar:'مشي سريع',icon:'🚶',met:4.3,k:0.86},
+  {ar:'مشي عادي',icon:'🚶',met:3.0,k:0.48},{ar:'دراجة',icon:'🚲',met:7.0,k:0.48},
+  {ar:'سباحة',icon:'🏊',met:7.0,k:0.70},{ar:'HIIT',icon:'⚡',met:10.0,k:0.90},
+  {ar:'إليبتيكال',icon:'🔄',met:5.0,k:0.55},{ar:'روينج',icon:'🚣',met:7.0,k:0.65},
+];
+
+const GROUP_COLORS = ['#FF6B6B','#4ECDC4','#FFE66D','#95E1D3','#F38181','#A8E6CF','#FFEAA7','#DDA0DD','#98D8C8','#F0B27A','#C3B1E1','#87CEEB'];
+
+const MUSCLE_GROUPS_DEFAULT = [
+  {id:'chest',     name:'صدر',        color:'#FF6B6B', exercises:['بنش بريس','إنكلاين بريس','ديكلاين بريس','دمبل بريس','دمبل فلايز','فلايز','كيبل كروسوفر','بوش أب']},
+  {id:'back',      name:'ظهر',        color:'#4ECDC4', exercises:['ديدليفت','لات بول داون','رو بالعقلة','رو بالبار','بول أب','تي-بار رو','سيتد كيبل رو','فيس بول','هايبر اكستنشن','شراغز']},
+  {id:'shoulder',  name:'كتف',        color:'#FFE66D', exercises:['كتف عسكري','لاترال ريز','فرونت ريز','ريير ديلت فلايز','أرنولد بريس','أبرايت رو']},
+  {id:'biceps',    name:'بايسبس',     color:'#95E1D3', exercises:['كيرل بايسبس','هامر كيرل','كونسنتريشن كيرل','إنكلاين كيرل','كيبل كيرل','بار كيرل','ريفيرس كيرل']},
+  {id:'triceps',   name:'ترايسبس',    color:'#F38181', exercises:['ترايسبس بوشداون','أوفرهيد ترايسبس','سكال كراشر','ترايسبس ديبس','كلوز جريب بريس','كيك باك']},
+  {id:'quads',     name:'كوادز',      color:'#A8E6CF', exercises:['سكوات','ليج بريس','لانجز','ليج اكستنشن','هاك سكوات','بولغاريان سبليت سكوات','ووكينج لانج']},
+  {id:'hamstring', name:'هامسترينج',  color:'#FFEAA7', exercises:['ليج كيرل','رومانيان ديدليفت']},
+  {id:'glutes',    name:'جلوتس',      color:'#DDA0DD', exercises:['هيب ثراست','جلوت برج']},
+  {id:'calves',    name:'كالف',       color:'#98D8C8', exercises:['كالف رايز','سيتد كالف رايز','دونكي كالف رايز']},
+  {id:'core',      name:'كور',        color:'#F0B27A',  exercises:['بلانك','كرانش','ليج ريز','ماونتن كليمبر','رشيان تويست','AB رولر','هانجينج نيز ريز','روتاري تورسو','أبدومينال']},
+];
+
+const getLastSession = (logs, name, type) => {
+  const dates = Object.keys(logs).sort().reverse();
+  for (const date of dates) {
+    const match = (logs[date]?.workouts||[]).find(w =>
+      type === 'resistance' ? w.exercise === name : w.activity === name
+    );
+    if (match) return { date, ...match };
+  }
+  return null;
+};
+
+const daysSince = (dateStr) => {
+  if (!dateStr) return null;
+  return Math.floor((new Date() - new Date(dateStr + 'T00:00:00')) / 86400000);
+};
+
+const genId = () => Math.random().toString(36).substr(2, 9);
+const todayStr = () => new Date().toISOString().split('T')[0];
+const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('ar-SA', {month:'short', day:'numeric'}); } catch(e) { return d; } };
+const fmtDay  = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('ar-SA', {weekday:'short'}); } catch(e) { return d; } };
+const nowTime = () => new Date().toLocaleTimeString('ar', {hour:'2-digit', minute:'2-digit'});
+const fmt = (n, d=1) => { const r = parseFloat((+n).toFixed(d)); return isNaN(r) ? 0 : r; };
+
+// ── RING ──────────────────────────────────────────────────────────────────────
+function Ring({ value, max, size=140, stroke=13, color='#00E5A0', children }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(Math.max(value / max, 0), 1);
+  return (
+    <div style={{position:'relative', width:size, height:size, flexShrink:0}}>
+      <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1C2730" strokeWidth={stroke}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
+          style={{transition:'stroke-dashoffset 0.6s ease'}}/>
+      </svg>
+      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── BOTTOM NAV ────────────────────────────────────────────────────────────────
+function BottomNav({tab, setTab}) {
+  const items = [
+    {id:'dashboard', icon:'⚡', label:'اليوم'},
+    {id:'nutrition',  icon:'🥗', label:'تغذية'},
+    {id:'workout',    icon:'🏋️', label:'تمارين'},
+    {id:'muscles',    icon:'💪', label:'عضلات'},
+    {id:'progress',   icon:'📈', label:'تحليل'},
+  ];
+  return (
+    <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:440,background:'#0B1014',borderTop:'1px solid #1C2730',display:'flex',zIndex:200,paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+      {items.map(item => (
+        <button key={item.id} onClick={()=>setTab(item.id)}
+          style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'9px 0 6px',background:'none',border:'none',color:tab===item.id?'#00E5A0':'#3D5560',transition:'color 0.2s',cursor:'pointer'}}>
+          <span style={{fontSize:20}}>{item.icon}</span>
+          <span style={{fontSize:10,fontWeight:600}}>{item.label}</span>
+          {tab===item.id && <div style={{width:20,height:2,borderRadius:1,background:'#00E5A0'}}/>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dashboard({todayData, logs, weightLog, saveWeightLog, onExport, onImportParse, onImportConfirm, importMsg, showImport, setShowImport, importJson, setImportJson, exportText, setExportText, importStep, setImportStep, importPreview}) {
+  const {meals=[], workouts=[]} = todayData;
+  const caloriesIn  = fmt(meals.reduce((s,m) => s+(m.calories||0), 0), 1);
+  const protein     = fmt(meals.reduce((s,m) => s+(m.protein||0), 0), 1);
+  const burned      = workouts.reduce((s,w) => s+(w.caloriesBurned||0), 0);
+  const remaining   = fmt(PROFILE.dailyCalories - caloriesIn + burned, 1);
+  const net         = fmt(caloriesIn - burned, 1);
+  const over        = caloriesIn > PROFILE.dailyCalories;
+
+  const [newWeight, setNewWeight] = useState('');
+  const todayW       = weightLog.find(w => w.date === todayStr());
+  const lastW        = weightLog[weightLog.length-1];
+  const currentWeight = todayW?.weight || lastW?.weight || PROFILE.startWeight;
+  const lostSoFar    = +(PROFILE.startWeight - currentWeight).toFixed(1);
+  const remainKg     = Math.max(currentWeight - PROFILE.goalWeight, 0).toFixed(1);
+  const progressPct  = Math.min((lostSoFar / (PROFILE.startWeight - PROFILE.goalWeight)) * 100, 100).toFixed(1);
+
+  const logWeight = () => {
+    const val = parseFloat(newWeight);
+    if (!val || val < 30 || val > 300) return;
+    const filtered = weightLog.filter(w => w.date !== todayStr());
+    saveWeightLog([...filtered, {date:todayStr(), weight:val}].sort((a,b)=>a.date.localeCompare(b.date)));
+    setNewWeight('');
+  };
+
+  const Badge = ({label, value, unit, color='#E8F0F2', note}) => (
+    <div style={{flex:1,background:'#0E151A',borderRadius:14,padding:'12px 10px'}}>
+      <div style={{fontSize:9,color:'#3D5560',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+      <div style={{fontSize:20,fontWeight:700,color,lineHeight:1}}>{value}<span style={{fontSize:10,fontWeight:400,marginRight:2}}>{unit}</span></div>
+      {note && <div style={{fontSize:9,color:'#3D5560',marginTop:3}}>{note}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{padding:'20px 16px 12px',direction:'rtl'}}>
+      <div style={{marginBottom:18}}>
+        <div style={{fontSize:11,color:'#3D5560'}}>{new Date().toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+        <div style={{fontSize:27,fontWeight:800,fontFamily:'Syne,sans-serif',marginTop:2,letterSpacing:'-0.5px'}}>لوحة اليوم ⚡</div>
+      </div>
+
+      {/* Calories card */}
+      <div style={{background:'#0E151A',borderRadius:22,padding:18,marginBottom:12,display:'flex',alignItems:'center',gap:18,border:'1px solid #1C2730'}}>
+        <Ring value={caloriesIn} max={PROFILE.dailyCalories} size={130} stroke={13} color={over?'#FF4444':'#00E5A0'}>
+          <div style={{fontSize:22,fontWeight:800,fontFamily:'Syne,sans-serif',color:over?'#FF4444':'#00E5A0',lineHeight:1}}>{caloriesIn}</div>
+          <div style={{fontSize:9,color:'#3D5560',marginTop:2}}>من {PROFILE.dailyCalories}</div>
+          <div style={{fontSize:9,color:'#3D5560'}}>سعرة</div>
+        </Ring>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:12}}>
+          <div>
+            <div style={{fontSize:9,color:'#3D5560'}}>متبقي اليوم</div>
+            <div style={{fontSize:26,fontWeight:800,fontFamily:'Syne,sans-serif',color:remaining>=0?'#00E5A0':'#FF4444',lineHeight:1.1}}>{remaining}<span style={{fontSize:11,fontWeight:400}}> كال</span></div>
+          </div>
+          <div style={{height:1,background:'#1C2730'}}/>
+          <div style={{display:'flex',gap:16}}>
+            <div>
+              <div style={{fontSize:9,color:'#3D5560'}}>محروق</div>
+              <div style={{fontSize:17,fontWeight:600,color:'#FF8C42'}}>{burned}<span style={{fontSize:9}}> كال</span></div>
+            </div>
+            <div>
+              <div style={{fontSize:9,color:'#3D5560'}}>بروتين</div>
+              <div style={{fontSize:17,fontWeight:600,color:'#5B9CF6'}}>{protein}g<span style={{fontSize:9,color:'#3D5560'}}> / {PROFILE.dailyProtein}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Protein bar */}
+      <div style={{background:'#0E151A',borderRadius:16,padding:14,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+          <span style={{fontSize:12,fontWeight:600}}>🥩 البروتين</span>
+          <span style={{fontSize:12,color:protein>=PROFILE.dailyProtein?'#00E5A0':'#E8F0F2',fontWeight:600}}>{protein}g <span style={{color:'#3D5560',fontWeight:400}}>/ {PROFILE.dailyProtein}g</span></span>
+        </div>
+        <div style={{height:8,background:'#1C2730',borderRadius:4,overflow:'hidden',marginBottom:5}}>
+          <div style={{height:'100%',width:`${Math.min(protein/PROFILE.dailyProtein*100,100)}%`,background:'linear-gradient(90deg,#3B6FD8,#5B9CF6)',borderRadius:4,transition:'width 0.5s'}}/>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#3D5560'}}>
+          <span>متبقي: {fmt(Math.max(PROFILE.dailyProtein-protein,0),1)}g</span>
+          <span>{Math.min(Math.round(protein/PROFILE.dailyProtein*100),100)}%</span>
+        </div>
+      </div>
+
+      {/* Weight log */}
+      <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div style={{fontSize:13,fontWeight:700}}>⚖️ سجل الوزن</div>
+          {lastW && <div style={{fontSize:10,color: todayW ? '#00E5A0' : '#3D5560'}}>
+            {todayW ? '✓ سجّلت اليوم' : `آخر تسجيل: ${fmtDate(lastW.date)}`}
+          </div>}
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:12}}>
+          <input type="number" placeholder="وزنك الحالي (kg)" value={newWeight} onChange={e=>setNewWeight(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&logWeight()}
+            style={{flex:1,background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:14,outline:'none'}}/>
+          <button onClick={logWeight} style={{background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:10,padding:'10px 18px',fontWeight:700,fontSize:13,cursor:'pointer'}}>سجل</button>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {[{l:'الوزن الحالي',v:`${currentWeight}`,u:'kg',c:'#00E5A0'},
+            {l:'خسرت',v:lostSoFar>0?`${lostSoFar}`:'0',u:'kg',c:lostSoFar>0?'#00E5A0':'#3D5560'},
+            {l:'باقي للهدف',v:remainKg,u:'kg',c:'#FF8C42'},
+          ].map(s=>(
+            <div key={s.l} style={{flex:1,background:'#141D24',borderRadius:12,padding:'10px 10px'}}>
+              <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>{s.l}</div>
+              <div style={{fontSize:17,fontWeight:700,color:s.c,lineHeight:1}}>{s.v}<span style={{fontSize:10,fontWeight:400}}>{s.u}</span></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Goal progress */}
+      <div style={{background:'#0E151A',borderRadius:16,padding:14,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <span style={{fontSize:13,fontWeight:700}}>🎯 التقدم نحو الهدف</span>
+          <span style={{fontSize:13,color:'#00E5A0',fontWeight:700}}>{progressPct}%</span>
+        </div>
+        <div style={{height:10,background:'#1C2730',borderRadius:5,overflow:'hidden',marginBottom:6}}>
+          <div style={{height:'100%',width:`${progressPct}%`,background:'linear-gradient(90deg,#00C870,#00E5A0)',borderRadius:5,transition:'width 0.6s'}}/>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#3D5560'}}>
+          <span>البداية: {PROFILE.startWeight}kg</span>
+          <span>الهدف: {PROFILE.goalWeight}kg | 6 أشهر</span>
+        </div>
+      </div>
+
+      {/* Today tiles */}
+      <div style={{display:'flex',gap:10,marginBottom:12}}>
+        <Badge label="وجبات اليوم" value={meals.length} unit="وجبة" color="#E8F0F2"/>
+        <Badge label="تمارين اليوم" value={workouts.length} unit="تمرين" color="#E8F0F2"/>
+        <Badge label="صافي السعرات" value={net} unit="كال" color={net<PROFILE.dailyCalories?'#00E5A0':'#FF4444'}/>
+      </div>
+
+      {/* Data export/import */}
+      <div style={{background:'#0E151A',borderRadius:16,padding:14,border:'1px solid #1C2730'}}>
+        <div style={{fontSize:12,fontWeight:700,marginBottom:10,color:'#3D5560'}}>💾 نسخ احتياطي</div>
+        <button onClick={onExport}
+          style={{width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'11px',color:'#E8F0F2',fontSize:13,fontWeight:600,cursor:'pointer',marginBottom:8,textAlign:'center'}}>
+          ⬆️ تصدير البيانات
+        </button>
+        {exportText && (
+          <div style={{marginBottom:8}}>
+            <div style={{fontSize:10,color:'#3D5560',marginBottom:5}}>اضغط مطولاً على النص ثم "تحديد الكل" للنسخ:</div>
+            <textarea readOnly value={exportText} rows={3}
+              style={{width:'100%',background:'#0A1015',border:'1px solid #00E5A040',borderRadius:10,padding:'10px 12px',color:'#00E5A0',fontSize:11,outline:'none',resize:'none',direction:'ltr',wordBreak:'break-all'}}/>
+            <button onClick={()=>setExportText('')}
+              style={{width:'100%',background:'none',border:'none',color:'#3D5560',fontSize:11,padding:'4px',cursor:'pointer'}}>
+              ✕ إغلاق
+            </button>
+          </div>
+        )}
+        <button onClick={()=>{setShowImport(!showImport); setImportStep('paste'); setImportPreview(null);}}
+          style={{width:'100%',background:showImport?'#252E38':'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'11px',color:'#E8F0F2',fontSize:13,fontWeight:600,cursor:'pointer',textAlign:'center',marginBottom:showImport?8:0}}>
+          ⬇️ استيراد — لصق البيانات
+        </button>
+        {showImport && importStep === 'paste' && (
+          <div>
+            <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>الصق هنا النص المنسوخ من التصدير:</div>
+            <textarea rows={5} value={importJson} onChange={e=>setImportJson(e.target.value)}
+              placeholder='{"version":1,...}'
+              style={{width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:11,outline:'none',resize:'vertical',marginBottom:8,direction:'ltr',wordBreak:'break-all'}}/>
+            <button onClick={onImportParse} disabled={!importJson.trim()}
+              style={{width:'100%',background:importJson.trim()?'#5B9CF6':'#1C2730',color:importJson.trim()?'#fff':'#3D5560',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+              فحص البيانات →
+            </button>
+          </div>
+        )}
+        {showImport && importStep === 'confirm' && importPreview && (
+          <div style={{background:'#141D24',borderRadius:12,padding:14,border:'1px solid #FF8C4260'}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#FF8C42',marginBottom:10}}>⚠️ تحذير — ستُستبدل بياناتك الحالية</div>
+            <div style={{fontSize:11,color:'#C0CDD4',marginBottom:12,lineHeight:1.7}}>
+              البيانات التي ستُستورد:<br/>
+              🍽️ {importPreview.mealCount} وجبة · 🏋️ {importPreview.workoutCount} تمرين · ⚖️ {importPreview.weightCount} قياس وزن · 💪 {importPreview.muscleCount} تمرين في المجموعات
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={onImportConfirm}
+                style={{flex:1,background:'#FF8C42',color:'#080C0E',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                نعم، استورد واستبدل
+              </button>
+              <button onClick={()=>{setImportStep('paste'); setImportPreview(null);}}
+                style={{background:'#141D24',color:'#E8F0F2',border:'1px solid #1C2730',borderRadius:10,padding:'10px 14px',fontSize:13,cursor:'pointer'}}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        )}
+        {importMsg && <div style={{fontSize:11,marginTop:8,color:importMsg.ok?'#00E5A0':'#FF4444',textAlign:'center'}}>{importMsg.text}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ── DATE BAR ──────────────────────────────────────────────────────────────────
+function DateBar({ selectedDate, setSelectedDate }) {
+  const today = todayStr();
+  const isToday = selectedDate === today;
+
+  const shift = (days) => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    const next = d.toISOString().split('T')[0];
+    if (next <= today) setSelectedDate(next);
+  };
+
+  const label = isToday ? 'اليوم' :
+    selectedDate === new Date(new Date().setDate(new Date().getDate()-1)).toISOString().split('T')[0]
+      ? 'أمس' : fmtDate(selectedDate);
+
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:8,background:'#0E151A',borderRadius:12,padding:'8px 12px',marginBottom:16,border:`1px solid ${isToday?'#00E5A040':'#FF8C4240'}`}}>
+      <button onClick={()=>shift(-1)}
+        style={{background:'#141D24',border:'none',borderRadius:8,width:30,height:30,color:'#E8F0F2',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+      <div style={{flex:1,textAlign:'center'}}>
+        <div style={{fontSize:13,fontWeight:700,color:isToday?'#00E5A0':'#FF8C42'}}>{label}</div>
+        <div style={{fontSize:10,color:'#3D5560'}}>{selectedDate}</div>
+      </div>
+      <button onClick={()=>shift(1)} disabled={isToday}
+        style={{background:'#141D24',border:'none',borderRadius:8,width:30,height:30,color:isToday?'#252E38':'#E8F0F2',fontSize:18,cursor:isToday?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+      {!isToday && (
+        <button onClick={()=>setSelectedDate(today)}
+          style={{background:'#00E5A020',border:'1px solid #00E5A040',borderRadius:8,padding:'4px 10px',color:'#00E5A0',fontSize:11,fontWeight:600,cursor:'pointer'}}>
+          اليوم
+        </button>
+      )}
+      <input type="date" value={selectedDate} max={today}
+        onChange={e=>e.target.value&&setSelectedDate(e.target.value)}
+        style={{background:'#141D24',border:'1px solid #1C2730',borderRadius:8,padding:'4px 8px',color:'#E8F0F2',fontSize:11,cursor:'pointer',width:36,opacity:0.01,position:'absolute'}}/>
+      <button onClick={()=>document.querySelector('input[type=date]')?.showPicker?.()}
+        style={{background:'#141D24',border:'1px solid #1C2730',borderRadius:8,width:30,height:30,color:'#3D5560',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>📅</button>
+    </div>
+  );
+}
+
+// ── NUTRITION ─────────────────────────────────────────────────────────────────
+function Nutrition({todayData, addMeal, deleteMeal, editMeal, selectedDate, setSelectedDate}) {
+  const {meals=[]} = todayData;
+  const [aiText,      setAiText]      = useState('');
+  const [aiLoading,   setAiLoading]   = useState(false);
+  const [aiResult,    setAiResult]    = useState(null);
+  const [aiError,     setAiError]     = useState('');
+  const [showManual,  setShowManual]  = useState(false);
+  const [manual,      setManual]      = useState({name:'',calories:'',protein:''});
+  const [editingId,   setEditingId]   = useState(null);
+  const [editVals,    setEditVals]    = useState({name:'',calories:'',protein:''});
+
+  const totalCal  = fmt(meals.reduce((s,m)=>s+(m.calories||0),0), 1);
+  const totalProt = fmt(meals.reduce((s,m)=>s+(m.protein||0),0), 1);
+
+  const inp = {background:'#141D24',border:'1px solid #1C2730',borderRadius:12,padding:'11px 14px',color:'#E8F0F2',fontSize:14,width:'100%',outline:'none'};
+
+
+
+  const estimateFood = async () => {
+    if (!aiText.trim()) return;
+    setAiLoading(true); setAiResult(null); setAiError('');
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:1000, messages:[{role:"user", content:`أنت خبير تغذية دقيق. قدّر السعرات الحرارية والبروتين لهذه الوجبة:\n"${aiText}"\n\nأجب فقط بـ JSON بدون أي نص إضافي:\n{"calories": 500, "protein": 30, "name": "اسم مختصر"}`}]})
+      });
+      const data = await res.json();
+      const text = data.content[0].text.replace(/```json|```/g,'').trim();
+      setAiResult(JSON.parse(text));
+    } catch(e) { setAiError('حدث خطأ، جرب مرة أخرى'); }
+    setAiLoading(false);
+  };
+
+  const confirmAi = () => { addMeal(aiResult); setAiResult(null); setAiText(''); };
+
+  const submitManual = () => {
+    if (!manual.name || !manual.calories) return;
+    addMeal({name:manual.name, calories:parseFloat(manual.calories)||0, protein:parseFloat(manual.protein)||0});
+    setManual({name:'',calories:'',protein:''}); setShowManual(false);
+  };
+
+  return (
+    <div style={{padding:'20px 16px 12px',direction:'rtl'}}>
+      <div style={{marginBottom:18}}>
+        <div style={{fontSize:27,fontWeight:800,fontFamily:'Syne,sans-serif',letterSpacing:'-0.5px'}}>التغذية 🥗</div>
+        <div style={{fontSize:11,color:'#3D5560',marginTop:4}}>هدف: {PROFILE.dailyCalories} كال · {PROFILE.dailyProtein}g بروتين</div>
+      </div>
+      <DateBar selectedDate={selectedDate} setSelectedDate={setSelectedDate}/>
+
+      {/* Summary */}
+      <div style={{display:'flex',gap:10,marginBottom:18}}>
+        {[{l:'مستهلك',v:totalCal,u:'كال',c:totalCal>PROFILE.dailyCalories?'#FF4444':'#00E5A0',note:`هدف ${PROFILE.dailyCalories}`},
+          {l:'بروتين',v:totalProt,u:'g',c:'#5B9CF6',note:`هدف ${PROFILE.dailyProtein}g`},
+          {l:'متبقي',v:fmt(PROFILE.dailyCalories-totalCal,1),u:'كال',c:(PROFILE.dailyCalories-totalCal)>=0?'#00E5A0':'#FF4444',note:'للهدف'},
+        ].map(s=>(
+          <div key={s.l} style={{flex:1,background:'#0E151A',borderRadius:14,padding:'12px 10px',border:'1px solid #1C2730'}}>
+            <div style={{fontSize:9,color:'#3D5560',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>{s.l}</div>
+            <div style={{fontSize:20,fontWeight:700,color:s.c,lineHeight:1}}>{s.v}<span style={{fontSize:10,fontWeight:400}}>{s.u}</span></div>
+            <div style={{fontSize:9,color:'#3D5560',marginTop:3}}>{s.note}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* AI */}
+      <div style={{background:'#0E151A',borderRadius:22,padding:16,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+          <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#00E5A0,#3B6FD8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🤖</div>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>مساعد التغذية الذكي</div>
+            <div style={{fontSize:10,color:'#3D5560'}}>صف وجبتك وأنا أحسب السعرات والبروتين</div>
+          </div>
+        </div>
+        <div style={{height:1,background:'#1C2730',margin:'12px 0'}}/>
+
+        <textarea rows={2} placeholder="مثال: صحن كبسة دجاج متوسط، أو بيضتين مقليتين مع شريحتين خبز..."
+          value={aiText} onChange={e=>setAiText(e.target.value)}
+          style={{...inp,resize:'none',marginBottom:10}}/>
+        <button onClick={estimateFood} disabled={aiLoading||!aiText.trim()}
+          style={{width:'100%',background:aiLoading||!aiText.trim()?'#1C2730':'linear-gradient(135deg,#00C870,#00E5A0)',color:aiLoading||!aiText.trim()?'#3D5560':'#080C0E',border:'none',borderRadius:12,padding:'12px',fontWeight:700,fontSize:14,cursor:'pointer',transition:'all 0.2s',marginBottom:(aiResult||aiError)?12:0}}>
+          {aiLoading ? '⏳ جاري التحليل...' : '⚡ قدّر السعرات'}
+        </button>
+        {aiError && <div style={{color:'#FF4444',fontSize:12,textAlign:'center'}}>{aiError}</div>}
+        {aiResult && (
+          <div style={{background:'#141D24',borderRadius:16,padding:14,border:'1px solid #00E5A030'}}>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:10,color:'#00E5A0'}}>{aiResult.name}</div>
+            <div style={{display:'flex',gap:20,marginBottom:14}}>
+              <div>
+                <div style={{fontSize:9,color:'#3D5560',marginBottom:2}}>السعرات</div>
+                <div style={{fontSize:28,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#00E5A0',lineHeight:1}}>{aiResult.calories}</div>
+              </div>
+              <div>
+                <div style={{fontSize:9,color:'#3D5560',marginBottom:2}}>البروتين</div>
+                <div style={{fontSize:28,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#5B9CF6',lineHeight:1}}>{aiResult.protein}<span style={{fontSize:14}}>g</span></div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={confirmAi} style={{flex:1,background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:10,padding:'11px',fontWeight:700,fontSize:13,cursor:'pointer'}}>✅ أضف للسجل</button>
+              <button onClick={()=>setAiResult(null)} style={{background:'#1C2730',color:'#E8F0F2',border:'none',borderRadius:10,padding:'11px 16px',fontSize:13,cursor:'pointer'}}>✕</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Manual */}
+      <button onClick={()=>setShowManual(!showManual)}
+        style={{width:'100%',background:'#0E151A',border:'1px dashed #1C2730',borderRadius:14,padding:13,color:'#3D5560',fontSize:13,marginBottom:showManual?8:14,textAlign:'center',cursor:'pointer'}}>
+        {showManual ? '✕ إغلاق' : '➕ إضافة يدوية'}
+      </button>
+      {showManual && (
+        <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:14,border:'1px solid #1C2730'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <input placeholder="اسم الوجبة *" value={manual.name} onChange={e=>setManual({...manual,name:e.target.value})} style={inp}/>
+            <input type="number" placeholder="السعرات الحرارية *" value={manual.calories} onChange={e=>setManual({...manual,calories:e.target.value})} style={inp}/>
+            <input type="number" placeholder="البروتين (جرام) - اختياري" value={manual.protein} onChange={e=>setManual({...manual,protein:e.target.value})} style={inp}/>
+            <button onClick={submitManual} style={{background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:12,padding:12,fontWeight:700,fontSize:14,cursor:'pointer'}}>حفظ الوجبة</button>
+          </div>
+        </div>
+      )}
+
+      {/* Meals list */}
+      <div style={{fontSize:14,fontWeight:700,marginBottom:10}}>وجبات اليوم ({meals.length})</div>
+      {meals.length === 0 ? (
+        <div style={{textAlign:'center',color:'#3D5560',padding:30,fontSize:13,background:'#0E151A',borderRadius:16,border:'1px solid #1C2730'}}>لا توجد وجبات مسجلة اليوم 🍽️</div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {[...meals].reverse().map(m => (
+            <div key={m.id} style={{background:'#0E151A',borderRadius:14,border:`1px solid ${editingId===m.id?'#00E5A040':'#1C2730'}`,overflow:'hidden',transition:'border 0.2s'}}>
+              {editingId === m.id ? (
+                /* ── Edit mode ── */
+                <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:8}}>
+                  <input value={editVals.name} onChange={e=>setEditVals({...editVals,name:e.target.value})}
+                    placeholder="اسم الوجبة" style={{...inp,fontSize:13}}/>
+                  <div style={{display:'flex',gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>السعرات</div>
+                      <input type="number" value={editVals.calories} onChange={e=>setEditVals({...editVals,calories:e.target.value})}
+                        style={{...inp,width:'100%',fontSize:13}}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>بروتين (g)</div>
+                      <input type="number" value={editVals.protein} onChange={e=>setEditVals({...editVals,protein:e.target.value})}
+                        style={{...inp,width:'100%',fontSize:13}}/>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:8}}>
+                    <button onClick={()=>{
+                      if(!editVals.name||!editVals.calories) return;
+                      editMeal(m.id,{name:editVals.name,calories:parseFloat(editVals.calories)||0,protein:parseFloat(editVals.protein)||0});
+                      setEditingId(null);
+                    }} style={{flex:1,background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                      ✓ حفظ
+                    </button>
+                    <button onClick={()=>setEditingId(null)}
+                      style={{background:'#141D24',color:'#E8F0F2',border:'none',borderRadius:10,padding:'10px 16px',fontSize:13,cursor:'pointer'}}>
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* ── View mode ── */
+                <div style={{padding:'12px 14px',display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>{m.name}</div>
+                    <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                      <span style={{fontSize:12,color:'#00E5A0',fontWeight:700}}>{m.calories} كال</span>
+                      {m.protein > 0 && <span style={{fontSize:12,color:'#5B9CF6'}}>{m.protein}g</span>}
+                      {m.time && <span style={{fontSize:10,color:'#3D5560'}}>{m.time}</span>}
+                    </div>
+                  </div>
+                  <button onClick={()=>{setEditingId(m.id);setEditVals({name:m.name,calories:m.calories,protein:m.protein||0});}}
+                    style={{background:'none',border:'none',color:'#3D5560',fontSize:15,padding:'4px 6px',cursor:'pointer',lineHeight:1}}>✏️</button>
+                  <button onClick={()=>deleteMeal(m.id)}
+                    style={{background:'none',border:'none',color:'#3D5560',fontSize:15,padding:'4px 6px',cursor:'pointer',lineHeight:1}}>🗑</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── WORKOUT ───────────────────────────────────────────────────────────────────
+function Workout({todayData, addWorkout, deleteWorkout, editWorkout, logs, muscleGroups, selectedDate, setSelectedDate}) {
+  const {workouts=[]} = todayData;
+  const [mode,       setMode]       = useState('resistance');
+  const [exercise,   setExercise]   = useState(EXERCISES_AR[0]);
+  const [customEx,   setCustomEx]   = useState('');
+  const [sets,       setSets]       = useState([{weight:'',reps:''}]);
+  const [notes,      setNotes]      = useState('');
+  const [cardioType, setCardioType] = useState(CARDIO_TYPES[0]);
+  const [duration,   setDuration]   = useState('');
+  const [distance,   setDistance]   = useState('');
+  const [cardioNotes,setCardioNotes]= useState('');
+  const [avgSpeed,   setAvgSpeed]    = useState('');
+  const [manualCalories, setManualCalories] = useState('');
+  const [editingWId,   setEditingWId]   = useState(null);
+  const [editWVals,   setEditWVals]    = useState({});
+  const [muscleFilter, setMuscleFilter] = useState(null); // selected muscle group id for picker
+
+  const inp = {background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:14,outline:'none'};
+  const calcCardio = () => {
+    if (!duration) return 0;
+    const d = parseFloat(duration);
+    const dist = parseFloat(distance) || 0;
+    const w = PROFILE.weight;
+    // If distance available: weight-based distance formula (more accurate)
+    if (dist > 0 && cardioType.k) {
+      return Math.round(w * dist * cardioType.k);
+    }
+    // Otherwise: NET MET formula (subtract resting rate of 1 MET)
+    return Math.round((cardioType.met - 1) * w * (d / 60));
+  };
+  const totalBurned = workouts.reduce((s,w)=>s+(w.caloriesBurned||0),0);
+
+  // Last session lookup
+  const exName = exercise === 'أخرى' ? customEx : exercise;
+  const lastResistance = exName && mode==='resistance' ? getLastSession(logs, exName, 'resistance') : null;
+  const lastCardio = mode==='cardio' ? getLastSession(logs, cardioType.ar, 'cardio') : null;
+
+  // Muscle group for selected exercise
+  const getExsFlat = (g) => g.subGroups ? g.subGroups.flatMap(sg=>sg.exercises||[]) : (g.exercises||[]);
+  const exGroup = muscleGroups?.find(g => getExsFlat(g).includes(exName));
+
+  const fmtLastDate = (dateStr) => {
+    const d = daysSince(dateStr);
+    if (d === 0) return 'اليوم';
+    if (d === 1) return 'أمس';
+    return `منذ ${d} أيام (${fmtDate(dateStr)})`;
+  };
+
+  const submitResistance = () => {
+    const exName = exercise==='أخرى' ? customEx : exercise;
+    if (!exName) return;
+    const validSets = sets.filter(s=>s.weight&&s.reps);
+    if (!validSets.length) return;
+    const totalReps = validSets.reduce((s,set)=>s+parseInt(set.reps),0);
+    addWorkout({type:'resistance', exercise:exName, sets:validSets.map(s=>({weight:parseFloat(s.weight),reps:parseInt(s.reps)})), caloriesBurned:(()=>{
+        // Estimate: each set ~45s active + overhead, MET≈6 for resistance
+        // Active calories = (MET-1) × weight × active_hours
+        // Average weight lifted per rep ≈ bodyweight% + bar weight
+        const setsCount = validSets.length;
+        const avgReps = totalReps / setsCount;
+        const avgBarWeight = validSets.reduce((s,sv)=>s+(parseFloat(sv.weight)||0),0) / setsCount;
+        const activeMinutes = setsCount * 0.75; // ~45s per set
+        const metNet = 5.0; // net MET for resistance (6 - 1 resting)
+        const weightCals = Math.round(metNet * PROFILE.weight * (activeMinutes/60));
+        // Add small component for weight moved (heavier = more work)
+        const workCals = Math.round(totalReps * avgBarWeight * 0.003);
+        return weightCals + workCals;
+      })(), notes});
+    setSets([{weight:'',reps:''}]); setNotes(''); setCustomEx('');
+  };
+
+  const submitCardio = () => {
+    if (!duration) return;
+    const cal = manualCalories ? parseFloat(manualCalories) : calcCardio();
+    const spd = avgSpeed ? parseFloat(avgSpeed) : (distance && duration ? parseFloat((parseFloat(distance)/parseFloat(duration)*60).toFixed(1)) : null);
+    addWorkout({type:'cardio', activity:cardioType.ar, icon:cardioType.icon, duration:parseFloat(duration), distance:parseFloat(distance)||null, avgSpeed:spd, caloriesBurned:cal, notes:cardioNotes});
+    setDuration(''); setDistance(''); setCardioNotes(''); setAvgSpeed(''); setManualCalories('');
+  };
+
+  const speed = distance && duration && parseFloat(duration)>0 ? (parseFloat(distance)/parseFloat(duration)*60).toFixed(1) : null;
+
+  return (
+    <div style={{padding:'20px 16px 12px',direction:'rtl'}}>
+      <div style={{marginBottom:18,display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+        <div>
+          <div style={{fontSize:27,fontWeight:800,fontFamily:'Syne,sans-serif',letterSpacing:'-0.5px'}}>التمارين 🏋️</div>
+          <div style={{fontSize:11,color:'#3D5560',marginTop:4}}>{workouts.length} تمرين · {totalBurned} كال محروق</div>
+        </div>
+      </div>
+      <DateBar selectedDate={selectedDate} setSelectedDate={setSelectedDate}/>
+
+      {/* Toggle */}
+      <div style={{display:'flex',background:'#0E151A',borderRadius:14,padding:4,marginBottom:18,gap:4,border:'1px solid #1C2730'}}>
+        {['resistance','cardio'].map(m=>(
+          <button key={m} onClick={()=>setMode(m)}
+            style={{flex:1,padding:'10px',borderRadius:10,border:'none',fontWeight:700,fontSize:13,background:mode===m?'#00E5A0':'none',color:mode===m?'#080C0E':'#3D5560',cursor:'pointer',transition:'all 0.2s'}}>
+            {m==='resistance'?'🏋️ مقاومة':'🏃 كارديو'}
+          </button>
+        ))}
+      </div>
+
+      {/* Resistance form */}
+      {mode==='resistance' && (
+        <div style={{background:'#0E151A',borderRadius:22,padding:16,marginBottom:14,border:'1px solid #1C2730'}}>
+          <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>سجل تمرين القوة</div>
+          {/* Step 1 — muscle group selector */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:10,color:'#3D5560',marginBottom:8}}>① اختر المجموعة العضلية</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {muscleGroups.filter(g=>getExsFlat(g).length>0).map(g=>(
+                <button key={g.id} onClick={()=>{setMuscleFilter(g.id);setExercise(getExsFlat(g)[0]||'');}}
+                  style={{padding:'6px 12px',borderRadius:10,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
+                    background:muscleFilter===g.id?g.color:'#141D24',
+                    color:muscleFilter===g.id?'#080C0E':'#C0CDD4',
+                    border:muscleFilter===g.id?'none':'1px solid #1C2730',transition:'all 0.15s'}}>
+                  {g.name}
+                </button>
+              ))}
+              <button onClick={()=>{setMuscleFilter('all');setExercise(EXERCISES_AR[0]);}}
+                style={{padding:'6px 12px',borderRadius:10,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
+                  background:muscleFilter==='all'?'#E8F0F2':'#141D24',
+                  color:muscleFilter==='all'?'#080C0E':'#3D5560',
+                  border:muscleFilter==='all'?'none':'1px solid #1C2730'}}>
+                الكل
+              </button>
+            </div>
+          </div>
+
+          {/* Step 2 — exercise selector filtered by group */}
+          {muscleFilter && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>② اختر التمرين</div>
+              {(()=>{
+                const filtered = muscleFilter==='all'
+                  ? EXERCISES_AR
+                  : [...(getExsFlat(muscleGroups.find(g=>g.id===muscleFilter)||{}) || []), 'أخرى'];
+                const grp = muscleGroups.find(g=>g.id===muscleFilter);
+                return (
+                  <>
+                    <select value={exercise} onChange={e=>setExercise(e.target.value)}
+                      style={{...inp,width:'100%',WebkitAppearance:'none',borderColor:grp?grp.color+'60':'#1C2730'}}>
+                      {filtered.map(ex=><option key={ex} value={ex}>{ex}</option>)}
+                    </select>
+                    {exercise==='أخرى' && <input placeholder="اسم التمرين" value={customEx} onChange={e=>setCustomEx(e.target.value)} style={{...inp,width:'100%',marginTop:8}}/>}
+                    {grp && (
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginTop:8}}>
+                        <div style={{width:8,height:8,borderRadius:'50%',background:grp.color}}/>
+                        <span style={{fontSize:11,color:grp.color,fontWeight:600}}>{grp.name}</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+          {!muscleFilter && (
+            <div style={{background:'#141D24',borderRadius:12,padding:'12px 14px',marginBottom:12,textAlign:'center',color:'#3D5560',fontSize:12}}>
+              👆 اختر مجموعة عضلية أولاً
+            </div>
+          )}
+
+          {/* Last session for this exercise */}
+          {lastResistance && (
+            <div style={{background:'#141D24',borderRadius:12,padding:'10px 14px',marginBottom:14,border:'1px solid #1C2730'}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>📅 آخر جلسة — {fmtLastDate(lastResistance.date)}</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {(lastResistance.sets||[]).map((s,i)=>(
+                  <div key={i} style={{background:'#1C2730',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'#C0CDD4'}}>
+                    {s.weight}kg × {s.reps}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{fontSize:10,color:'#3D5560',marginBottom:8}}>الجلسات (وزن كيلو × تكرار)</div>
+          {sets.map((s,i)=>(
+            <div key={i} style={{display:'flex',gap:8,marginBottom:8,alignItems:'center'}}>
+              <div style={{fontSize:11,color:'#00E5A0',fontWeight:800,minWidth:22,textAlign:'center'}}>#{i+1}</div>
+              <input type="number" placeholder="وزن" value={s.weight}
+                onChange={e=>setSets(sets.map((ss,idx)=>idx===i?{...ss,weight:e.target.value}:ss))}
+                style={{...inp,flex:1}}/>
+              <span style={{color:'#3D5560',fontSize:16}}>×</span>
+              <input type="number" placeholder="تكرار" value={s.reps}
+                onChange={e=>setSets(sets.map((ss,idx)=>idx===i?{...ss,reps:e.target.value}:ss))}
+                style={{...inp,flex:1}}/>
+              {sets.length>1 && <button onClick={()=>setSets(sets.filter((_,idx)=>idx!==i))} style={{background:'none',border:'none',color:'#3D5560',fontSize:18,padding:'0 4px',cursor:'pointer'}}>✕</button>}
+            </div>
+          ))}
+          <button onClick={()=>setSets([...sets,{weight:'',reps:''}])}
+            style={{width:'100%',background:'#141D24',border:'1px dashed #1C2730',borderRadius:10,padding:9,color:'#3D5560',fontSize:12,marginBottom:12,cursor:'pointer'}}>
+            + إضافة جلسة
+          </button>
+          <input placeholder="ملاحظات (اختياري)" value={notes} onChange={e=>setNotes(e.target.value)}
+            style={{...inp,width:'100%',marginBottom:12}}/>
+          <button onClick={submitResistance}
+            style={{width:'100%',background:'linear-gradient(135deg,#00C870,#00E5A0)',color:'#080C0E',border:'none',borderRadius:12,padding:13,fontWeight:700,fontSize:14,cursor:'pointer'}}>
+            💾 حفظ التمرين
+          </button>
+        </div>
+      )}
+
+      {/* Cardio form */}
+      {mode==='cardio' && (
+        <div style={{background:'#0E151A',borderRadius:22,padding:16,marginBottom:14,border:'1px solid #1C2730'}}>
+          <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>سجل تمرين الكارديو</div>
+          <div style={{fontSize:10,color:'#3D5560',marginBottom:8}}>نوع التمرين</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:16}}>
+            {CARDIO_TYPES.map(ct=>(
+              <button key={ct.ar} onClick={()=>setCardioType(ct)}
+                style={{padding:'8px 13px',borderRadius:10,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
+                  background:cardioType.ar===ct.ar?'#00E5A0':'#141D24',
+                  color:cardioType.ar===ct.ar?'#080C0E':'#E8F0F2',
+                  border:cardioType.ar===ct.ar?'none':'1px solid #1C2730'}}>
+                {ct.icon} {ct.ar}
+              </button>
+            ))}
+          </div>
+          {/* Last session for this cardio type */}
+          {lastCardio && (
+            <div style={{background:'#141D24',borderRadius:12,padding:'10px 14px',marginBottom:14,border:'1px solid #1C2730'}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>📅 آخر جلسة — {fmtLastDate(lastCardio.date)}</div>
+              <div style={{display:'flex',gap:16,fontSize:12,color:'#C0CDD4'}}>
+                <span>⏱ {lastCardio.duration} دقيقة</span>
+                {lastCardio.distance && <span>📍 {lastCardio.distance} كم</span>}
+                {lastCardio.distance && lastCardio.duration && <span>🚀 {(lastCardio.distance/lastCardio.duration*60).toFixed(1)} km/h</span>}
+                <span style={{color:'#FF8C42'}}>{lastCardio.caloriesBurned} كال</span>
+              </div>
+            </div>
+          )}
+          <div style={{display:'flex',gap:8,marginBottom:8}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>المدة (دقيقة) *</div>
+              <input type="number" placeholder="30" value={duration} onChange={e=>setDuration(e.target.value)} style={{...inp,width:'100%'}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>المسافة (كم)</div>
+              <input type="number" placeholder="اختياري" value={distance} onChange={e=>setDistance(e.target.value)} style={{...inp,width:'100%'}}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,marginBottom:12}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>متوسط السرعة (km/h)</div>
+              <input type="number" placeholder="اختياري" value={avgSpeed} onChange={e=>setAvgSpeed(e.target.value)} style={{...inp,width:'100%'}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>كالوري محروق (يدوي)</div>
+              <input type="number" placeholder={`تلقائي: ${calcCardio()}`} value={manualCalories} onChange={e=>setManualCalories(e.target.value)} style={{...inp,width:'100%'}}/>
+            </div>
+          </div>
+          {duration && (
+            <div style={{background:'#141D24',borderRadius:12,padding:'12px 14px',marginBottom:12,display:'flex',gap:24,border:'1px solid #1C2730'}}>
+              <div>
+                <div style={{fontSize:9,color:'#3D5560'}}>كالوري محروق</div>
+                <div style={{fontSize:26,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#FF8C42',lineHeight:1.1}}>{calcCardio()}</div>
+              </div>
+              {(avgSpeed || speed) && (
+                <div>
+                  <div style={{fontSize:9,color:'#3D5560'}}>السرعة</div>
+                  <div style={{fontSize:26,fontWeight:800,fontFamily:'Syne,sans-serif',lineHeight:1.1}}>{avgSpeed||speed}<span style={{fontSize:11}}>km/h</span></div>
+                </div>
+              )}
+              {manualCalories && (
+                <div>
+                  <div style={{fontSize:9,color:'#3D5560'}}>محروق (يدوي)</div>
+                  <div style={{fontSize:26,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#FF8C42',lineHeight:1.1}}>{manualCalories}</div>
+                </div>
+              )}
+            </div>
+          )}
+          <input placeholder="ملاحظات (اختياري)" value={cardioNotes} onChange={e=>setCardioNotes(e.target.value)}
+            style={{...inp,width:'100%',marginBottom:12}}/>
+          <button onClick={submitCardio}
+            style={{width:'100%',background:'linear-gradient(135deg,#00C870,#00E5A0)',color:'#080C0E',border:'none',borderRadius:12,padding:13,fontWeight:700,fontSize:14,cursor:'pointer'}}>
+            💾 حفظ الكارديو
+          </button>
+        </div>
+      )}
+
+      {/* Today's workouts */}
+      <div style={{fontSize:14,fontWeight:700,marginBottom:10}}>تمارين اليوم</div>
+      {workouts.length===0 ? (
+        <div style={{textAlign:'center',color:'#3D5560',padding:30,fontSize:13,background:'#0E151A',borderRadius:16,border:'1px solid #1C2730'}}>لم تسجل أي تمارين بعد 💪</div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {[...workouts].reverse().map(w=>(
+            <div key={w.id} style={{background:'#0E151A',borderRadius:14,border:`1px solid ${editingWId===w.id?'#00E5A040':'#1C2730'}`,overflow:'hidden',transition:'border 0.2s'}}>
+              {editingWId === w.id ? (
+                <div style={{padding:'12px 14px'}}>
+                  <div style={{fontSize:12,fontWeight:700,marginBottom:10,color:'#00E5A0'}}>تعديل التمرين</div>
+                  {w.type==='resistance' && (
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,color:'#3D5560',marginBottom:6}}>الجلسات (وزن kg × تكرار)</div>
+                      {(editWVals.sets||[]).map((s,i)=>(
+                        <div key={i} style={{display:'flex',gap:6,marginBottom:6,alignItems:'center'}}>
+                          <span style={{fontSize:11,color:'#00E5A0',minWidth:20,fontWeight:700}}>#{i+1}</span>
+                          <input type="number" value={s.weight} onChange={e=>setEditWVals({...editWVals,sets:editWVals.sets.map((ss,idx)=>idx===i?{...ss,weight:e.target.value}:ss)})}
+                            style={{...inp,flex:1,padding:'7px 10px'}} placeholder="وزن"/>
+                          <span style={{color:'#3D5560',fontSize:16}}>×</span>
+                          <input type="number" value={s.reps} onChange={e=>setEditWVals({...editWVals,sets:editWVals.sets.map((ss,idx)=>idx===i?{...ss,reps:e.target.value}:ss)})}
+                            style={{...inp,flex:1,padding:'7px 10px'}} placeholder="تكرار"/>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {w.type==='cardio' && (
+                    <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:10}}>
+                      {[['duration','المدة (د)'],['distance','المسافة (كم)'],['avgSpeed','السرعة (km/h)']].map(([k,lbl])=>(
+                        <div key={k} style={{flex:1,minWidth:80}}>
+                          <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>{lbl}</div>
+                          <input type="number" value={editWVals[k]||''} onChange={e=>setEditWVals({...editWVals,[k]:e.target.value})} style={{...inp,width:'100%',padding:'7px 10px'}}/>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{display:'flex',gap:8,marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>كالوري محروق</div>
+                      <input type="number" value={editWVals.caloriesBurned||''} onChange={e=>setEditWVals({...editWVals,caloriesBurned:e.target.value})} style={{...inp,width:'100%',padding:'7px 10px'}}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:9,color:'#3D5560',marginBottom:4}}>ملاحظات</div>
+                      <input value={editWVals.notes||''} onChange={e=>setEditWVals({...editWVals,notes:e.target.value})} style={{...inp,width:'100%',padding:'7px 10px'}}/>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:8}}>
+                    <button onClick={()=>{
+                      editWorkout(w.id, {...w, ...editWVals,
+                        caloriesBurned: parseFloat(editWVals.caloriesBurned)||w.caloriesBurned,
+                        sets: editWVals.sets?.map(s=>({weight:parseFloat(s.weight)||0, reps:parseInt(s.reps)||0})),
+                        duration: editWVals.duration ? parseFloat(editWVals.duration) : w.duration,
+                        distance: editWVals.distance ? parseFloat(editWVals.distance) : w.distance,
+                        avgSpeed: editWVals.avgSpeed ? parseFloat(editWVals.avgSpeed) : w.avgSpeed,
+                      });
+                      setEditingWId(null);
+                    }} style={{flex:1,background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}}>✓ حفظ</button>
+                    <button onClick={()=>setEditingWId(null)} style={{background:'#141D24',color:'#E8F0F2',border:'none',borderRadius:10,padding:'10px 14px',fontSize:13,cursor:'pointer'}}>✕</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{padding:'13px 14px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:w.sets||w.duration?8:0}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{w.type==='resistance'?'🏋️':(w.icon||'🏃')} {w.exercise||w.activity}</div>
+                    <div style={{fontSize:13,color:'#FF8C42',fontWeight:700}}>{w.caloriesBurned} كال</div>
+                  </div>
+                  {w.type==='resistance' && w.sets && (
+                    <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:w.notes?6:0}}>
+                      {w.sets.map((s,i)=>(
+                        <div key={i} style={{background:'#141D24',borderRadius:8,padding:'5px 11px',fontSize:12,fontWeight:600}}>{s.weight}kg × {s.reps}</div>
+                      ))}
+                    </div>
+                  )}
+                  {w.type==='cardio' && (
+                    <div style={{display:'flex',flexWrap:'wrap',gap:10,fontSize:12,color:'#3D5560',marginBottom:w.notes?6:0}}>
+                      <span>⏱ {w.duration} دقيقة</span>
+                      {w.distance && <span>📍 {w.distance} كم</span>}
+                      {w.avgSpeed && <span>🚀 {w.avgSpeed} km/h</span>}
+                      {!w.avgSpeed&&w.distance&&w.duration && <span>🚀 {(w.distance/w.duration*60).toFixed(1)} km/h</span>}
+                    </div>
+                  )}
+                  {w.notes && <div style={{fontSize:11,color:'#3D5560',marginTop:2}}>📝 {w.notes}</div>}
+                  <div style={{display:'flex',alignItems:'center',gap:4,marginTop:6}}>
+                    {w.time && <span style={{fontSize:10,color:'#252E38',flex:1}}>{w.time}</span>}
+                    <button onClick={()=>{setEditingWId(w.id); setEditWVals({...w, sets: w.sets?.map(s=>({...s}))});}}
+                      style={{background:'none',border:'none',color:'#3D5560',fontSize:15,padding:'2px 6px',cursor:'pointer'}}>✏️</button>
+                    <button onClick={()=>deleteWorkout(w.id)}
+                      style={{background:'none',border:'none',color:'#3D5560',fontSize:15,padding:'2px 6px',cursor:'pointer'}}>🗑</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function Progress({logs, weightLog}) {
+  const [range, setRange] = useState(7);
+
+  const getDates = n => Array.from({length:n}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(n-1-i));
+    return d.toISOString().split('T')[0];
+  });
+
+  const dates = getDates(range);
+
+  const calData = dates.map(d => ({
+    day:      fmtDay(d),
+    date:     fmtDate(d),
+    consumed: (logs[d]?.meals||[]).reduce((s,m)=>s+(m.calories||0),0),
+    burned:   (logs[d]?.workouts||[]).reduce((s,w)=>s+(w.caloriesBurned||0),0),
+  }));
+
+  const protData = dates.map(d => ({
+    day:     fmtDay(d),
+    protein: (logs[d]?.meals||[]).reduce((s,m)=>s+(m.protein||0),0),
+  }));
+
+  const wData = weightLog
+    .filter(w => w.date >= dates[0])
+    .map(w => ({date: fmtDate(w.date), weight: w.weight}));
+
+  const workoutDays  = dates.filter(d=>(logs[d]?.workouts||[]).length>0).length;
+  const avgCal  = Math.round(calData.reduce((s,d)=>s+d.consumed,0) / range);
+  const avgProt = Math.round(protData.reduce((s,d)=>s+d.protein,0)  / range);
+  const totalBurned  = calData.reduce((s,d)=>s+d.burned,0);
+  const tt = {background:'#0E151A',border:'1px solid #1C2730',borderRadius:8,padding:'6px 10px',color:'#E8F0F2',fontSize:11};
+
+  return (
+    <div style={{padding:'20px 16px 12px',direction:'rtl'}}>
+      <div style={{fontSize:27,fontWeight:800,fontFamily:'Syne,sans-serif',letterSpacing:'-0.5px',marginBottom:18}}>التحليل 📈</div>
+
+      {/* Range */}
+      <div style={{background:'#0E151A',borderRadius:16,padding:12,marginBottom:18,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',gap:6,marginBottom:10}}>
+          {[7,14,30,90].map(r=>(
+            <button key={r} onClick={()=>setRange(r)}
+              style={{flex:1,padding:'8px 4px',borderRadius:9,border:'none',fontSize:11,fontWeight:700,
+                background:range===r?'#00E5A0':'#141D24',color:range===r?'#080C0E':'#3D5560',cursor:'pointer',transition:'all 0.15s'}}>
+              {r}
+            </button>
+          ))}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <button onClick={()=>setRange(r=>Math.max(1,r-1))}
+            style={{width:38,height:38,borderRadius:10,border:'none',background:'#141D24',color:'#E8F0F2',fontSize:20,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>−</button>
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{fontSize:22,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#00E5A0',lineHeight:1}}>{range}</div>
+            <div style={{fontSize:10,color:'#3D5560',marginTop:2}}>يوم</div>
+          </div>
+          <button onClick={()=>setRange(r=>Math.min(180,r+1))}
+            style={{width:38,height:38,borderRadius:10,border:'none',background:'#141D24',color:'#E8F0F2',fontSize:20,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>+</button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+        {[{l:'متوسط السعرات',v:avgCal,u:'كال',c:'#00E5A0',note:`هدف ${PROFILE.dailyCalories}`},
+          {l:'متوسط البروتين',v:avgProt,u:'g',c:'#5B9CF6',note:`هدف ${PROFILE.dailyProtein}g`},
+          {l:'أيام التمرين',v:workoutDays,u:`/${range}`,c:'#FF8C42',note:'يوم مكتمل'},
+          {l:'إجمالي المحروق',v:totalBurned,u:'كال',c:'#FF5D5D',note:`آخر ${range} أيام`},
+        ].map(s=>(
+          <div key={s.l} style={{background:'#0E151A',borderRadius:16,padding:14,border:'1px solid #1C2730'}}>
+            <div style={{fontSize:9,color:'#3D5560',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.5px'}}>{s.l}</div>
+            <div style={{fontSize:22,fontWeight:800,fontFamily:'Syne,sans-serif',color:s.c,lineHeight:1}}>{s.v}<span style={{fontSize:11,fontWeight:400,marginRight:2}}>{s.u}</span></div>
+            <div style={{fontSize:9,color:'#3D5560',marginTop:4}}>{s.note}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Weight chart */}
+      {wData.length > 1 && (
+        <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:12,border:'1px solid #1C2730'}}>
+          <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>⚖️ منحنى الوزن</div>
+          <ResponsiveContainer width="100%" height={140}>
+            <AreaChart data={wData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1C2730"/>
+              <XAxis dataKey="date" tick={{fill:'#3D5560',fontSize:9}}/>
+              <YAxis tick={{fill:'#3D5560',fontSize:9}} domain={['auto','auto']}/>
+              <Tooltip contentStyle={tt}/>
+              <Area type="monotone" dataKey="weight" name="الوزن (kg)" stroke="#00E5A0" fill="#00E5A010" strokeWidth={2.5}/>
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Calories chart */}
+      <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:2}}>🔥 السعرات اليومية</div>
+        <div style={{fontSize:10,color:'#3D5560',marginBottom:12}}>
+          <span style={{color:'#00E5A0'}}>■</span> مستهلك &nbsp;
+          <span style={{color:'#FF8C42'}}>■</span> محروق &nbsp;
+          <span style={{color:'#3D5560'}}>-- </span> هدف {PROFILE.dailyCalories}
+        </div>
+        <ResponsiveContainer width="100%" height={150}>
+          <BarChart data={calData} barSize={12} barGap={2}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1C2730"/>
+            <XAxis dataKey="day" tick={{fill:'#3D5560',fontSize:9}}/>
+            <YAxis tick={{fill:'#3D5560',fontSize:9}}/>
+            <Tooltip contentStyle={tt}/>
+            <ReferenceLine y={PROFILE.dailyCalories} stroke="#3D5560" strokeDasharray="4 4"/>
+            <Bar dataKey="consumed" name="مستهلك" fill="#00E5A0" radius={[4,4,0,0]}/>
+            <Bar dataKey="burned"   name="محروق"   fill="#FF8C42" radius={[4,4,0,0]}/>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Protein chart */}
+      <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:12,border:'1px solid #1C2730'}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:2}}>💪 البروتين اليومي</div>
+        <div style={{fontSize:10,color:'#3D5560',marginBottom:12}}><span style={{color:'#3D5560'}}>-- </span> هدف {PROFILE.dailyProtein}g</div>
+        <ResponsiveContainer width="100%" height={130}>
+          <BarChart data={protData} barSize={14}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1C2730"/>
+            <XAxis dataKey="day" tick={{fill:'#3D5560',fontSize:9}}/>
+            <YAxis tick={{fill:'#3D5560',fontSize:9}}/>
+            <Tooltip contentStyle={tt}/>
+            <ReferenceLine y={PROFILE.dailyProtein} stroke="#3D5560" strokeDasharray="4 4"/>
+            <Bar dataKey="protein" name="البروتين (g)" fill="#5B9CF6" radius={[4,4,0,0]}/>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Workout history */}
+      <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:8,border:'1px solid #1C2730'}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>📅 سجل التمارين</div>
+        {dates.filter(d=>(logs[d]?.workouts||[]).length>0).length===0 ? (
+          <div style={{color:'#3D5560',fontSize:12,textAlign:'center',padding:20}}>لا يوجد سجل تمارين للفترة المحددة</div>
+        ) : (
+          dates.filter(d=>(logs[d]?.workouts||[]).length>0).reverse().map(d=>(
+            <div key={d} style={{borderBottom:'1px solid #1C2730',paddingBottom:10,marginBottom:10}}>
+              <div style={{fontSize:11,color:'#00E5A0',fontWeight:700,marginBottom:6}}>{fmtDate(d)} · {fmtDay(d)}</div>
+              {(logs[d]?.workouts||[]).map(w=>(
+                <div key={w.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3,color:'#C0CDD4'}}>
+                  <span>
+                    {w.type==='resistance'?'🏋️':'🏃'} {w.exercise||w.activity}
+                    {w.type==='resistance'&&w.sets ? ` · ${w.sets.length} جلسات` : ''}
+                    {w.type==='cardio'&&w.duration ? ` · ${w.duration} دقيقة` : ''}
+                  </span>
+                  <span style={{color:'#FF8C42',fontWeight:600}}>{w.caloriesBurned} كال</span>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── MUSCLE SVG IDS mapping (which SVG parts to highlight per exercise) ────────
+const EXERCISE_MUSCLES_SVG = {
+  'بنش بريس':['chest','triceps','shoulder'],'إنكلاين بريس':['chest','triceps','shoulder'],
+  'ديكلاين بريس':['chest','triceps'],'دمبل بريس':['chest','triceps','shoulder'],
+  'دمبل فلايز':['chest'],'فلايز':['chest'],'كيبل كروسوفر':['chest'],'بوش أب':['chest','triceps','shoulder'],
+  'ديدليفت':['back_lower','glutes','hamstring','traps'],'لات بول داون':['back_upper','biceps'],
+  'رو بالعقلة':['back_upper','biceps'],'رو بالبار':['back_upper','biceps'],
+  'بول أب':['back_upper','biceps'],'تي-بار رو':['back_upper','biceps'],
+  'سيتد كيبل رو':['back_upper','biceps'],'فيس بول':['shoulder','traps'],
+  'هايبر اكستنشن':['back_lower','glutes'],'شراغز':['traps'],
+  'كتف عسكري':['shoulder','triceps'],'لاترال ريز':['shoulder'],'فرونت ريز':['shoulder'],
+  'ريير ديلت فلايز':['shoulder'],'أرنولد بريس':['shoulder','triceps'],'أبرايت رو':['shoulder','traps'],
+  'كيرل بايسبس':['biceps'],'هامر كيرل':['biceps'],'كونسنتريشن كيرل':['biceps'],
+  'إنكلاين كيرل':['biceps'],'كيبل كيرل':['biceps'],'بار كيرل':['biceps'],'ريفيرس كيرل':['biceps'],
+  'ترايسبس بوشداون':['triceps'],'أوفرهيد ترايسبس':['triceps'],'سكال كراشر':['triceps'],
+  'ترايسبس ديبس':['triceps','chest'],'كلوز جريب بريس':['triceps','chest'],'كيك باك':['triceps'],
+  'سكوات':['quads','glutes','hamstring'],'ليج بريس':['quads','glutes'],
+  'لانجز':['quads','glutes','hamstring'],'ليج اكستنشن':['quads'],
+  'ليج كيرل':['hamstring'],'رومانيان ديدليفت':['hamstring','glutes','back_lower'],
+  'هاك سكوات':['quads','glutes'],'بولغاريان سبليت سكوات':['quads','glutes'],
+  'ووكينج لانج':['quads','glutes'],'هيب ثراست':['glutes','hamstring'],
+  'جلوت برج':['glutes'],'كالف رايز':['calves'],'سيتد كالف رايز':['calves'],
+  'دونكي كالف رايز':['calves'],'بلانك':['core'],'كرانش':['core'],
+  'ليج ريز':['core'],'ماونتن كليمبر':['core','shoulder'],
+  'رشيان تويست':['core'],'AB رولر':['core'],'هانجينج نيز ريز':['core'],'روتاري تورسو':['core'],'أبدومينال':['core'],
+};
+
+// ── EXERCISE ENGLISH NAMES (for YouTube search) ──────────────────────────────
+const EXERCISE_EN_NAME = {
+  'بنش بريس':'bench press','إنكلاين بريس':'incline bench press','ديكلاين بريس':'decline bench press',
+  'دمبل بريس':'dumbbell bench press','دمبل فلايز':'dumbbell flyes','فلايز':'cable flyes',
+  'كيبل كروسوفر':'cable crossover','بوش أب':'push up',
+  'ديدليفت':'deadlift','لات بول داون':'lat pulldown','رو بالعقلة':'dumbbell row',
+  'رو بالبار':'barbell row','بول أب':'pull up','تي-بار رو':'t-bar row',
+  'سيتد كيبل رو':'seated cable row','فيس بول':'face pull','هايبر اكستنشن':'hyperextension','شراغز':'barbell shrug',
+  'كتف عسكري':'overhead press','لاترال ريز':'lateral raise','فرونت ريز':'front raise',
+  'ريير ديلت فلايز':'rear delt fly','أرنولد بريس':'arnold press','أبرايت رو':'upright row',
+  'كيرل بايسبس':'bicep curl','هامر كيرل':'hammer curl','كونسنتريشن كيرل':'concentration curl',
+  'إنكلاين كيرل':'incline curl','كيبل كيرل':'cable curl','بار كيرل':'barbell curl','ريفيرس كيرل':'reverse curl',
+  'ترايسبس بوشداون':'triceps pushdown','أوفرهيد ترايسبس':'overhead tricep extension',
+  'سكال كراشر':'skull crusher','ترايسبس ديبس':'tricep dips','كلوز جريب بريس':'close grip bench press','كيك باك':'tricep kickback',
+  'سكوات':'squat','ليج بريس':'leg press','لانجز':'lunge','ليج اكستنشن':'leg extension',
+  'ليج كيرل':'leg curl','رومانيان ديدليفت':'romanian deadlift','هاك سكوات':'hack squat',
+  'بولغاريان سبليت سكوات':'bulgarian split squat','ووكينج لانج':'walking lunge',
+  'هيب ثراست':'hip thrust','جلوت برج':'glute bridge',
+  'كالف رايز':'calf raise','سيتد كالف رايز':'seated calf raise','دونكي كالف رايز':'donkey calf raise',
+  'بلانك':'plank','كرانش':'crunch','ليج ريز':'leg raise','ماونتن كليمبر':'mountain climber',
+  'رشيان تويست':'russian twist','AB رولر':'ab roller','هانجينج نيز ريز':'hanging knee raise',
+  'روتاري تورسو':'rotary torso machine','أبدومينال':'abdominal crunch machine',
+};
+const ytQuery = (ex) => {
+  const en = EXERCISE_EN_NAME[ex];
+  return en ? `exercise how to tutorial ${en}` : `${ex} exercise how to tutorial`;
+};
+const EXERCISE_EQUIPMENT = {
+  'بنش بريس':'barbell_bench','إنكلاين بريس':'barbell_bench','ديكلاين بريس':'barbell_bench',
+  'دمبل بريس':'dumbbell','دمبل فلايز':'dumbbell','فلايز':'cable','كيبل كروسوفر':'cable',
+  'بوش أب':'bodyweight','ديدليفت':'barbell','لات بول داون':'cable_machine',
+  'رو بالعقلة':'dumbbell','رو بالبار':'barbell','بول أب':'pullup_bar',
+  'تي-بار رو':'barbell','سيتد كيبل رو':'cable_machine','فيس بول':'cable',
+  'هايبر اكستنشن':'bench','شراغز':'barbell',
+  'كتف عسكري':'barbell','لاترال ريز':'dumbbell','فرونت ريز':'dumbbell',
+  'ريير ديلت فلايز':'dumbbell','أرنولد بريس':'dumbbell','أبرايت رو':'barbell',
+  'كيرل بايسبس':'barbell','هامر كيرل':'dumbbell','كونسنتريشن كيرل':'dumbbell',
+  'إنكلاين كيرل':'dumbbell','كيبل كيرل':'cable','بار كيرل':'barbell','ريفيرس كيرل':'barbell',
+  'ترايسبس بوشداون':'cable','أوفرهيد ترايسبس':'dumbbell','سكال كراشر':'barbell_bench',
+  'ترايسبس ديبس':'bench','كلوز جريب بريس':'barbell_bench','كيك باك':'dumbbell',
+  'سكوات':'barbell','ليج بريس':'leg_machine','لانجز':'dumbbell',
+  'ليج اكستنشن':'leg_machine','ليج كيرل':'leg_machine','رومانيان ديدليفت':'barbell',
+  'هاك سكوات':'leg_machine','بولغاريان سبليت سكوات':'dumbbell','ووكينج لانج':'dumbbell',
+  'هيب ثراست':'barbell','جلوت برج':'bodyweight',
+  'كالف رايز':'barbell','سيتد كالف رايز':'leg_machine','دونكي كالف رايز':'bodyweight',
+  'بلانك':'bodyweight','كرانش':'bodyweight','ليج ريز':'bodyweight',
+  'ماونتن كليمبر':'bodyweight','رشيان تويست':'bodyweight','AB رولر':'ab_roller',
+  'هانجينج نيز ريز':'pullup_bar','روتاري تورسو':'leg_machine','أبدومينال':'leg_machine',
+};
+
+// ── EXERCISE MOVEMENT MAP ─────────────────────────────────────────────────────
+const EXERCISE_MOVEMENT = {
+  'بنش بريس':'push_horizontal','إنكلاين بريس':'push_incline','ديكلاين بريس':'push_horizontal',
+  'دمبل بريس':'push_horizontal','دمبل فلايز':'fly','فلايز':'fly','كيبل كروسوفر':'fly',
+  'بوش أب':'push_horizontal','ديدليفت':'hinge','لات بول داون':'pull_down',
+  'رو بالعقلة':'pull_horizontal','رو بالبار':'pull_horizontal','بول أب':'pull_up',
+  'تي-بار رو':'pull_horizontal','سيتد كيبل رو':'pull_horizontal','فيس بول':'pull_horizontal',
+  'هايبر اكستنشن':'hinge','شراغز':'shrug',
+  'كتف عسكري':'push_vertical','لاترال ريز':'raise_side','فرونت ريز':'raise_front',
+  'ريير ديلت فلايز':'raise_rear','أرنولد بريس':'push_vertical','أبرايت رو':'pull_up_close',
+  'كيرل بايسبس':'curl','هامر كيرل':'curl','كونسنتريشن كيرل':'curl',
+  'إنكلاين كيرل':'curl','كيبل كيرل':'curl','بار كيرل':'curl','ريفيرس كيرل':'curl',
+  'ترايسبس بوشداون':'extend_down','أوفرهيد ترايسبس':'extend_up','سكال كراشر':'extend_up',
+  'ترايسبس ديبس':'dip','كلوز جريب بريس':'push_horizontal','كيك باك':'extend_down',
+  'سكوات':'squat','ليج بريس':'leg_press','لانجز':'lunge',
+  'ليج اكستنشن':'leg_extend','ليج كيرل':'leg_curl','رومانيان ديدليفت':'hinge',
+  'هاك سكوات':'squat','بولغاريان سبليت سكوات':'lunge','ووكينج لانج':'lunge',
+  'هيب ثراست':'hip_thrust','جلوت برج':'hip_thrust',
+  'كالف رايز':'calf','سيتد كالف رايز':'calf','دونكي كالف رايز':'calf',
+  'بلانك':'plank','كرانش':'crunch','ليج ريز':'crunch',
+  'ماونتن كليمبر':'plank','رشيان تويست':'crunch','AB رولر':'crunch',
+  'هانجينج نيز ريز':'pull_up','روتاري تورسو':'twist','أبدومينال':'crunch',
+};
+
+// ── UNIFIED EXERCISE DEMO SVG ─────────────────────────────────────────────────
+function ExerciseDemoSVG({ exercise, color = '#00E5A0' }) {
+  const muscles = EXERCISE_MUSCLES_SVG[exercise] || [];
+  const pattern = EXERCISE_MOVEMENT[exercise] || 'push_horizontal';
+
+  const hi  = (...ms) => ms.some(m => muscles.includes(m));
+  const mc  = (...ms) => hi(...ms) ? color : '#182028';
+  const mo  = (...ms) => hi(...ms) ? 0.88   : 0.18;
+  const mst = (...ms) => hi(...ms) ? color  : '#222C35';
+  const S='#1C2B35', SS='#2E4050', MT='#607888', BD='#0D1318';
+
+  return (
+    <svg viewBox="0 0 320 200" style={{width:'100%', maxHeight:190, display:'block'}}>
+      <style>{`
+        @keyframes _up{0%,100%{transform:translateY(0)}50%{transform:translateY(var(--dy,-14px))}}
+        @keyframes _dn{0%,100%{transform:translateY(0)}50%{transform:translateY(var(--dy, 14px))}}
+        @keyframes _rt{0%,100%{transform:rotate(var(--r0,0deg))}50%{transform:rotate(var(--r1,-30deg))}}
+        @keyframes _gw{0%,100%{opacity:.6}50%{opacity:1}}
+        ._up{animation:_up 2.2s ease-in-out infinite}
+        ._dn{animation:_dn 2.2s ease-in-out infinite}
+        ._rt{animation:_rt 2.2s ease-in-out infinite}
+        ._gw{animation:_gw 1.6s ease-in-out infinite}
+      `}</style>
+
+      {/* ═══ LEFT PANEL: MUSCLE MAP ═══ */}
+      <g>
+        <text x="65" y="10" textAnchor="middle" fontSize="9" fill={color} fontWeight="700">خريطة العضلات</text>
+        {/* Head */}
+        <circle cx="65" cy="23" r="13" fill={S} stroke={SS} strokeWidth="1.5"/>
+        <circle cx="61" cy="20" r="2"  fill={SS}/><circle cx="69" cy="20" r="2" fill={SS}/>
+        {/* Neck */}
+        <rect x="60" y="35" width="10" height="8" rx="3" fill={S} stroke={SS} strokeWidth="1"/>
+        {/* Traps */}
+        <path d="M49,43 Q65,35 81,43 Q72,51 65,53 Q58,51 49,43Z"
+              fill={mc('traps')} opacity={mo('traps')} stroke={mst('traps')} strokeWidth="1"/>
+        {/* Shoulders */}
+        <ellipse cx="42" cy="55" rx="11" ry="9" fill={mc('shoulder')} opacity={mo('shoulder')} stroke={mst('shoulder')} strokeWidth="1"/>
+        <ellipse cx="88" cy="55" rx="11" ry="9" fill={mc('shoulder')} opacity={mo('shoulder')} stroke={mst('shoulder')} strokeWidth="1"/>
+        {/* Chest */}
+        <path d="M53,43 Q65,53 77,43 L80,71 Q65,78 50,71Z"
+              fill={mc('chest')} opacity={mo('chest')} stroke={mst('chest')} strokeWidth="1"/>
+        {/* Back upper overlay */}
+        {hi('back_upper') && <path d="M53,43 Q65,53 77,43 L80,71 Q65,78 50,71Z" fill={color} opacity="0.45"/>}
+        {/* Core */}
+        {[[0,0],[1,0],[0,1],[1,1],[0,2],[1,2]].map(([c,r])=>(
+          <rect key={`${c}${r}`} x={57+c*9} y={71+r*10} width="8" height="8" rx="1.5"
+                fill={hi('core')?color:'#182028'} opacity={hi('core')?0.8:0.2}/>
+        ))}
+        {/* Body outline */}
+        <path d="M50,43 L46,97 Q65,104 84,97 L80,43" fill="none" stroke="#222C35" strokeWidth="1.5"/>
+        {/* Back lower */}
+        {hi('back_lower') && <path d="M54,91 L57,104 Q65,108 73,104 L76,91 Q65,95 54,91Z" fill={color} opacity="0.5"/>}
+        {/* Glutes */}
+        <path d="M46,97 Q65,108 84,97 L82,111 Q65,119 48,111Z"
+              fill={mc('glutes')} opacity={mo('glutes')} stroke={mst('glutes')} strokeWidth="1"/>
+        {/* Biceps */}
+        <ellipse cx="32" cy="68" rx="7" ry="13" fill={mc('biceps')} opacity={mo('biceps')} stroke={mst('biceps')} strokeWidth="1"/>
+        <ellipse cx="98" cy="68" rx="7" ry="13" fill={mc('biceps')} opacity={mo('biceps')} stroke={mst('biceps')} strokeWidth="1"/>
+        {/* Triceps dashed */}
+        {hi('triceps') && <>
+          <ellipse cx="32" cy="68" rx="7" ry="13" fill="none" stroke={color} strokeWidth="2.5" strokeDasharray="3,2"/>
+          <ellipse cx="98" cy="68" rx="7" ry="13" fill="none" stroke={color} strokeWidth="2.5" strokeDasharray="3,2"/>
+        </>}
+        {/* Forearms */}
+        <rect x="27" y="81" width="10" height="18" rx="5" fill={S} stroke={SS} strokeWidth="1"/>
+        <rect x="93" y="81" width="10" height="18" rx="5" fill={S} stroke={SS} strokeWidth="1"/>
+        {/* Quads */}
+        <ellipse cx="55" cy="133" rx="11" ry="20" fill={mc('quads')} opacity={mo('quads')} stroke={mst('quads')} strokeWidth="1"/>
+        <ellipse cx="75" cy="133" rx="11" ry="20" fill={mc('quads')} opacity={mo('quads')} stroke={mst('quads')} strokeWidth="1"/>
+        {/* Hamstrings dashed */}
+        {hi('hamstring') && <>
+          <ellipse cx="55" cy="133" rx="11" ry="20" fill="none" stroke={color} strokeWidth="2.5" strokeDasharray="4,3"/>
+          <ellipse cx="75" cy="133" rx="11" ry="20" fill="none" stroke={color} strokeWidth="2.5" strokeDasharray="4,3"/>
+        </>}
+        {/* Knees */}
+        <circle cx="55" cy="156" r="8"  fill={BD} stroke={SS} strokeWidth="1.5"/>
+        <circle cx="75" cy="156" r="8"  fill={BD} stroke={SS} strokeWidth="1.5"/>
+        {/* Calves */}
+        <ellipse cx="55" cy="174" rx="7" ry="14" fill={mc('calves')} opacity={mo('calves')} stroke={mst('calves')} strokeWidth="1"/>
+        <ellipse cx="75" cy="174" rx="7" ry="14" fill={mc('calves')} opacity={mo('calves')} stroke={mst('calves')} strokeWidth="1"/>
+        {/* Feet */}
+        <rect x="48" y="187" width="14" height="6" rx="3" fill={S} stroke={SS} strokeWidth="1"/>
+        <rect x="68" y="187" width="14" height="6" rx="3" fill={S} stroke={SS} strokeWidth="1"/>
+      </g>
+
+      {/* Divider */}
+      <line x1="125" y1="5" x2="125" y2="195" stroke="#1C2730" strokeWidth="1"/>
+
+      {/* ═══ RIGHT PANEL: EXERCISE SCENE ═══ */}
+      <g transform="translate(130,0)">
+        <text x="95" y="10" textAnchor="middle" fontSize="9" fill={color} fontWeight="700">الأداء + الجهاز</text>
+        {(()=>{
+          // Thick-limb figure helper. hx,hy = hip center
+          const Fig = ({hx,hy,ta=0,ual=-20,uar=-20,fal=0,far2=0,thl=0,thr=0,shl=0,shr=0}) => {
+            const R=a=>a*Math.PI/180;
+            const px=(a,l,bx)=>bx+Math.sin(R(a))*l;
+            const py=(a,l,by)=>by-Math.cos(R(a))*l;
+            const tsx=px(ta,36,hx),    tsy=py(ta,36,hx,hy)-(36-36)+hy- Math.cos(R(ta))*36;
+            // Recalculate correctly
+            const torsoX = hx + Math.sin(R(ta))*36;
+            const torsoY = hy - Math.cos(R(ta))*36;
+            const headX  = hx + Math.sin(R(ta))*52;
+            const headY  = hy - Math.cos(R(ta))*52;
+            const shldX  = hx + Math.sin(R(ta))*28;
+            const shldY  = hy - Math.cos(R(ta))*28;
+            // Arms
+            const ulx = shldX + Math.cos(R(ual+ta-90))*22;
+            const uly = shldY + Math.sin(R(ual+ta-90))*22;
+            const urx = shldX - Math.cos(R(uar+ta-90))*22;
+            const ury = shldY + Math.sin(R(uar+ta-90))*22;
+            const flx = ulx + Math.sin(R(ual+ta+fal))*18;
+            const fly = uly + Math.cos(R(ual+ta+fal))*18;
+            const frx = urx + Math.sin(R(uar+ta+far2))*18;
+            const fry = ury + Math.cos(R(uar+ta+far2))*18;
+            // Legs
+            const llhx=hx-7, llhy=hy;
+            const lkx=llhx+Math.sin(R(thl))*26, lky=llhy+Math.cos(R(thl))*26;
+            const lfx=lkx+Math.sin(R(thl+shl))*24, lfy=lky+Math.cos(R(thl+shl))*24;
+            const rlhx=hx+7, rlhy=hy;
+            const rkx=rlhx+Math.sin(R(thr))*26, rky=rlhy+Math.cos(R(thr))*26;
+            const rfx=rkx+Math.sin(R(thr+shr))*24, rfy=rky+Math.cos(R(thr+shr))*24;
+            return (
+              <g>
+                <line x1={llhx} y1={llhy} x2={lkx}   y2={lky}   stroke={SS} strokeWidth="11" strokeLinecap="round"/>
+                <line x1={lkx}  y1={lky}  x2={lfx}   y2={lfy}   stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1={rlhx} y1={rlhy} x2={rkx}   y2={rky}   stroke={SS} strokeWidth="11" strokeLinecap="round"/>
+                <line x1={rkx}  y1={rky}  x2={rfx}   y2={rfy}   stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1={hx}   y1={hy}   x2={torsoX} y2={torsoY} stroke={S}  strokeWidth="15" strokeLinecap="round"/>
+                <line x1={shldX} y1={shldY} x2={ulx} y2={uly}   stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1={ulx}  y1={uly}  x2={flx}   y2={fly}   stroke={SS} strokeWidth="7"  strokeLinecap="round"/>
+                <line x1={shldX} y1={shldY} x2={urx} y2={ury}   stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1={urx}  y1={ury}  x2={frx}   y2={fry}   stroke={SS} strokeWidth="7"  strokeLinecap="round"/>
+                <circle cx={headX} cy={headY} r="11" fill={S} stroke={SS} strokeWidth="2"/>
+                <circle cx={hx}    cy={hy}    r="7"  fill={S}/>
+              </g>
+            );
+          };
+          // Floor
+          const Floor = () => <rect x="0" y="177" width="190" height="5" rx="2" fill="#141D24" stroke="#252E38" strokeWidth="1"/>;
+          // Barbell
+          const BB = ({y, w=140, x=25}) => (<>
+            <rect x={x}       y={y-5}  width="10" height="16" rx="3" fill={color} opacity=".85"/>
+            <rect x={x+10}    y={y-2}  width="10" height="9"  rx="2" fill={MT}/>
+            <rect x={x+20}    y={y-3}  width={w}  height="11" rx="5" fill={MT}/>
+            <rect x={x+20+w}  y={y-2}  width="10" height="9"  rx="2" fill={MT}/>
+            <rect x={x+30+w}  y={y-5}  width="10" height="16" rx="3" fill={color} opacity=".85"/>
+          </>);
+          // Dumbbell pair
+          const DB = ({lx,ly,rx2,ry2}) => (<>
+            <rect x={lx-16} y={ly-4}  width="8" height="12" rx="3" fill={color} opacity=".8"/>
+            <rect x={lx-8}  y={ly-1}  width="18" height="7" rx="3" fill={MT}/>
+            <rect x={lx+10} y={ly-4}  width="8" height="12" rx="3" fill={color} opacity=".8"/>
+            <rect x={rx2-16} y={ry2-4} width="8" height="12" rx="3" fill={color} opacity=".8"/>
+            <rect x={rx2-8}  y={ry2-1} width="18" height="7" rx="3" fill={MT}/>
+            <rect x={rx2+10} y={ry2-4} width="8" height="12" rx="3" fill={color} opacity=".8"/>
+          </>);
+          // Cable from top
+          const Cable = ({tx=95}) => (<>
+            <rect x={tx-20} y="0" width="40" height="22" rx="4" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+            <circle cx={tx} cy="11" r="8" fill="#252E38" stroke={MT} strokeWidth="2"/>
+            <circle cx={tx} cy="11" r="3" fill={MT}/>
+            <path d={`M${tx} 19 L${tx} 70`} fill="none" stroke={color} strokeWidth="2" strokeDasharray="4,2"/>
+            <rect x={tx-22} y="68" width="44" height="7" rx="3" fill={MT}/>
+          </>);
+
+          if(pattern==='push_horizontal') return (
+            <g>
+              {/* Bench */}
+              <rect x="10" y="148" width="170" height="13" rx="5" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <rect x="28" y="160" width="12"  height="22" rx="3" fill="#252E38"/>
+              <rect x="150" y="160" width="12" height="22" rx="3" fill="#252E38"/>
+              {/* Rack */}
+              <rect x="72" y="105" width="6" height="45" rx="2" fill="#252E38"/>
+              <rect x="112" y="105" width="6" height="45" rx="2" fill="#252E38"/>
+              <rect x="68" y="102" width="14" height="6" rx="2" fill="#252E38"/>
+              <rect x="108" y="102" width="14" height="6" rx="2" fill="#252E38"/>
+              {/* Barbell with animation */}
+              <g className="_up" style={{'--dy':'-18px'}}>
+                <BB y={110} x={18} w={144}/>
+                {/* Figure lying on bench */}
+                <Fig hx={95} hy={143} ta={-82} ual={-55} uar={-55} fal={-15} far2={-15}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='push_vertical'||pattern==='push_incline') return (
+            <g>
+              <Floor/>
+              <g className="_up" style={{'--dy':'-16px'}}>
+                <BB y={48} x={22} w={136}/>
+                <Fig hx={95} hy={143} ta={0} ual={-80} uar={-80} fal={5} far2={5}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='pull_up'||pattern==='pull_up_close') return (
+            <g>
+              {/* Pull-up bar */}
+              <rect x="5"   y="22" width="180" height="11" rx="5" fill={MT} stroke={color} strokeWidth="1.5"/>
+              <rect x="5"   y="8"  width="14"  height="25" rx="4" fill="#252E38"/>
+              <rect x="171" y="8"  width="14"  height="25" rx="4" fill="#252E38"/>
+              <g className="_up" style={{'--dy':'-20px'}}>
+                <Fig hx={95} hy={155} ta={0} ual={-88} uar={-88} fal={-8} far2={-8} thl={10} thr={-10} shl={20} shr={-20}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='pull_down') return (
+            <g>
+              <Cable tx={95}/>
+              {/* Seat */}
+              <rect x="45" y="148" width="100" height="12" rx="4" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <rect x="88" y="130" width="14"  height="20" rx="3" fill="#252E38"/>
+              <g className="_dn" style={{'--dy':'14px'}}>
+                <Fig hx={95} hy={145} ta={0} ual={-72} uar={-72} fal={8} far2={8} thl={-18} thr={18}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='pull_horizontal') return (
+            <g>
+              <Floor/>
+              {/* Pulley machine on right */}
+              <rect x="162" y="50" width="24" height="85" rx="4" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <circle cx="174" cy="95" r="11" fill="#252E38" stroke={MT} strokeWidth="2"/>
+              <circle cx="174" cy="95" r="4"  fill={MT}/>
+              <path d="M163 95 Q130 95 108 108" fill="none" stroke={color} strokeWidth="2" strokeDasharray="4,2"/>
+              <g className="_rt" style={{'--r0':'0deg','--r1':'10deg'}}>
+                <Fig hx={65} hy={143} ta={-30} ual={5} uar={65} fal={20} far2={20}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='squat') return (
+            <g>
+              <Floor/>
+              {/* Barbell on shoulders */}
+              <BB y={93} x={22} w={136}/>
+              {/* Two positions shown */}
+              <Fig hx={65} hy={140} ta={0}   ual={5} uar={5} thl={0} thr={0} shl={0} shr={0}/>
+              <g className="_dn" style={{'--dy':'8px'}}>
+                <Fig hx={130} hy={143} ta={-10} ual={10} uar={10} thl={-30} thr={30} shl={50} shr={-50}/>
+              </g>
+              <text x="65"  y="178" textAnchor="middle" fontSize="8" fill="#3D5560">قائم</text>
+              <text x="130" y="178" textAnchor="middle" fontSize="8" fill={color}>جلوس ↓</text>
+            </g>
+          );
+
+          if(pattern==='hinge') return (
+            <g>
+              <Floor/>
+              {/* Barbell on floor */}
+              <BB y={168} x={22} w={136}/>
+              <circle cx="38"  cy="172" r="13" fill="none" stroke={color} strokeWidth="3" opacity=".8"/>
+              <circle cx="152" cy="172" r="13" fill="none" stroke={color} strokeWidth="3" opacity=".8"/>
+              {/* Two positions */}
+              <Fig hx={65} hy={140} ta={0}  ual={-15} uar={-15}/>
+              <g className="_rt" style={{'--r0':'0deg','--r1':'5deg'}}>
+                <Fig hx={130} hy={143} ta={-38} ual={0} uar={0} fal={25} far2={25}/>
+              </g>
+              <text x="65"  y="175" textAnchor="middle" fontSize="8" fill="#3D5560">قائم</text>
+              <text x="130" y="175" textAnchor="middle" fontSize="8" fill={color}>انحناء</text>
+            </g>
+          );
+
+          if(pattern==='curl') return (
+            <g>
+              <Floor/>
+              <DB lx={40} ly={158} rx2={150} ry2={158}/>
+              <Fig hx={65}  hy={142} ta={0} ual={-12} uar={-12} fal={0} far2={0}/>
+              <g className="_up" style={{'--dy':'-20px'}}>
+                <Fig hx={130} hy={142} ta={0} ual={-12} uar={-12} fal={-65} far2={-65}/>
+              </g>
+              <text x="65"  y="176" textAnchor="middle" fontSize="8" fill="#3D5560">ابتداء</text>
+              <text x="130" y="176" textAnchor="middle" fontSize="8" fill={color}>رفع ↑</text>
+            </g>
+          );
+
+          if(pattern==='extend_down') return (
+            <g>
+              <Floor/>
+              <Cable tx={95}/>
+              {/* Rope */}
+              <path d="M82 75 L70 105 M108 75 L120 105" fill="none" stroke={MT} strokeWidth="3" strokeLinecap="round"/>
+              <g className="_dn" style={{'--dy':'14px'}}>
+                <Fig hx={95} hy={143} ta={0} ual={-15} uar={-15} fal={-82} far2={-82}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='extend_up') return (
+            <g>
+              <Floor/>
+              <DB lx={95} ly={55} rx2={95} ry2={55}/>
+              <g className="_up" style={{'--dy':'-14px'}}>
+                <Fig hx={95} hy={143} ta={0} ual={-85} uar={-85} fal={-10} far2={-10}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='hip_thrust') return (
+            <g>
+              <Floor/>
+              {/* Bench */}
+              <rect x="15" y="110" width="68" height="13" rx="4" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <rect x="25" y="122" width="10" height="20" rx="2" fill="#252E38"/>
+              <rect x="62" y="122" width="10" height="20" rx="2" fill="#252E38"/>
+              <BB y={102} x={22} w={136}/>
+              <g className="_up" style={{'--dy':'-22px'}}>
+                <Fig hx={95} hy={162} ta={-62} ual={-8} uar={-8} thl={-62} thr={62} shl={-82} shr={82}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='plank') return (
+            <g>
+              <Floor/>
+              <g className="_gw">
+                <circle cx="38" cy="136" r="11" fill={S} stroke={SS} strokeWidth="2"/>
+                <line x1="38" y1="147" x2="155" y2="160" stroke={S}  strokeWidth="14" strokeLinecap="round"/>
+                <line x1="55" y1="152" x2="30"  y2="177" stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1="80" y1="155" x2="58"  y2="177" stroke={SS} strokeWidth="9"  strokeLinecap="round"/>
+                <line x1="130" y1="158" x2="118" y2="177" stroke={SS} strokeWidth="10" strokeLinecap="round"/>
+                <line x1="155" y1="160" x2="168" y2="177" stroke={SS} strokeWidth="10" strokeLinecap="round"/>
+                <line x1="50"  y1="150" x2="28"  y2="160" stroke={SS} strokeWidth="7"  strokeLinecap="round"/>
+              </g>
+              <text x="95" y="195" textAnchor="middle" fontSize="9" fill="#3D5560">ثبّت الجسم مستقيماً</text>
+            </g>
+          );
+
+          if(pattern==='crunch') return (
+            <g>
+              <Floor/>
+              <Fig hx={65}  hy={160} ta={-50} ual={-5} uar={-5} thl={-70} thr={70} shl={-35} shr={35}/>
+              <g className="_up" style={{'--dy':'-16px'}}>
+                <Fig hx={128} hy={160} ta={-65} ual={-5} uar={-5} thl={-70} thr={70} shl={-35} shr={35}/>
+              </g>
+              <text x="65"  y="175" textAnchor="middle" fontSize="8" fill="#3D5560">ابتداء</text>
+              <text x="128" y="175" textAnchor="middle" fontSize="8" fill={color}>رفع ↑</text>
+            </g>
+          );
+
+          if(pattern==='lunge') return (
+            <g>
+              <Floor/>
+              <DB lx={58} ly={143} rx2={132} ry2={143}/>
+              <g className="_rt" style={{'--r0':'-3deg','--r1':'3deg'}}>
+                <Fig hx={95} hy={143} ta={0} ual={-15} uar={-15} thl={-12} thr={-38} shl={0} shr={65}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='leg_extend') return (
+            <g>
+              {/* Machine seat */}
+              <rect x="35" y="130" width="120" height="16" rx="5" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <rect x="85" y="145" width="20"  height="30" rx="3" fill="#252E38"/>
+              {/* Pad */}
+              <rect x="138" y="155" width="28" height="10" rx="4" fill="#252E38" stroke={color} strokeWidth="1.5"/>
+              <g className="_dn" style={{'--dy':'14px'}}>
+                <Fig hx={95} hy={128} ta={-18} ual={-10} uar={-10} thl={-70} thr={70} shl={-50} shr={50}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='leg_curl') return (
+            <g>
+              <rect x="20" y="120" width="150" height="14" rx="5" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <rect x="138" y="134" width="28" height="10" rx="4" fill="#252E38" stroke={color} strokeWidth="1.5"/>
+              <g className="_rt" style={{'--r0':'0deg','--r1':'-35deg'}}>
+                <Fig hx={95} hy={118} ta={-82} ual={-10} uar={-10} thl={0} thr={0} shl={0} shr={0}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='leg_press') return (
+            <g>
+              {/* Machine */}
+              <rect x="20"  y="10"  width="150" height="90" rx="6" fill="#141D24" stroke="#252E38" strokeWidth="2"/>
+              <rect x="35"  y="20"  width="120" height="60" rx="4" fill="#182028"/>
+              <rect x="138" y="8"  width="12"  height="14" rx="3" fill={color} opacity=".8"/>
+              <rect x="150" y="11" width="30"  height="8"  rx="3" fill={MT}/>
+              <g className="_rt" style={{'--r0':'0deg','--r1':'-12deg'}}>
+                <Fig hx={95} hy={148} ta={-75} ual={-10} uar={-10} thl={-100} thr={100} shl={50} shr={-50}/>
+              </g>
+              <Floor/>
+            </g>
+          );
+
+          if(pattern==='raise_side'||pattern==='raise_front'||pattern==='raise_rear') return (
+            <g>
+              <Floor/>
+              <g className="_up" style={{'--dy':'-18px'}}>
+                <DB lx={36} ly={140} rx2={154} ry2={140}/>
+                <Fig hx={95} hy={143} ta={0} ual={-78} uar={78} fal={0} far2={0}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='calf') return (
+            <g>
+              {/* Step */}
+              <rect x="45" y="165" width="100" height="12" rx="3" fill="#141D24" stroke="#252E38" strokeWidth="1.5"/>
+              <Fig hx={65}  hy={163} ta={0} ual={-15} uar={-15}/>
+              <g className="_up" style={{'--dy':'-14px'}}>
+                <Fig hx={130} hy={163} ta={0} ual={-15} uar={-15}/>
+              </g>
+              <text x="65"  y="182" textAnchor="middle" fontSize="8" fill="#3D5560">ابتداء</text>
+              <text x="130" y="182" textAnchor="middle" fontSize="8" fill={color}>رفع ↑</text>
+            </g>
+          );
+
+          if(pattern==='shrug') return (
+            <g>
+              <Floor/>
+              <DB lx={60} ly={145} rx2={130} ry2={145}/>
+              <g className="_up" style={{'--dy':'-10px'}}>
+                <Fig hx={95} hy={142} ta={0} ual={-8} uar={-8}/>
+              </g>
+            </g>
+          );
+
+          if(pattern==='dip') return (
+            <g>
+              {/* Parallel bars */}
+              <rect x="25"  y="60" width="10" height="115" rx="4" fill="#252E38"/>
+              <rect x="155" y="60" width="10" height="115" rx="4" fill="#252E38"/>
+              <rect x="25"  y="60" width="165" height="12" rx="5" fill={MT} stroke={color} strokeWidth="1.5" opacity=".9"/>
+              <g className="_dn" style={{'--dy':'18px'}}>
+                <Fig hx={95} hy={128} ta={0} ual={-10} uar={-10} fal={-40} far2={-40}/>
+              </g>
+            </g>
+          );
+
+          // Default
+          return (
+            <g>
+              <Floor/>
+              <g className="_up" style={{'--dy':'-14px'}}>
+                <Fig hx={95} hy={143} ta={0} ual={-60} uar={-60} fal={-20} far2={-20}/>
+              </g>
+            </g>
+          );
+        })()}
+      </g>
+    </svg>
+  );
+}
+
+// ── EXERCISE MODAL ─────────────────────────────────────────────────────────────
+function ExerciseModal({ exercise, groupColor, onClose }) {
+  const [info,    setInfo]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const highlights = EXERCISE_MUSCLES_SVG[exercise] || [];
+
+  useEffect(() => {
+    if (!exercise) return;
+    setLoading(true); setInfo(null);
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        messages: [{
+          role: "user",
+          content: `أنت مدرب لياقة بدنية خبير. اشرح تمرين "${exercise}" باللغة العربية.
+أجب فقط بـ JSON بدون أي نص إضافي أو backticks:
+{
+  "description": "وصف مختصر للتمرين في جملة واحدة",
+  "muscles": ["العضلة الرئيسية", "عضلة مساعدة 1", "عضلة مساعدة 2"],
+  "equipment": ["الأداة أو الجهاز الرئيسي", "بديل اختياري"],
+  "equipment_note": "ملاحظة مختصرة عن ضبط الجهاز أو الأداة إن وجدت",
+  "steps": ["الخطوة 1 — الوضعية الابتدائية", "الخطوة 2 — الحركة", "الخطوة 3", "الخطوة 4 — العودة"],
+  "tips": ["نصيحة تقنية 1", "نصيحة تقنية 2"]
+}`
+        }]
+      })
+    }).then(r=>r.json()).then(d=>{
+      try { setInfo(JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim())); }
+      catch(e) {}
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  }, [exercise]);
+
+  if (!exercise) return null;
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'#000000CC',zIndex:300,display:'flex',alignItems:'flex-end',direction:'rtl'}}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{background:'#0D1318',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:440,margin:'0 auto',maxHeight:'85vh',overflowY:'auto',paddingBottom:'env(safe-area-inset-bottom,16px)'}}>
+        <div style={{display:'flex',justifyContent:'center',paddingTop:12,paddingBottom:4}}>
+          <div style={{width:36,height:4,borderRadius:2,background:'#1C2730'}}/>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px 16px',borderBottom:'1px solid #1C2730'}}>
+          <div style={{width:12,height:12,borderRadius:'50%',background:groupColor,flexShrink:0}}/>
+          <div style={{flex:1,fontSize:18,fontWeight:800,fontFamily:'Syne,sans-serif'}}>{exercise}</div>
+          {/* YouTube button */}
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery(exercise))}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{display:'flex',alignItems:'center',gap:5,background:'#FF0000',color:'#fff',border:'none',borderRadius:8,padding:'6px 10px',fontSize:11,fontWeight:700,cursor:'pointer',textDecoration:'none',flexShrink:0}}>
+            ▶ يوتيوب
+          </a>
+          <button onClick={onClose} style={{background:'#1C2730',border:'none',borderRadius:8,width:32,height:32,color:'#E8F0F2',fontSize:16,cursor:'pointer'}}>✕</button>
+        </div>
+
+        <div style={{padding:'16px 18px'}}>
+
+          {/* YouTube prominent link */}
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery(exercise))}`}
+             target="_blank" rel="noopener noreferrer"
+             style={{display:'flex',alignItems:'center',gap:12,background:'#FF000015',border:'1px solid #FF000040',borderRadius:14,padding:'12px 14px',marginBottom:14,textDecoration:'none'}}>
+            <div style={{width:44,height:34,background:'#FF0000',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <span style={{color:'#fff',fontSize:16}}>▶</span>
+            </div>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:'#E8F0F2',marginBottom:2}}>شاهد شرح الفيديو على يوتيوب</div>
+              <div style={{fontSize:10,color:'#3D5560'}}>اضغط لتشاهد طريقة الأداء الصحيحة</div>
+            </div>
+          </a>
+
+          {loading ? (
+            <div style={{textAlign:'center',padding:20,color:'#3D5560'}}>
+              <div style={{fontSize:24,marginBottom:6}}>⏳</div>
+              <div style={{fontSize:12}}>جاري تحميل الشرح...</div>
+            </div>
+          ) : info ? (
+            <>
+              {/* Description */}
+              <div style={{background:'#141D24',borderRadius:14,padding:'11px 14px',marginBottom:10,border:`1px solid ${groupColor}30`}}>
+                <div style={{fontSize:11,color:groupColor,fontWeight:700,marginBottom:5}}>عن التمرين</div>
+                <div style={{fontSize:12,color:'#C0CDD4',lineHeight:1.7}}>{info.description}</div>
+              </div>
+
+              {/* Equipment details */}
+              {info.equipment?.length > 0 && (
+                <div style={{background:'#141D24',borderRadius:14,padding:'11px 14px',marginBottom:10,border:'1px solid #1C2730'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:8}}>
+                    <span style={{fontSize:13}}>🏋️</span>
+                    <span style={{fontSize:11,fontWeight:700,color:'#E8F0F2'}}>الأدوات</span>
+                  </div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:info.equipment_note?6:0}}>
+                    {info.equipment.map((eq,i)=>(
+                      <div key={i} style={{background:i===0?'#FF8C4220':'#1C2730',border:`1px solid ${i===0?'#FF8C4250':'#252E38'}`,borderRadius:7,padding:'4px 10px',fontSize:11,color:i===0?'#FF8C42':'#C0CDD4',fontWeight:i===0?600:400}}>{eq}</div>
+                    ))}
+                  </div>
+                  {info.equipment_note && <div style={{fontSize:11,color:'#3D5560',lineHeight:1.6}}>⚙️ {info.equipment_note}</div>}
+                </div>
+              )}
+
+              {/* Steps */}
+              {info.steps?.length > 0 && (
+                <div style={{background:'#141D24',borderRadius:14,padding:'11px 14px',marginBottom:10,border:'1px solid #1C2730'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:10}}>
+                    <span style={{fontSize:13}}>▶️</span>
+                    <span style={{fontSize:11,fontWeight:700,color:'#E8F0F2'}}>خطوات الأداء</span>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {info.steps.map((step,i)=>(
+                      <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+                        <div style={{width:22,height:22,borderRadius:'50%',background:groupColor,color:'#080C0E',fontSize:11,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{i+1}</div>
+                        <div style={{fontSize:12,color:'#C0CDD4',lineHeight:1.65,flex:1,paddingTop:3}}>{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tips */}
+              {info.tips?.length > 0 && (
+                <div style={{background:'#141D24',borderRadius:14,padding:'11px 14px',border:'1px solid #1C2730'}}>
+                  <div style={{fontSize:11,color:'#FFE66D',fontWeight:700,marginBottom:8}}>💡 نصائح تقنية</div>
+                  {info.tips.map((tip,i)=>(
+                    <div key={i} style={{fontSize:12,color:'#C0CDD4',lineHeight:1.6,marginBottom:i<info.tips.length-1?7:0,display:'flex',gap:6}}>
+                      <span style={{color:'#FFE66D',flexShrink:0}}>•</span><span>{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{textAlign:'center',padding:20,color:'#3D5560',fontSize:13}}>تعذّر تحميل الشرح، حاول مرة أخرى</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MUSCLE MAP ────────────────────────────────────────────────────────────────
+function MuscleMap({ logs, muscleGroups, saveMuscleGroups }) {
+  const [editMode,    setEditMode]    = useState(false);
+  const [range,       setRange]       = useState(7);
+  const [mergeSource, setMergeSource] = useState(null);
+  const [moveEx,      setMoveEx]      = useState(null);
+  const [renamingId,  setRenamingId]  = useState(null);
+  const [renameVal,   setRenameVal]   = useState('');
+  const [selectedEx,       setSelectedEx]       = useState(null);
+  const [selectedGrpColor,  setSelectedGrpColor]  = useState('#00E5A0');
+  const [renamingEx,        setRenamingEx]        = useState(null); // {exercise, groupId, subIdx}
+  const [renameExVal,       setRenameExVal]       = useState('');
+  const [aiExInput,        setAiExInput]        = useState('');
+  const [aiExLoading,      setAiExLoading]      = useState(false);
+  const [aiExResult,       setAiExResult]       = useState(null);
+  const [aiExError,        setAiExError]        = useState('');
+
+  const getLastTrained = (group) => {
+    const dates = Object.keys(logs).sort().reverse();
+    for (const date of dates) {
+      if ((logs[date]?.workouts||[]).some(w => w.type==='resistance' && getExs(group).includes(w.exercise)))
+        return date;
+    }
+    return null;
+  };
+
+  const trainedInRange = (group) => {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - range);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    return Object.keys(logs).some(date =>
+      date >= cutoffStr &&
+(logs[date]?.workouts||[]).some(w => w.type==='resistance' && getExs(group).includes(w.exercise))
+    );
+  };
+
+  const statusColor = (days) => {
+    if (days === null) return '#2A3540';
+    if (days <= 2) return '#00E5A0';
+    if (days <= 5) return '#FFE66D';
+    return '#FF6B6B';
+  };
+
+  const statusLabel = (days) => {
+    if (days === null) return 'لم تتمرن بعد';
+    if (days === 0) return 'اليوم ✓';
+    if (days === 1) return 'أمس';
+    return `منذ ${days} أيام`;
+  };
+
+  // Helper: get all exercises flat from group (supports subGroups)
+  const getExs = (g) => g.subGroups ? g.subGroups.flatMap(sg=>sg.exercises||[]) : (g.exercises||[]);
+
+  const mergeGroups = (sourceId, targetId) => {
+    const source = muscleGroups.find(g => g.id === sourceId);
+    const target = muscleGroups.find(g => g.id === targetId);
+    const targetSubs = target.subGroups || [{name: target.name, exercises: target.exercises||[]}];
+    const sourceSubs = source.subGroups || [{name: source.name, exercises: source.exercises||[]}];
+    const newName = target.name + ' + ' + source.name;
+    saveMuscleGroups(
+      muscleGroups.filter(g => g.id !== sourceId)
+        .map(g => g.id === targetId ? {...g, name: newName, subGroups: [...targetSubs, ...sourceSubs], exercises: undefined} : g)
+    );
+    setMergeSource(null);
+  };
+
+  const moveExercise = (exercise, fromId, toId) => {
+    saveMuscleGroups(muscleGroups.map(g => {
+      if (g.id === fromId) {
+        if (g.subGroups) return {...g, subGroups: g.subGroups.map(sg=>({...sg,exercises:sg.exercises.filter(e=>e!==exercise)})).filter(sg=>sg.exercises.length>0)};
+        return {...g, exercises: g.exercises.filter(e => e !== exercise)};
+      }
+      if (g.id === toId) {
+        if (g.subGroups) return {...g, subGroups:[...g.subGroups, {name:'منقول', exercises:[exercise]}]};
+        return {...g, exercises: [...g.exercises, exercise]};
+      }
+      return g;
+    }));
+    setMoveEx(null);
+  };
+
+  const splitGroup = (groupId) => {
+    const group = muscleGroups.find(g => g.id === groupId);
+    if (!group.subGroups || group.subGroups.length < 2) return;
+    const usedColors = muscleGroups.filter(g=>g.id!==groupId).map(g => g.color);
+    let colorIdx = 0;
+    const newGroups = group.subGroups
+      .filter(sg => (sg.exercises||[]).length > 0)
+      .map((sg, i) => {
+        const color = GROUP_COLORS.find(c => !usedColors.includes(c)) || GROUP_COLORS[colorIdx++ % GROUP_COLORS.length];
+        usedColors.push(color);
+        return { id: 'grp_' + Date.now() + '_' + i, name: sg.name || (group.name + ' ' + (i+1)), color, exercises: sg.exercises||[] };
+      });
+    saveMuscleGroups([...muscleGroups.filter(g => g.id !== groupId), ...newGroups]);
+  };
+
+  const addGroup = () => {
+    const newId = 'grp_' + Date.now();
+    const used = muscleGroups.map(g => g.color);
+    const color = GROUP_COLORS.find(c => !used.includes(c)) || GROUP_COLORS[0];
+    saveMuscleGroups([...muscleGroups, {id:newId, name:'مجموعة جديدة', color, exercises:[]}]);
+    setRenamingId(newId); setRenameVal('');
+  };
+
+  const renameExercise = (oldName, newName, groupId, subIdx) => {
+    if (!newName.trim() || newName === oldName) { setRenamingEx(null); return; }
+    saveMuscleGroups(muscleGroups.map(g => {
+      if (g.id !== groupId) return g;
+      if (g.subGroups) {
+        return {...g, subGroups: g.subGroups.map((sg, i) =>
+          i === subIdx ? {...sg, exercises: sg.exercises.map(e => e === oldName ? newName.trim() : e)} : sg
+        )};
+      }
+      return {...g, exercises: (g.exercises||[]).map(e => e === oldName ? newName.trim() : e)};
+    }));
+    setRenamingEx(null);
+  };
+
+  const classifyExercise = async () => {
+    if (!aiExInput.trim()) return;
+    setAiExLoading(true); setAiExResult(null); setAiExError('');
+    const groupNames = muscleGroups.map(g => g.name).join('، ');
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:500,
+          messages:[{role:"user", content:`أنت مدرب لياقة بدنية خبير. المجموعات العضلية المتاحة هي: ${groupNames}.
+
+صنّف هذا التمرين أو الجهاز: "${aiExInput}"
+
+أجب فقط بـ JSON بدون أي نص إضافي:
+{"exerciseName": "اسم التمرين بالأحرف العربية (مثال: بوش آب، هيب ثراست، كيبل كروس أوفر) — تحويل صوتي وليس ترجمة", "groupName": "اسم المجموعة العضلية من القائمة المتاحة فقط", "reason": "سبب التصنيف في جملة قصيرة"}`}]
+        })
+      });
+      const data = await res.json();
+      const result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+      setAiExResult(result);
+    } catch(e) { setAiExError('حدث خطأ، حاول مرة أخرى'); }
+    setAiExLoading(false);
+  };
+
+  const confirmAddExercise = () => {
+    if (!aiExResult) return;
+    const targetGroup = muscleGroups.find(g => g.name === aiExResult.groupName);
+    if (!targetGroup) { setAiExError('ما قدرت أحدد المجموعة، حاول مرة ثانية'); return; }
+    const exName = aiExResult.exerciseName;
+    if (getExs(targetGroup).includes(exName)) { setAiExError('التمرين موجود بالفعل في هذه المجموعة'); return; }
+    saveMuscleGroups(muscleGroups.map(g =>
+      g.id === targetGroup.id
+        ? g.subGroups
+          ? {...g, subGroups: [...g.subGroups.slice(0,-1), {...g.subGroups[g.subGroups.length-1], exercises:[...g.subGroups[g.subGroups.length-1].exercises, exName]}]}
+          : {...g, exercises: [...(g.exercises||[]), exName]}
+        : g
+    ));
+    setAiExResult(null); setAiExInput('');
+  };
+
+  const coveredCount = muscleGroups.filter(g => getExs(g).length > 0 && trainedInRange(g)).length;
+  const totalCount   = muscleGroups.filter(g => getExs(g).length > 0).length;
+  const inp = {background:'#141D24',border:'1px solid #1C2730',borderRadius:8,padding:'4px 10px',color:'#E8F0F2',fontSize:13,fontWeight:700,outline:'none',width:'100%'};
+
+  return (
+    <div style={{padding:'20px 16px 12px', direction:'rtl'}}>
+      {/* Exercise detail modal */}
+      {selectedEx && (
+        <ExerciseModal exercise={selectedEx} groupColor={selectedGrpColor} onClose={()=>setSelectedEx(null)}/>
+      )}
+
+      {/* AI Exercise Classifier */}
+      <div style={{background:'#0E151A',borderRadius:20,padding:16,marginBottom:16,border:'1px solid #1C2730'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#00E5A0,#3B6FD8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>🤖</div>
+          <div>
+            <div style={{fontSize:13,fontWeight:700}}>مصنّف التمارين الذكي</div>
+            <div style={{fontSize:10,color:'#3D5560'}}>أدخل اسم تمرين أو جهاز ويصنّفه تلقائياً</div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:aiExResult||aiExError?10:0}}>
+          <input value={aiExInput} onChange={e=>setAiExInput(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&classifyExercise()}
+            placeholder="مثال: Cable Fly، جهاز الصدر، Hip Thrust..."
+            style={{flex:1,background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:13,outline:'none'}}/>
+          <button onClick={classifyExercise} disabled={aiExLoading||!aiExInput.trim()}
+            style={{background:aiExLoading||!aiExInput.trim()?'#1C2730':'linear-gradient(135deg,#00C870,#00E5A0)',color:aiExLoading||!aiExInput.trim()?'#3D5560':'#080C0E',border:'none',borderRadius:10,padding:'10px 14px',fontWeight:700,fontSize:13,cursor:'pointer',flexShrink:0}}>
+            {aiExLoading?'⏳':'⚡'}
+          </button>
+        </div>
+        {aiExError && <div style={{fontSize:11,color:'#FF4444',marginBottom:8}}>{aiExError}</div>}
+        {aiExResult && (
+          <div style={{background:'#141D24',borderRadius:14,padding:14,border:'1px solid #00E5A030'}}>
+            <div style={{fontSize:14,fontWeight:800,color:'#00E5A0',marginBottom:4}}>{aiExResult.exerciseName}</div>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+              {(()=>{const g=muscleGroups.find(g=>g.name===aiExResult.groupName); return g ? <><div style={{width:8,height:8,borderRadius:'50%',background:g.color}}/><span style={{fontSize:12,color:g.color,fontWeight:600}}>{g.name}</span></> : <span style={{fontSize:12,color:'#3D5560'}}>{aiExResult.groupName}</span>;})()}
+            </div>
+            <div style={{fontSize:11,color:'#3D5560',marginBottom:12}}>{aiExResult.reason}</div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={confirmAddExercise}
+                style={{flex:1,background:'#00E5A0',color:'#080C0E',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                ✅ أضف للقائمة
+              </button>
+              <button onClick={()=>{setAiExResult(null);setAiExInput('');}}
+                style={{background:'#1C2730',color:'#E8F0F2',border:'none',borderRadius:10,padding:'10px 14px',fontSize:13,cursor:'pointer'}}>✕</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:18}}>
+        <div>
+          <div style={{fontSize:27, fontWeight:800, fontFamily:'Syne,sans-serif', letterSpacing:'-0.5px'}}>العضلات 💪</div>
+          <div style={{fontSize:11, color:'#3D5560', marginTop:4}}>
+            {coveredCount}/{totalCount} مجموعة خلال آخر {range} أيام
+          </div>
+        </div>
+        <button onClick={()=>{setEditMode(!editMode);setMergeSource(null);setMoveEx(null);}}
+          style={{background:editMode?'#00E5A0':'#141D24', color:editMode?'#080C0E':'#E8F0F2',
+            border:'none', borderRadius:10, padding:'8px 16px', fontSize:12, fontWeight:700, cursor:'pointer'}}>
+          {editMode ? '✓ حفظ' : '✏️ تعديل'}
+        </button>
+      </div>
+
+      {/* Range stepper */}
+      {!editMode && (
+        <div style={{background:'#0E151A',borderRadius:14,padding:'10px 14px',marginBottom:16,border:'1px solid #1C2730',display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:11,color:'#3D5560',flex:1}}>الفترة</span>
+          {[7,14,30].map(r=>(
+            <button key={r} onClick={()=>setRange(r)}
+              style={{padding:'5px 10px',borderRadius:8,border:'none',fontSize:11,fontWeight:700,
+                background:range===r?'#1C2730':'none',color:range===r?'#00E5A0':'#3D5560',cursor:'pointer'}}>
+              {r}
+            </button>
+          ))}
+          <button onClick={()=>setRange(r=>Math.max(1,r-1))}
+            style={{width:30,height:30,borderRadius:8,border:'none',background:'#141D24',color:'#E8F0F2',fontSize:16,cursor:'pointer'}}>−</button>
+          <span style={{fontSize:15,fontWeight:800,fontFamily:'Syne,sans-serif',color:'#00E5A0',minWidth:50,textAlign:'center'}}>{range}d</span>
+          <button onClick={()=>setRange(r=>Math.min(90,r+1))}
+            style={{width:30,height:30,borderRadius:8,border:'none',background:'#141D24',color:'#E8F0F2',fontSize:16,cursor:'pointer'}}>+</button>
+        </div>
+      )}
+
+      {/* Groups */}
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {muscleGroups.map(group => {
+          const lastDate   = getLastTrained(group);
+          const days       = daysSince(lastDate);
+          const inRange    = trainedInRange(group);
+          const sColor     = statusColor(days);
+          const isMergeSrc = mergeSource === group.id;
+
+          return (
+            <div key={group.id} style={{background:'#0E151A',borderRadius:18,padding:14,border:`1px solid ${editMode ? group.color+'50' : inRange ? group.color+'30' : '#1C2730'}`,transition:'border 0.2s'}}>
+              {/* Header row */}
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:getExs(group).length>0?10:0}}>
+                <div style={{width:11,height:11,borderRadius:'50%',background:group.color,flexShrink:0}}/>
+
+                {editMode && renamingId === group.id ? (
+                  <input autoFocus value={renameVal} onChange={e=>setRenameVal(e.target.value)}
+                    onBlur={()=>{saveMuscleGroups(muscleGroups.map(g=>g.id===group.id?{...g,name:renameVal||g.name}:g));setRenamingId(null);}}
+                    onKeyDown={e=>e.key==='Enter'&&(saveMuscleGroups(muscleGroups.map(g=>g.id===group.id?{...g,name:renameVal||g.name}:g)),setRenamingId(null))}
+                    style={inp}/>
+                ) : (
+                  <span style={{flex:1,fontSize:14,fontWeight:700,cursor:editMode?'pointer':'default'}}
+                    onClick={()=>editMode&&(setRenamingId(group.id),setRenameVal(group.name))}>
+                    {group.name}{editMode&&<span style={{color:'#3D5560',fontSize:11,marginRight:4}}>✎</span>}
+                  </span>
+                )}
+
+                {!editMode && (
+                  <span style={{fontSize:11,color:sColor,fontWeight:600}}>{statusLabel(days)}</span>
+                )}
+
+                {editMode && (
+                  <div style={{display:'flex',gap:6,position:'relative'}}>
+                    {/* Merge dropdown */}
+                    <div style={{position:'relative'}}>
+                      <button onClick={()=>setMergeSource(isMergeSrc?null:group.id)}
+                        style={{background:isMergeSrc?'#FFE66D':'#141D24',color:isMergeSrc?'#080C0E':'#3D5560',border:'none',borderRadius:8,padding:'5px 9px',fontSize:11,cursor:'pointer',fontWeight:600}}>
+                        دمج ▾
+                      </button>
+                      {isMergeSrc && (
+                        <div style={{position:'absolute',left:0,top:'100%',marginTop:4,background:'#1A2430',borderRadius:12,padding:6,zIndex:200,minWidth:130,boxShadow:'0 8px 24px #00000080',border:'1px solid #1C2730'}}>
+                          <div style={{fontSize:10,color:'#3D5560',padding:'4px 8px 6px'}}>دمج مع:</div>
+                          {muscleGroups.filter(g=>g.id!==group.id).map(g=>(
+                            <div key={g.id} onClick={()=>mergeGroups(group.id,g.id)}
+                              style={{padding:'8px 10px',borderRadius:8,cursor:'pointer',fontSize:12,display:'flex',alignItems:'center',gap:8,color:'#E8F0F2'}}
+                              onMouseOver={e=>e.currentTarget.style.background='#252E38'}
+                              onMouseOut={e=>e.currentTarget.style.background='none'}>
+                              <div style={{width:8,height:8,borderRadius:'50%',background:g.color,flexShrink:0}}/>
+                              {g.name}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {/* Split button — only for merged groups */}
+                    {group.subGroups && group.subGroups.length > 1 && (
+                      <button onClick={()=>splitGroup(group.id)}
+                        style={{background:'#141D24',color:'#95E1D3',border:'1px solid #95E1D330',borderRadius:8,padding:'5px 9px',fontSize:11,cursor:'pointer',fontWeight:600}}>
+                        فصل
+                      </button>
+                    )}
+                    {/* Delete empty group */}
+                    {getExs(group).length === 0 && (
+                      <button onClick={()=>saveMuscleGroups(muscleGroups.filter(g=>g.id!==group.id))}
+                        style={{background:'#FF444420',color:'#FF6B6B',border:'none',borderRadius:8,padding:'5px 8px',fontSize:12,cursor:'pointer'}}>✕</button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Exercise tags — supports subGroups */}
+              {(()=>{
+                const subs = group.subGroups || [{name:null, exercises:group.exercises||[]}];
+                const allExs = getExs(group);
+                if (allExs.length === 0) return <div style={{fontSize:11,color:'#252E38'}}>{editMode?'فارغة — احذفها أو أضف تمارين':'لا توجد تمارين'}</div>;
+                return (
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {subs.filter(sg=>(sg.exercises||[]).length>0).map((sg,si)=>(
+                      <div key={si}>
+                        {group.subGroups && sg.name && (
+                          <div style={{fontSize:10,color:group.color,fontWeight:700,marginBottom:5,opacity:0.85}}>{sg.name}</div>
+                        )}
+                        <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                          {(sg.exercises||[]).map(ex=>{
+                            const isRenamingThis = renamingEx?.exercise===ex && renamingEx?.groupId===group.id && renamingEx?.subIdx===si;
+                            return (
+                              <div key={ex} style={{display:'flex',alignItems:'center',gap:3,background:'#141D24',borderRadius:8,padding:'4px 6px 4px 10px',border:`1px solid ${isRenamingThis?group.color+'80':group.color+'25'}`,cursor:editMode?'default':'pointer',transition:'border 0.15s'}}
+                                onClick={()=>!editMode&&(setSelectedEx(ex),setSelectedGrpColor(group.color))}
+                                onMouseOver={e=>{ if(!editMode) e.currentTarget.style.borderColor=group.color+'80'; }}
+                                onMouseOut={e=>{ if(!isRenamingThis) e.currentTarget.style.borderColor=group.color+'25'; }}>
+                                {editMode && isRenamingThis ? (
+                                  <input autoFocus value={renameExVal}
+                                    onChange={e=>setRenameExVal(e.target.value)}
+                                    onBlur={()=>renameExercise(ex, renameExVal, group.id, si)}
+                                    onKeyDown={e=>{
+                                      if(e.key==='Enter') renameExercise(ex, renameExVal, group.id, si);
+                                      if(e.key==='Escape') setRenamingEx(null);
+                                    }}
+                                    style={{background:'none',border:'none',color:'#E8F0F2',fontSize:11,outline:'none',width:`${Math.max(renameExVal.length,4)}ch`,minWidth:40}}/>
+                                ) : (
+                                  <span style={{fontSize:11,color:'#C0CDD4'}}
+                                    onDoubleClick={()=>editMode&&(setRenamingEx({exercise:ex,groupId:group.id,subIdx:si}),setRenameExVal(ex))}>
+                                    {ex}
+                                  </span>
+                                )}
+                                {editMode && !isRenamingThis && (
+                                  <div style={{display:'flex',gap:1}}>
+                                    {/* Rename button */}
+                                    <button
+                                      onClick={()=>{setRenamingEx({exercise:ex,groupId:group.id,subIdx:si});setRenameExVal(ex);}}
+                                      title="تعديل الاسم"
+                                      style={{background:'none',border:'none',color:'#3D5560',fontSize:10,cursor:'pointer',padding:'0 2px',lineHeight:1}}>✎</button>
+                                    {/* Move button */}
+                                    <div style={{position:'relative'}}>
+                                      <button onClick={()=>setMoveEx(moveEx?.exercise===ex&&moveEx?.fromGroupId===group.id?null:{exercise:ex,fromGroupId:group.id})}
+                                        style={{background:'none',border:'none',color:'#3D5560',fontSize:11,cursor:'pointer',padding:'0 2px',lineHeight:1}}>↗</button>
+                                      {moveEx?.exercise===ex && moveEx?.fromGroupId===group.id && (
+                                        <div style={{position:'absolute',left:0,top:'100%',marginTop:2,background:'#1A2430',borderRadius:12,padding:6,zIndex:200,minWidth:130,boxShadow:'0 8px 24px #00000080',border:'1px solid #1C2730'}}>
+                                          <div style={{fontSize:10,color:'#3D5560',padding:'4px 8px 6px'}}>نقل إلى:</div>
+                                          {muscleGroups.filter(g2=>g2.id!==group.id).map(g2=>(
+                                            <div key={g2.id} onClick={()=>moveExercise(ex,group.id,g2.id)}
+                                              style={{padding:'8px 10px',borderRadius:8,cursor:'pointer',fontSize:12,display:'flex',alignItems:'center',gap:8,color:'#E8F0F2'}}
+                                              onMouseOver={e=>e.currentTarget.style.background='#252E38'}
+                                              onMouseOut={e=>e.currentTarget.style.background='none'}>
+                                              <div style={{width:8,height:8,borderRadius:'50%',background:g2.color,flexShrink:0}}/>{g2.name}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {/* Delete button */}
+                                    <button
+                                      onClick={()=>saveMuscleGroups(muscleGroups.map(g=>
+                                        g.id!==group.id?g:
+                                        g.subGroups?{...g,subGroups:g.subGroups.map((sg2,i2)=>i2===si?{...sg2,exercises:sg2.exercises.filter(e=>e!==ex)}:sg2)}:
+                                        {...g,exercises:(g.exercises||[]).filter(e=>e!==ex)}
+                                      ))}
+                                      title="حذف التمرين"
+                                      style={{background:'none',border:'none',color:'#3D5560',fontSize:10,cursor:'pointer',padding:'0 2px',lineHeight:1}}>✕</button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {si < subs.filter(sg=>(sg.exercises||[]).length>0).length-1 && group.subGroups && (
+                          <div style={{height:1,background:'#1C2730',marginTop:6}}/>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })}
+
+        {editMode && (
+          <button onClick={addGroup}
+            style={{background:'#0E151A',border:'1px dashed #1C2730',borderRadius:16,padding:14,color:'#3D5560',fontSize:13,cursor:'pointer',textAlign:'center'}}>
+            + إضافة مجموعة جديدة
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── EMBEDDED BACKUP (fallback if storage empty) ───────────────────────────────
+const BACKUP_DATA = {"fit_logs_v3":{"2026-04-13":{"meals":[{"name":"بسكوت دايجستف خالي من السكر حبة واحدة","calories":66.5,"protein":0.95,"id":"6p078iawj","time":"11:05 ص"},{"calories":288,"protein":5.9,"name":"رز أبيض مطبوخ","id":"vpzs6agb3","time":"01:37 م"},{"calories":150,"protein":8,"name":"كوب لبن 250مل","id":"lz5s7qdki","time":"01:39 م"},{"calories":2,"protein":0.3,"name":"قهوة سوداء مفلترة 250مل","id":"bg0nbgbgs","time":"01:40 م"},{"calories":2,"protein":0.3,"name":"قهوة سوداء مفلترة 250مل","id":"8jdl4ngcy","time":"01:40 م"},{"calories":85,"protein":4,"name":"سلطة خضراء بصوص الزبادي","id":"onwnjtf5f","time":"01:45 م"},{"calories":218,"protein":27,"name":"صدر دجاج مع خضار وزبدة","id":"4epmb4nbb","time":"02:39 م"},{"calories":400,"protein":5,"name":"كيكة شوكولاتة بالغاناش","id":"4hitrvj7z","time":"02:41 م"},{"calories":80,"protein":2,"name":"سويت بايتس لوتس بالشوكولاتة","id":"4o26ccjk3","time":"02:42 م"},{"calories":23,"protein":0.2,"name":"تمرة واحدة","id":"tm1oqtn88","time":"02:43 م"},{"calories":45,"protein":1.5,"name":"مكسرات مشكلة","id":"fx9v3mnye","time":"02:44 م"}],"workouts":[{"type":"cardio","activity":"جري","icon":"🏃","duration":43.09,"distance":5.01,"avgSpeed":7,"caloriesBurned":425,"notes":"","id":"k8y8xmzl1","time":"11:01 ص"},{"type":"resistance","exercise":"بوش أب","sets":[{"weight":99,"reps":18},{"weight":99,"reps":6}],"caloriesBurned":25,"notes":"وزن 99 = جسمي","id":"funrmu7rs","time":"11:02 ص"},{"type":"resistance","exercise":"روتاري تورسو","sets":[{"weight":90,"reps":10},{"weight":79,"reps":12},{"weight":63,"reps":12}],"caloriesBurned":27,"notes":"","id":"e57e7lvki","time":"02:45 م"}]},"2026-04-14":{"meals":[{"calories":2,"protein":0.3,"name":"قهوة سوداء مفلترة","id":"7p7jvryb6","time":"02:49 م"},{"calories":22,"protein":0.6,"name":"مكسرات مشكلة (4 حبات)","id":"33wff5ik2","time":"02:51 م"},{"calories":1800,"protein":72,"name":"بيتزا كاملة","id":"s9xun7uhy","time":"06:45 ص"},{"calories":85,"protein":1.5,"name":"بقلاوة عش البلبل","id":"h4rjmoez7","time":"06:45 ص"}],"workouts":[]},"2026-04-15":{"meals":[{"calories":2,"protein":0.3,"name":"قهوة سوداء مفلترة","id":"0sv1rgibd","time":"06:46 ص"},{"calories":45,"protein":0.5,"name":"حبة شوكولاتة بايتس","id":"kp5x3wyn2","time":"06:46 ص"}],"workouts":[]}},"fit_weight_v3":[{"date":"2026-04-14","weight":99}],"fit_muscles_v1":[{"id":"chest","name":"صدر","color":"#FF6B6B","exercises":["بنش بريس","إنكلاين بريس","ديكلاين بريس","دمبل بريس","دمبل فلايز","فلايز","كيبل كروسوفر","بوش أب"]},{"id":"back","name":"ظهر","color":"#4ECDC4","exercises":["ديدليفت","لات بول داون","رو بالعقلة","رو بالبار","بول أب","تي-بار رو","سيتد كيبل رو","فيس بول","هايبر اكستنشن","شراغز"]},{"id":"shoulder","name":"كتف","color":"#FFE66D","exercises":["كتف عسكري","لاترال ريز","فرونت ريز","ريير ديلت فلايز","أرنولد بريس","أبرايت رو"]},{"id":"biceps","name":"بايسبس","color":"#95E1D3","exercises":["كيرل بايسبس","هامر كيرل","كونسنتريشن كيرل","إنكلاين كيرل","كيبل كيرل","بار كيرل","ريفيرس كيرل"]},{"id":"triceps","name":"ترايسبس","color":"#F38181","exercises":["ترايسبس بوشداون","أوفرهيد ترايسبس","سكال كراشر","ترايسبس ديبس","كلوز جريب بريس","كيك باك"]},{"id":"quads","name":"كوادز","color":"#A8E6CF","exercises":["سكوات","ليج بريس","لانجز","ليج اكستنشن","هاك سكوات","بولغاريان سبليت سكوات","ووكينج لانج"]},{"id":"hamstring","name":"هامسترينج","color":"#FFEAA7","exercises":["ليج كيرل","رومانيان ديدليفت"]},{"id":"glutes","name":"جلوتس","color":"#DDA0DD","exercises":["هيب ثراست","جلوت برج"]},{"id":"calves","name":"كالف","color":"#98D8C8","exercises":["كالف رايز","سيتد كالف رايز","دونكي كالف رايز"]},{"id":"core","name":"كور","color":"#F0B27A","exercises":["بلانك","كرانش","ليج ريز","ماونتن كليمبر","رشيان تويست","AB رولر","هانجينج نيز ريز","روتاري تورسو","أبدومينال"]}]};
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
+function FitnessApp() {
+  const [tab,          setTab]          = useState('dashboard');
+  const [logs,         setLogs]         = useState({});
+  const [weightLog,    setWeightLog]    = useState([]);
+  const [muscleGroups, setMuscleGroups] = useState(MUSCLE_GROUPS_DEFAULT);
+  const [importMsg,    setImportMsg]    = useState(null);
+  const [showImport,   setShowImport]   = useState(false);
+  const [importJson,   setImportJson]   = useState('');
+  const [exportText,   setExportText]   = useState('');
+  const [importStep,   setImportStep]   = useState('paste');
+  const [importPreview,setImportPreview]= useState(null);
+  const [ready,        setReady]        = useState(false);
+
+  useEffect(()=>{
+    (async()=>{
+      try {
+        const l = await window.storage.get('fit_logs_v3');
+        const w = await window.storage.get('fit_weight_v3');
+        const m = await window.storage.get('fit_muscles_v1');
+
+        // اذا الـ storage فارغ أو ما فيه بيانات، استخدم النسخة الاحتياطية المضمّنة
+        const storedLogs = l ? JSON.parse(l.value) : null;
+        const hasRealData = storedLogs && Object.keys(storedLogs).length > 0;
+
+        if (hasRealData) {
+          setLogs(storedLogs);
+          if (w) setWeightLog(JSON.parse(w.value));
+          if (m) setMuscleGroups(JSON.parse(m.value));
+        } else {
+          // استخدم البيانات المضمّنة واحفظها في الـ storage
+          setLogs(BACKUP_DATA.fit_logs_v3);
+          setWeightLog(BACKUP_DATA.fit_weight_v3);
+          setMuscleGroups(BACKUP_DATA.fit_muscles_v1);
+          await window.storage.set('fit_logs_v3', JSON.stringify(BACKUP_DATA.fit_logs_v3));
+          await window.storage.set('fit_weight_v3', JSON.stringify(BACKUP_DATA.fit_weight_v3));
+          await window.storage.set('fit_muscles_v1', JSON.stringify(BACKUP_DATA.fit_muscles_v1));
+        }
+      } catch(e){
+        // في حال أي خطأ، حمّل البيانات المضمّنة
+        setLogs(BACKUP_DATA.fit_logs_v3);
+        setWeightLog(BACKUP_DATA.fit_weight_v3);
+        setMuscleGroups(BACKUP_DATA.fit_muscles_v1);
+      }
+      setReady(true);
+    })();
+  },[]);
+
+  const saveLogs = async nl => {
+    setLogs(nl);
+    try { await window.storage.set('fit_logs_v3', JSON.stringify(nl)); } catch(e){}
+  };
+  const saveWeightLog = async wl => {
+    setWeightLog(wl);
+    try { await window.storage.set('fit_weight_v3', JSON.stringify(wl)); } catch(e){}
+  };
+  const saveMuscleGroups = async mg => {
+    setMuscleGroups(mg);
+    try { await window.storage.set('fit_muscles_v1', JSON.stringify(mg)); } catch(e){}
+  };
+
+  const onExport = () => {
+    const payload = { version:1, exportedAt:new Date().toISOString(), fit_logs_v3:logs, fit_weight_v3:weightLog, fit_muscles_v1:muscleGroups };
+    setExportText(JSON.stringify(payload));
+  };
+
+  const onImportParse = () => {
+    try {
+      const data = JSON.parse(importJson.trim());
+      if (!data.version) throw new Error();
+      const mealCount = Object.values(data.fit_logs_v3 || {}).reduce((s,d)=>s+(d.meals?.length||0),0);
+      const workoutCount = Object.values(data.fit_logs_v3 || {}).reduce((s,d)=>s+(d.workouts?.length||0),0);
+      const weightCount = (data.fit_weight_v3 || []).length;
+      const muscleCount = (data.fit_muscles_v1 || []).reduce((s,g)=>s+(g.exercises?.length||0),0);
+      setImportPreview({data, mealCount, workoutCount, weightCount, muscleCount});
+      setImportStep('confirm');
+    } catch {
+      setImportMsg({ok:false, text:'❌ النص غير صالح — تأكد من نسخه كاملاً'});
+      setTimeout(()=>setImportMsg(null), 4000);
+    }
+  };
+
+  const onImportConfirm = async () => {
+    try {
+      const data = importPreview.data;
+      if (data.fit_logs_v3)    await saveLogs(data.fit_logs_v3);
+      if (data.fit_weight_v3)  await saveWeightLog(data.fit_weight_v3);
+      if (data.fit_muscles_v1) await saveMuscleGroups(data.fit_muscles_v1);
+      setImportMsg({ok:true, text:'✅ تم الاستيراد بنجاح'});
+      setShowImport(false); setImportJson(''); setImportStep('paste'); setImportPreview(null);
+    } catch {
+      setImportMsg({ok:false, text:'❌ فشل الاستيراد'});
+    }
+    setTimeout(()=>setImportMsg(null), 4000);
+  };
+
+  const [selectedDate, setSelectedDate] = useState(todayStr());
+
+  const t = selectedDate;
+  const todayData = logs[t] || {meals:[], workouts:[]};
+
+  const addMeal = meal => saveLogs({...logs, [t]:{...todayData, meals:[...(todayData.meals||[]), {...meal, id:genId(), time:nowTime()}]}});
+  const deleteMeal = id => saveLogs({...logs, [t]:{...todayData, meals:(todayData.meals||[]).filter(m=>m.id!==id)}});
+  const editMeal = (id, updates) => saveLogs({...logs, [t]:{...todayData, meals:(todayData.meals||[]).map(m=>m.id===id?{...m,...updates}:m)}});
+  const addWorkout = w => saveLogs({...logs, [t]:{...todayData, workouts:[...(todayData.workouts||[]), {...w, id:genId(), time:nowTime()}]}});
+  const deleteWorkout = id => saveLogs({...logs, [t]:{...todayData, workouts:(todayData.workouts||[]).filter(w=>w.id!==id)}});
+  const editWorkout = (id, updated) => saveLogs({...logs, [t]:{...todayData, workouts:(todayData.workouts||[]).map(w=>w.id===id?updated:w)}});
+
+  if (!ready) return (
+    <div style={{background:'#080C0E',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#00E5A0',gap:14,fontFamily:'sans-serif'}}>
+      <div style={{fontSize:52}}>💪</div>
+      <div style={{fontSize:15,color:'#3D5560'}}>جاري تحميل بياناتك...</div>
+    </div>
+  );
+
+  return (
+    <div style={{background:'#080C0E',minHeight:'100vh',maxWidth:440,margin:'0 auto',color:'#E8F0F2',position:'relative',paddingBottom:80}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@700;800&display=swap');
+        * { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',sans-serif; }
+        ::-webkit-scrollbar { width:3px }
+        ::-webkit-scrollbar-track { background:#080C0E }
+        ::-webkit-scrollbar-thumb { background:#1C2730; border-radius:2px }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0 }
+        select { -webkit-appearance:none; }
+      `}</style>
+
+      {tab==='dashboard' && <Dashboard todayData={todayData} logs={logs} weightLog={weightLog} saveWeightLog={saveWeightLog} onExport={onExport} onImportParse={onImportParse} onImportConfirm={onImportConfirm} importMsg={importMsg} showImport={showImport} setShowImport={setShowImport} importJson={importJson} setImportJson={setImportJson} exportText={exportText} setExportText={setExportText} importStep={importStep} setImportStep={setImportStep} importPreview={importPreview}/>}
+      {tab==='nutrition'  && <Nutrition  todayData={todayData} addMeal={addMeal} deleteMeal={deleteMeal} editMeal={editMeal} selectedDate={selectedDate} setSelectedDate={setSelectedDate}/>}
+      {tab==='workout'    && <Workout    todayData={todayData} addWorkout={addWorkout} deleteWorkout={deleteWorkout} editWorkout={editWorkout} logs={logs} muscleGroups={muscleGroups} selectedDate={selectedDate} setSelectedDate={setSelectedDate}/>}
+      {tab==='muscles'    && <MuscleMap  logs={logs} muscleGroups={muscleGroups} saveMuscleGroups={saveMuscleGroups}/>}
+      {tab==='progress'   && <Progress   logs={logs} weightLog={weightLog}/>}
+
+      <BottomNav tab={tab} setTab={setTab}/>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<FitnessApp />);
+</script>
+</body>
+</html>
