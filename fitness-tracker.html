@@ -32,17 +32,6 @@ window.storage = {
 };
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Wait for all scripts to be ready
-  function waitForReact(cb) {
-    if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && typeof Recharts !== 'undefined') {
-      cb();
-    } else {
-      setTimeout(function() { waitForReact(cb); }, 50);
-    }
-  }
-  
-  waitForReact(function() {
 const {
   useState,
   useEffect,
@@ -6467,8 +6456,6 @@ function FitnessApp() {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(React.createElement(FitnessApp));
 
-  });
-});
 </script>
 </body>
 </html>
