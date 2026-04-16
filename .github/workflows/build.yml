@@ -30,16 +30,30 @@ jobs:
           import json
           html = open('fitness-tracker.html','r',encoding='utf-8').read()
           esc = json.dumps(html)
-          lines = [
-            \"import { SafeAreaView, StatusBar } from 'react-native';\",
-            \"import { WebView } from 'react-native-webview';\",
-            'const HTML = ' + esc + ';',
-            'export default function App() {',
-            \"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{html:HTML,baseUrl:'file:///android_asset/'}} style={{flex:1}} javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} /></SafeAreaView>);\",
-            '}'
-          ]
-          open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
-          print('App.tsx written OK')
+          code = '''import { SafeAreaView, StatusBar } from \"react-native\";
+          import { WebView } from \"react-native-webview\";
+          const HTML = ''' + esc + ''';
+          export default function App() {
+            return (
+              <SafeAreaView style={{flex:1,backgroundColor:\"#080C0E\"}}>
+                <StatusBar barStyle=\"light-content\" />
+                <WebView
+                  source={{html:HTML, baseUrl:\"file:///android_asset/\"}}
+                  style={{flex:1}}
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                  allowFileAccess={true}
+                  allowUniversalAccessFromFileURLs={true}
+                  allowFileAccessFromFileURLs={true}
+                  mixedContentMode=\"always\"
+                  originWhitelist={[\"*\"]}
+                />
+              </SafeAreaView>
+            );
+          }
+          '''
+          open('FitnessTracker/App.tsx','w',encoding='utf-8').write(code)
+          print('App.tsx written OK, size:', len(code))
           "
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
           python3 -c "
