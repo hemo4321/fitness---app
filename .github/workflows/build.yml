@@ -19,60 +19,42 @@ jobs:
         run: npm install -g eas-cli
 
       - name: Create Expo project
+        run: npx create-expo-app@latest FitnessTracker --template blank-typescript
+
+      - name: Install dependencies
+        run: cd FitnessTracker && npm install react-native-webview expo-asset expo-file-system
+
+      - name: Copy HTML
+        run: cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
+
+      - name: Write app index
         run: |
-          npx create-expo-app@latest FitnessTracker --template blank-typescript
-          cd FitnessTracker
-          npm install react-native-webview expo-asset expo-file-system
+          printf '%s\n' \
+            "import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';" \
+            "import { WebView } from 'react-native-webview';" \
+            "import { Asset } from 'expo-asset';" \
+            "import { useState, useEffect } from 'react';" \
+            "import * as FileSystem from 'expo-file-system';" \
+            "export default function App() {" \
+            "  const [html, setHtml] = useState('');" \
+            "  useEffect(() => {" \
+            "    (async () => {" \
+            "      const a = Asset.fromModule(require('../assets/fitness-babel.html'));" \
+            "      await a.downloadAsync();" \
+            "      setHtml(await FileSystem.readAsStringAsync(a.localUri!));" \
+            "    })();" \
+            "  }, []);" \
+            "  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}>" \
+            "    <StatusBar barStyle='light-content' backgroundColor='#080C0E' />" \
+            "    <WebView source={{html,baseUrl:''}} style={{flex:1}} javaScriptEnabled domStorageEnabled originWhitelist={['*']} />" \
+            "  </SafeAreaView>);" \
+            "}" > FitnessTracker/app/index.tsx
 
-      - name: Setup app files
+      - name: Write eas.json
         run: |
-          cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
-          
-          cat > FitnessTracker/app/index.tsx << 'APPEOF'
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { Asset } from 'expo-asset';
-import { useState, useEffect } from 'react';
-import * as FileSystem from 'expo-file-system';
-
-export default function App() {
-  const [html, setHtml] = useState('');
-  useEffect(() => {
-    (async () => {
-      const asset = Asset.fromModule(require('../assets/fitness-babel.html'));
-      await asset.downloadAsync();
-      const content = await FileSystem.readAsStringAsync(asset.localUri!);
-      setHtml(content);
-    })();
-  }, []);
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#080C0E" />
-      <WebView source={{ html, baseUrl: '' }} style={styles.webview}
-        javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} />
-    </SafeAreaView>
-  );
-}
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#080C0E' },
-  webview: { flex: 1 },
-});
-APPEOF
-
-          cat > FitnessTracker/eas.json << 'EASEOF'
-{
-  "cli": { "version": ">= 16.0.0" },
-  "build": {
-    "preview": {
-      "android": { "buildType": "apk" }
-    }
-  }
-}
-EASEOF
+          echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
 
       - name: Build APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          cd FitnessTracker
-          EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
+        run: cd FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
