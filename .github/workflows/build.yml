@@ -24,11 +24,37 @@ jobs:
       - name: Install dependencies
         run: cd FitnessTracker && npx expo install react-native-webview
 
+      - name: Inline CDN scripts into HTML
+        run: |
+          python3 -c "
+          import urllib.request, re
+
+          html = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+
+          # find all external script tags
+          pattern = r'<script src=\"(https?://[^\"]+)\"></script>'
+          matches = re.findall(pattern, html)
+
+          for url in matches:
+              print('Downloading:', url)
+              try:
+                  content = urllib.request.urlopen(url, timeout=30).read().decode('utf-8', errors='replace')
+                  tag_old = '<script src=\"' + url + '\"></script>'
+                  tag_new = '<script>' + content + '</script>'
+                  html = html.replace(tag_old, tag_new)
+                  print('  Done, size:', len(content))
+              except Exception as e:
+                  print('  ERROR:', e)
+
+          open('fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
+          print('Final HTML size:', len(html))
+          "
+
       - name: Setup files
         run: |
           python3 -c "
           import json
-          html = open('fitness-tracker.html','r',encoding='utf-8').read()
+          html = open('fitness-tracker-inline.html','r',encoding='utf-8').read()
           esc = json.dumps(html)
           lines = [
             'import { SafeAreaView, StatusBar } from \"react-native\";',
@@ -53,7 +79,7 @@ jobs:
             '}',
           ]
           open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
-          print('App.tsx written, HTML size:', len(html))
+          print('App.tsx written OK')
           "
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
           python3 -c "
