@@ -22,7 +22,7 @@ jobs:
         run: npx create-expo-app@latest FitnessTracker --template blank-typescript
 
       - name: Install dependencies
-        run: cd FitnessTracker && npm install react-native-webview expo-asset expo-file-system
+        run: cd FitnessTracker && npx expo install react-native-webview expo-asset expo-file-system
 
       - name: Setup files
         run: |
