@@ -22,7 +22,7 @@ jobs:
         run: npx create-expo-app@latest FitnessTracker --template blank-typescript
 
       - name: Install dependencies
-        run: cd FitnessTracker && npx expo install react-native-webview expo-asset expo-file-system
+        run: cd FitnessTracker && npx expo install react-native-webview expo-asset
 
       - name: Setup files
         run: |
@@ -33,11 +33,11 @@ jobs:
           f.write(\"import { WebView } from 'react-native-webview';\n\")
           f.write(\"import { Asset } from 'expo-asset';\n\")
           f.write(\"import { useState, useEffect } from 'react';\n\")
-          f.write(\"import * as FileSystem from 'expo-file-system';\n\")
           f.write(\"export default function App() {\n\")
-          f.write(\"  const [html, setHtml] = useState('');\n\")
-          f.write(\"  useEffect(() => { (async () => { const a = Asset.fromModule(require('./assets/fitness-babel.html')); await a.downloadAsync(); setHtml(await FileSystem.readAsStringAsync(a.localUri)); })(); }, []);\n\")
-          f.write(\"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{html,baseUrl:''}} style={{flex:1}} javaScriptEnabled domStorageEnabled originWhitelist={['*']} /></SafeAreaView>);\n\")
+          f.write(\"  const [uri, setUri] = useState('');\n\")
+          f.write(\"  useEffect(() => { (async () => { const a = Asset.fromModule(require('./assets/fitness-babel.html')); await a.downloadAsync(); setUri(a.localUri!); })(); }, []);\n\")
+          f.write(\"  if (!uri) return null;\n\")
+          f.write(\"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{uri}} style={{flex:1}} javaScriptEnabled domStorageEnabled originWhitelist={['*']} allowFileAccess={true} /></SafeAreaView>);\n\")
           f.write('}\n')
           f.close()
           "
