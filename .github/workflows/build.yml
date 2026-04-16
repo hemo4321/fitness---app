@@ -48,7 +48,7 @@ jobs:
       - name: Init EAS project
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd FitnessTracker && eas init --id $(eas project:info --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "") --non-interactive || eas init --non-interactive
+        run: cd FitnessTracker && eas init --id 7b50975b-dc4c-4c54-95e5-bfdff1915a08 --force --non-interactive
 
       - name: Build APK
         env:
