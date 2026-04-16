@@ -53,13 +53,22 @@ jobs:
       - name: Setup App.tsx
         run: |
           python3 -c "
-          import json
+          import json, os
           html = open('fitness-tracker-inline.html','r',encoding='utf-8').read()
           esc = json.dumps(html)
+
+          # Write HTML as a plain JS module so TypeScript never compiles the huge string.
+          # This avoids Metro/tsc OOM on the EAS cloud builder.
+          js_path = 'FitnessTracker/htmlContent.js'
+          open(js_path,'w',encoding='utf-8').write('module.exports = ' + esc + ';\n')
+          print('htmlContent.js written, size:', os.path.getsize(js_path)//1024, 'KB')
+
+          # Keep App.tsx small — just imports and the WebView wrapper.
           lines = [
             'import { SafeAreaView, StatusBar } from \"react-native\";',
             'import { WebView } from \"react-native-webview\";',
-            'const HTML: string = ' + esc + ';',
+            '// eslint-disable-next-line @typescript-eslint/no-var-requires',
+            'const HTML: string = require(\"./htmlContent\");',
             'export default function App() {',
             '  return (',
             '    <SafeAreaView style={{flex:1,backgroundColor:\"#080C0E\"}}>',
