@@ -21,19 +21,61 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Install dependencies
-        run: cd FitnessTracker && npm install
+      - name: Create Expo project
+        run: |
+          npx create-expo-app@latest FitnessTracker --template blank-typescript --no-install
+          cd FitnessTracker
+          npm install
+          npm install react-native-webview expo-asset expo-file-system
+
+      - name: Copy HTML file
+        run: cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
+
+      - name: Write app code
+        run: |
+          cat > FitnessTracker/app/index.tsx << 'APPEOF'
+          import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+          import { WebView } from 'react-native-webview';
+          import { Asset } from 'expo-asset';
+          import { useState, useEffect } from 'react';
+          import * as FileSystem from 'expo-file-system';
+
+          export default function App() {
+            const [html, setHtml] = useState('');
+            useEffect(() => {
+              (async () => {
+                const asset = Asset.fromModule(require('../assets/fitness-babel.html'));
+                await asset.downloadAsync();
+                const content = await FileSystem.readAsStringAsync(asset.localUri!);
+                setHtml(content);
+              })();
+            }, []);
+            return (
+              <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="light-content" backgroundColor="#080C0E" />
+                <WebView source={{ html, baseUrl: '' }} style={styles.webview}
+                  javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} />
+              </SafeAreaView>
+            );
+          }
+          const styles = StyleSheet.create({
+            container: { flex: 1, backgroundColor: '#080C0E' },
+            webview: { flex: 1 },
+          });
+          APPEOF
+
+      - name: Write eas.json
+        run: |
+          cat > FitnessTracker/eas.json << 'EASEOF'
+          {
+            "cli": { "version": ">= 16.0.0" },
+            "build": {
+              "preview": {
+                "android": { "buildType": "apk" }
+              }
+            }
+          }
+          EASEOF
 
       - name: Build APK
         run: cd FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
-
-      - name: Download APK
-        run: |
-          APK_URL=$(cd FitnessTracker && eas build:list --platform android --limit 1 --json | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8');console.log(JSON.parse(d)[0].artifacts.buildUrl)")
-          curl -L "$APK_URL" -o fitness-tracker.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: fitness-tracker-apk
-          path: fitness-tracker.apk
