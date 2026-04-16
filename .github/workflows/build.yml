@@ -28,30 +28,21 @@ jobs:
         run: |
           cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
           mkdir -p FitnessTracker/app
-          cat > FitnessTracker/app/index.tsx << 'TSX'
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { Asset } from 'expo-asset';
-import { useState, useEffect } from 'react';
-import * as FileSystem from 'expo-file-system';
-export default function App() {
-  const [html, setHtml] = useState('');
-  useEffect(() => {
-    (async () => {
-      const a = Asset.fromModule(require('../assets/fitness-babel.html'));
-      await a.downloadAsync();
-      setHtml(await FileSystem.readAsStringAsync(a.localUri!));
-    })();
-  }, []);
-  return (
-    <SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}>
-      <StatusBar barStyle="light-content" backgroundColor="#080C0E" />
-      <WebView source={{html,baseUrl:''}} style={{flex:1}}
-        javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} />
-    </SafeAreaView>
-  );
-}
-TSX
+          python3 -c "
+          code = open('setup_app.py').read() if __import__('os').path.exists('setup_app.py') else ''
+          f = open('FitnessTracker/app/index.tsx','w')
+          f.write(\"import { SafeAreaView, StatusBar } from 'react-native';\n\")
+          f.write(\"import { WebView } from 'react-native-webview';\n\")
+          f.write(\"import { Asset } from 'expo-asset';\n\")
+          f.write(\"import { useState, useEffect } from 'react';\n\")
+          f.write(\"import * as FileSystem from 'expo-file-system';\n\")
+          f.write(\"export default function App() {\n\")
+          f.write(\"  const [html, setHtml] = useState('');\n\")
+          f.write(\"  useEffect(() => { (async () => { const a = Asset.fromModule(require('../assets/fitness-babel.html')); await a.downloadAsync(); setHtml(await FileSystem.readAsStringAsync(a.localUri)); })(); }, []);\n\")
+          f.write(\"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{html,baseUrl:''}} style={{flex:1}} javaScriptEnabled domStorageEnabled originWhitelist={['*']} /></SafeAreaView>);\n\")
+          f.write('}\n')
+          f.close()
+          "
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
 
       - name: Build APK
