@@ -29,7 +29,6 @@ jobs:
           cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
           mkdir -p FitnessTracker/app
           python3 -c "
-          code = open('setup_app.py').read() if __import__('os').path.exists('setup_app.py') else ''
           f = open('FitnessTracker/app/index.tsx','w')
           f.write(\"import { SafeAreaView, StatusBar } from 'react-native';\n\")
           f.write(\"import { WebView } from 'react-native-webview';\n\")
@@ -44,6 +43,15 @@ jobs:
           f.close()
           "
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
+          python3 -c "
+          import json
+          with open('FitnessTracker/app.json','r') as f:
+            config = json.load(f)
+          config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
+          with open('FitnessTracker/app.json','w') as f:
+            json.dump(config, f, indent=2)
+          print('app.json updated')
+          "
 
       - name: Init EAS project
         env:
