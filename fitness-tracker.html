@@ -1170,6 +1170,7 @@ function Nutrition({
           }]
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const text = data.content[0].text.replace(/```json|```/g, '').trim();
       setAiResult(JSON.parse(text));
@@ -4786,7 +4787,7 @@ function ExerciseModal({
 }`
         }]
       })
-    }).then(r => r.json()).then(d => {
+    }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }).then(d => {
       try {
         setInfo(JSON.parse(d.content[0].text.replace(/```json|```/g, '').trim()));
       } catch (e) {}
@@ -5298,6 +5299,7 @@ function MuscleMap({
           }]
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const result = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
       setAiExResult(result);
