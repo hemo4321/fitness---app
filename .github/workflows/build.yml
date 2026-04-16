@@ -27,9 +27,8 @@ jobs:
       - name: Setup files
         run: |
           cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
-          mkdir -p FitnessTracker/app
           python3 -c "
-          f = open('FitnessTracker/app/index.tsx','w')
+          f = open('FitnessTracker/App.tsx','w')
           f.write(\"import { SafeAreaView, StatusBar } from 'react-native';\n\")
           f.write(\"import { WebView } from 'react-native-webview';\n\")
           f.write(\"import { Asset } from 'expo-asset';\n\")
@@ -37,7 +36,7 @@ jobs:
           f.write(\"import * as FileSystem from 'expo-file-system';\n\")
           f.write(\"export default function App() {\n\")
           f.write(\"  const [html, setHtml] = useState('');\n\")
-          f.write(\"  useEffect(() => { (async () => { const a = Asset.fromModule(require('../assets/fitness-babel.html')); await a.downloadAsync(); setHtml(await FileSystem.readAsStringAsync(a.localUri)); })(); }, []);\n\")
+          f.write(\"  useEffect(() => { (async () => { const a = Asset.fromModule(require('./assets/fitness-babel.html')); await a.downloadAsync(); setHtml(await FileSystem.readAsStringAsync(a.localUri)); })(); }, []);\n\")
           f.write(\"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{html,baseUrl:''}} style={{flex:1}} javaScriptEnabled domStorageEnabled originWhitelist={['*']} /></SafeAreaView>);\n\")
           f.write('}\n')
           f.close()
