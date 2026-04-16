@@ -13,69 +13,66 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
       - name: Create Expo project
         run: |
-          npx create-expo-app@latest FitnessTracker --template blank-typescript --no-install
+          npx create-expo-app@latest FitnessTracker --template blank-typescript
           cd FitnessTracker
-          npm install
           npm install react-native-webview expo-asset expo-file-system
 
-      - name: Copy HTML file
-        run: cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
-
-      - name: Write app code
+      - name: Setup app files
         run: |
+          cp fitness-tracker.html FitnessTracker/assets/fitness-babel.html
+          
           cat > FitnessTracker/app/index.tsx << 'APPEOF'
-          import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-          import { WebView } from 'react-native-webview';
-          import { Asset } from 'expo-asset';
-          import { useState, useEffect } from 'react';
-          import * as FileSystem from 'expo-file-system';
+import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { Asset } from 'expo-asset';
+import { useState, useEffect } from 'react';
+import * as FileSystem from 'expo-file-system';
 
-          export default function App() {
-            const [html, setHtml] = useState('');
-            useEffect(() => {
-              (async () => {
-                const asset = Asset.fromModule(require('../assets/fitness-babel.html'));
-                await asset.downloadAsync();
-                const content = await FileSystem.readAsStringAsync(asset.localUri!);
-                setHtml(content);
-              })();
-            }, []);
-            return (
-              <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="light-content" backgroundColor="#080C0E" />
-                <WebView source={{ html, baseUrl: '' }} style={styles.webview}
-                  javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} />
-              </SafeAreaView>
-            );
-          }
-          const styles = StyleSheet.create({
-            container: { flex: 1, backgroundColor: '#080C0E' },
-            webview: { flex: 1 },
-          });
-          APPEOF
+export default function App() {
+  const [html, setHtml] = useState('');
+  useEffect(() => {
+    (async () => {
+      const asset = Asset.fromModule(require('../assets/fitness-babel.html'));
+      await asset.downloadAsync();
+      const content = await FileSystem.readAsStringAsync(asset.localUri!);
+      setHtml(content);
+    })();
+  }, []);
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#080C0E" />
+      <WebView source={{ html, baseUrl: '' }} style={styles.webview}
+        javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} />
+    </SafeAreaView>
+  );
+}
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#080C0E' },
+  webview: { flex: 1 },
+});
+APPEOF
 
-      - name: Write eas.json
-        run: |
           cat > FitnessTracker/eas.json << 'EASEOF'
-          {
-            "cli": { "version": ">= 16.0.0" },
-            "build": {
-              "preview": {
-                "android": { "buildType": "apk" }
-              }
-            }
-          }
-          EASEOF
+{
+  "cli": { "version": ">= 16.0.0" },
+  "build": {
+    "preview": {
+      "android": { "buildType": "apk" }
+    }
+  }
+}
+EASEOF
 
       - name: Build APK
-        run: cd FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd FitnessTracker
+          EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
