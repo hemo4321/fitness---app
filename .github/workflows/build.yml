@@ -26,29 +26,26 @@ jobs:
 
       - name: Download JS libraries via npm
         run: |
-          mkdir -p /tmp/libs
-          cd /tmp/libs && npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0
+          npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
           cp /tmp/libs/node_modules/react/umd/react.production.min.js /tmp/react.js
           cp /tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js /tmp/react-dom.js
           cp /tmp/libs/node_modules/recharts/umd/Recharts.js /tmp/recharts.js
-          echo "Sizes:"
-          wc -c /tmp/react.js /tmp/react-dom.js /tmp/recharts.js
+          echo "react: $(wc -c < /tmp/react.js) bytes"
+          echo "react-dom: $(wc -c < /tmp/react-dom.js) bytes"
+          echo "recharts: $(wc -c < /tmp/recharts.js) bytes"
 
       - name: Inline libraries into HTML
         run: |
           python3 -c "
-          html = open('fitness-tracker.html', 'r', encoding='utf-8').read()
-
-          react    = open('/tmp/react.js',    'r', encoding='utf-8').read()
-          reactdom = open('/tmp/react-dom.js','r', encoding='utf-8').read()
-          recharts = open('/tmp/recharts.js', 'r', encoding='utf-8').read()
-
+          html     = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+          react    = open('/tmp/react.js',         'r', encoding='utf-8').read()
+          reactdom = open('/tmp/react-dom.js',     'r', encoding='utf-8').read()
+          recharts = open('/tmp/recharts.js',      'r', encoding='utf-8').read()
           html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + react + '</script>')
           html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + reactdom + '</script>')
           html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + recharts + '</script>')
-
           open('fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
-          print('Done! Final size:', len(html) // 1024, 'KB')
+          print('Inline done, size:', len(html)//1024, 'KB')
           "
 
       - name: Setup App.tsx
@@ -57,7 +54,7 @@ jobs:
           import json
           html = open('fitness-tracker-inline.html','r',encoding='utf-8').read()
           esc = json.dumps(html)
-          code = '\n'.join([
+          lines = [
             'import { SafeAreaView, StatusBar } from \"react-native\";',
             'import { WebView } from \"react-native-webview\";',
             'const HTML: string = ' + esc + ';',
@@ -77,9 +74,9 @@ jobs:
             '    </SafeAreaView>',
             '  );',
             '}',
-          ])
-          open('FitnessTracker/App.tsx','w',encoding='utf-8').write(code)
-          print('App.tsx written, size:', len(code)//1024, 'KB')
+          ]
+          open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
+          print('App.tsx written, size:', len('\n'.join(lines))//1024, 'KB')
           "
 
       - name: Setup config files
