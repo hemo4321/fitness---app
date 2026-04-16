@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Expo / React Native build outputs
+FitnessTracker/
+.expo/
+dist/
+*.apk
+*.aab
+*.ipa
+
+# Inlined HTML build artifact
+fitness-tracker-inline.html
+
+# Environment files — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+/tmp/
+*.tmp

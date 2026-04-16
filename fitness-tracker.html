@@ -301,6 +301,10 @@ function BottomNav({
     id: 'progress',
     icon: '📈',
     label: 'تحليل'
+  }, {
+    id: 'settings',
+    icon: '⚙️',
+    label: 'إعدادات'
   }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1152,10 +1156,13 @@ function Nutrition({
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "x-api-key": localStorage.getItem('fit_api_key') || '',
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 1000,
           messages: [{
             role: "user",
@@ -1163,11 +1170,12 @@ function Nutrition({
           }]
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const text = data.content[0].text.replace(/```json|```/g, '').trim();
       setAiResult(JSON.parse(text));
     } catch (e) {
-      setAiError('حدث خطأ، جرب مرة أخرى');
+      setAiError(!localStorage.getItem('fit_api_key') ? 'أضف مفتاح API من تبويب الإعدادات ⚙️' : 'حدث خطأ، تأكد من صحة مفتاح API وجرب مرة أخرى');
     }
     setAiLoading(false);
   };
@@ -4757,10 +4765,13 @@ function ExerciseModal({
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-api-key": localStorage.getItem('fit_api_key') || '',
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1500,
         messages: [{
           role: "user",
@@ -4776,7 +4787,7 @@ function ExerciseModal({
 }`
         }]
       })
-    }).then(r => r.json()).then(d => {
+    }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }).then(d => {
       try {
         setInfo(JSON.parse(d.content[0].text.replace(/```json|```/g, '').trim()));
       } catch (e) {}
@@ -5269,10 +5280,13 @@ function MuscleMap({
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "x-api-key": localStorage.getItem('fit_api_key') || '',
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 500,
           messages: [{
             role: "user",
@@ -5285,11 +5299,12 @@ function MuscleMap({
           }]
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const result = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
       setAiExResult(result);
     } catch (e) {
-      setAiExError('حدث خطأ، حاول مرة أخرى');
+      setAiExError(!localStorage.getItem('fit_api_key') ? 'أضف مفتاح API من تبويب الإعدادات ⚙️' : 'حدث خطأ، تأكد من صحة مفتاح API وحاول مرة أخرى');
     }
     setAiExLoading(false);
   };
@@ -6188,6 +6203,54 @@ const BACKUP_DATA = {
   }]
 };
 
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function Settings() {
+  const [key, setKey] = useState(localStorage.getItem('fit_api_key') || '');
+  const [saved, setSaved] = useState(false);
+  const save = () => {
+    localStorage.setItem('fit_api_key', key.trim());
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+  const inputStyle = {
+    background: '#131D24', border: '1px solid #1C2730', borderRadius: 10,
+    padding: '11px 14px', color: '#E8F0F2', fontSize: 13, width: '100%',
+    outline: 'none', direction: 'ltr', textAlign: 'left', marginBottom: 10
+  };
+  const cardStyle = {
+    background: '#0D1318', borderRadius: 16, padding: '16px 16px 12px', marginBottom: 14
+  };
+  return /*#__PURE__*/React.createElement("div", {style: {padding: '20px 16px 12px', direction: 'rtl'}},
+    /*#__PURE__*/React.createElement("div", {style: {fontSize: 27, fontWeight: 800, fontFamily: 'Syne,sans-serif', letterSpacing: '-0.5px', marginBottom: 18}}, "الإعدادات ⚙️"),
+    /*#__PURE__*/React.createElement("div", {style: cardStyle},
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 6}}, "مفتاح Claude API"),
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', marginBottom: 12, lineHeight: 1.6}},
+        "يُستخدم لميزة تقدير الوجبات والتمارين بالذكاء الاصطناعي. يُحفظ محلياً على جهازك فقط ولا يُرسل لأي خادم."
+      ),
+      /*#__PURE__*/React.createElement("input", {
+        type: 'password',
+        value: key,
+        onChange: e => { setKey(e.target.value); setSaved(false); },
+        placeholder: 'sk-ant-api03-...',
+        style: inputStyle
+      }),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: save,
+        style: {
+          background: saved ? '#00C87A' : '#00E5A0', color: '#080C0E', border: 'none',
+          borderRadius: 10, padding: '11px 20px', fontWeight: 700, fontSize: 14,
+          cursor: 'pointer', width: '100%', transition: 'background 0.2s'
+        }
+      }, saved ? '✓ تم الحفظ' : 'حفظ المفتاح')
+    ),
+    /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', lineHeight: 1.7, padding: '0 4px'}},
+      "للحصول على مفتاح API: سجّل الدخول على ",
+      /*#__PURE__*/React.createElement("span", {style: {color: '#00E5A0'}}, "console.anthropic.com"),
+      " ← API Keys ← Create Key"
+    )
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function FitnessApp() {
   const [tab, setTab] = useState('dashboard');
@@ -6448,7 +6511,8 @@ function FitnessApp() {
   }), tab === 'progress' && /*#__PURE__*/React.createElement(Progress, {
     logs: logs,
     weightLog: weightLog
-  }), /*#__PURE__*/React.createElement(BottomNav, {
+  }), tab === 'settings' && /*#__PURE__*/React.createElement(Settings, null),
+  /*#__PURE__*/React.createElement(BottomNav, {
     tab: tab,
     setTab: setTab
   }));
