@@ -18,10 +18,10 @@ jobs:
           node-version: 20
 
       - name: Install EAS CLI
-        run: npm install -g eas-cli
+        run: npm install -g eas-cli@latest
 
       - name: Create Expo project
-        run: npx create-expo-app@latest FitnessTracker --template blank-typescript
+        run: npx create-expo-app@latest FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
         run: cd FitnessTracker && npx expo install react-native-webview
@@ -93,6 +93,15 @@ jobs:
             json.dump(config, f, indent=2)
           print('app.json updated')
           "
+
+      - name: Check EXPO_TOKEN
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "::error::EXPO_TOKEN secret is not set. Go to repo Settings → Secrets → Actions and add EXPO_TOKEN."
+            echo "Get your token from https://expo.dev → Account → Access Tokens"
+            exit 1
+          fi
+          echo "EXPO_TOKEN is set ✓"
 
       - name: Init EAS project
         env:
