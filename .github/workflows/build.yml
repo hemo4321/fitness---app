@@ -26,39 +26,21 @@ jobs:
 
       - name: Setup files
         run: |
-          python3 << 'PYEOF'
+          python3 -c "
           import json
-
-          with open('fitness-tracker.html', 'r', encoding='utf-8') as f:
-              html_content = f.read()
-
-          html_escaped = json.dumps(html_content)
-
-          app_code = """import { SafeAreaView, StatusBar } from 'react-native';
-import { WebView } from 'react-native-webview';
-
-const HTML = """ + html_escaped + """;
-
-export default function App() {
-  return (
-    <SafeAreaView style={{flex:1, backgroundColor:'#080C0E'}}>
-      <StatusBar barStyle="light-content" />
-      <WebView
-        source={{html: HTML, baseUrl: 'file:///android_asset/'}}
-        style={{flex:1}}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        originWhitelist={['*']}
-      />
-    </SafeAreaView>
-  );
-}
-"""
-          with open('FitnessTracker/App.tsx', 'w', encoding='utf-8') as f:
-              f.write(app_code)
+          html = open('fitness-tracker.html','r',encoding='utf-8').read()
+          esc = json.dumps(html)
+          lines = [
+            \"import { SafeAreaView, StatusBar } from 'react-native';\",
+            \"import { WebView } from 'react-native-webview';\",
+            'const HTML = ' + esc + ';',
+            'export default function App() {',
+            \"  return (<SafeAreaView style={{flex:1,backgroundColor:'#080C0E'}}><StatusBar barStyle='light-content' /><WebView source={{html:HTML,baseUrl:'file:///android_asset/'}} style={{flex:1}} javaScriptEnabled={true} domStorageEnabled={true} originWhitelist={['*']} /></SafeAreaView>);\",
+            '}'
+          ]
+          open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
           print('App.tsx written OK')
-          PYEOF
-
+          "
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
           python3 -c "
           import json
