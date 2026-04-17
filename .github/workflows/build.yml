@@ -21,19 +21,20 @@ jobs:
         run: npm install -g eas-cli@latest
 
       - name: Create Expo project
-        run: npx create-expo-app@latest FitnessTracker --template blank-typescript --yes
+        # Build in /tmp — outside the git repo — so EAS CLI has no parent
+        # .gitignore to inherit. Previously, the repo .gitignore listed
+        # 'FitnessTracker/' which caused 'git ls-files' to exclude all project
+        # files, giving EAS an empty archive ("package.json not found").
+        run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
-        run: cd FitnessTracker && npx expo install react-native-webview
+        run: cd /tmp/FitnessTracker && npx expo install react-native-webview
 
       - name: Setup App.tsx
         run: |
           python3 -c "
-          import json, os
+          import json
 
-          # Use the original HTML with CDN script tags (React/ReactDOM/Recharts load
-          # from unpkg at runtime). This keeps the file ~196 KB — safe for Metro to
-          # bundle — while the 1 MB+ inlined variant was causing the EAS Gradle OOM.
           html = open('fitness-tracker.html', 'r', encoding='utf-8').read()
           esc  = json.dumps(html)
           print('HTML size:', len(html)//1024, 'KB  |  JSON-encoded:', len(esc)//1024, 'KB')
@@ -59,30 +60,22 @@ jobs:
             '  );',
             '}',
           ]
-          open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
+          open('/tmp/FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
           print('App.tsx written:', len('\n'.join(lines))//1024, 'KB')
           "
 
       - name: Setup config files
         run: |
-          echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
+          echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > /tmp/FitnessTracker/eas.json
           python3 -c "
           import json
-          with open('FitnessTracker/app.json','r') as f:
+          with open('/tmp/FitnessTracker/app.json','r') as f:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
-          with open('FitnessTracker/app.json','w') as f:
+          with open('/tmp/FitnessTracker/app.json','w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
           "
-          # .easignore overrides the parent .gitignore when EAS creates the upload
-          # archive. Without it, 'git ls-files' excludes FitnessTracker/ (it's
-          # gitignored at the repo root) → empty archive → 'package.json not found'.
-          cat > FitnessTracker/.easignore << 'EOF'
-          node_modules/
-          .expo/
-          EOF
-          echo ".easignore created"
 
       - name: Check EXPO_TOKEN
         run: |
@@ -96,9 +89,9 @@ jobs:
       - name: Init EAS project
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd FitnessTracker && eas init --id 7b50975b-dc4c-4c54-95e5-bfdff1915a08 --force --non-interactive
+        run: cd /tmp/FitnessTracker && eas init --id 7b50975b-dc4c-4c54-95e5-bfdff1915a08 --force --non-interactive
 
       - name: Build APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
+        run: cd /tmp/FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
