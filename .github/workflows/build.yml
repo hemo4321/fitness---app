@@ -33,20 +33,20 @@ jobs:
       - name: Inline JS libraries into HTML
         run: |
           npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
-          python3 -c "
+          cat > /tmp/inline.py << 'PYEOF'
+          import re
           html     = open('fitness-tracker.html', 'r', encoding='utf-8').read()
           react    = open('/tmp/libs/node_modules/react/umd/react.production.min.js', 'r', encoding='utf-8').read()
           reactdom = open('/tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js', 'r', encoding='utf-8').read()
           recharts = open('/tmp/libs/node_modules/recharts/umd/Recharts.js', 'r', encoding='utf-8').read()
-          # Escape </script> inside inlined JS so the HTML parser does not
-          # terminate the <script> block early when it hits that substring.
-          def safe(js): return js.replace('</', '<\\/')
-          html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + safe(react) + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + safe(reactdom) + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + safe(recharts) + '</script>')
+          def safe(js): return re.sub(r'</', r'<\\/', js)
+          html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>', '<script>' + safe(react) + '</script>')
+          html = html.replace('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>', '<script>' + safe(reactdom) + '</script>')
+          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>', '<script>' + safe(recharts) + '</script>')
           open('/tmp/fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
           print('Inline done, size:', len(html)//1024, 'KB')
-          "
+          PYEOF
+          python3 /tmp/inline.py
 
       - name: Copy HTML to Expo assets
         run: |
@@ -129,16 +129,17 @@ jobs:
       - name: Setup config files
         run: |
           echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > /tmp/FitnessTracker/eas.json
-          python3 -c "
+          cat > /tmp/patch_appjson.py << 'PYEOF'
           import json
-          with open('/tmp/FitnessTracker/app.json','r') as f:
+          with open('/tmp/FitnessTracker/app.json', 'r') as f:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
           config['expo']['plugins'] = ['./withAndroidAssets']
-          with open('/tmp/FitnessTracker/app.json','w') as f:
+          with open('/tmp/FitnessTracker/app.json', 'w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
-          "
+          PYEOF
+          python3 /tmp/patch_appjson.py
 
       - name: Check EXPO_TOKEN
         run: |
