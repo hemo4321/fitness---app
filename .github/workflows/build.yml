@@ -26,7 +26,12 @@ jobs:
         run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
-        run: cd /tmp/FitnessTracker && npx expo install react-native-webview
+        # expo-asset + expo-file-system: load the HTML from the app bundle at
+        # runtime instead of embedding it as a JS string literal.
+        # A ~1 MB string literal causes Hermes AOT compilation to OOM/timeout.
+        run: |
+          cd /tmp/FitnessTracker
+          npx expo install react-native-webview expo-asset expo-file-system
 
       - name: Inline JS libraries into HTML
         run: |
@@ -43,78 +48,73 @@ jobs:
           print('Inline done, size:', len(html)//1024, 'KB')
           "
 
+      - name: Copy HTML to Expo assets
+        run: |
+          mkdir -p /tmp/FitnessTracker/assets
+          cp /tmp/fitness-tracker-inline.html /tmp/FitnessTracker/assets/app.html
+          echo "Copied: $(wc -c < /tmp/FitnessTracker/assets/app.html) bytes"
+
+      - name: Configure Metro for .html assets
+        run: |
+          cat > /tmp/FitnessTracker/metro.config.js << 'EOF'
+          const { getDefaultConfig } = require('expo/metro-config');
+          const config = getDefaultConfig(__dirname);
+          config.resolver.assetExts = [...config.resolver.assetExts, 'html'];
+          module.exports = config;
+          EOF
+
       - name: Setup App.tsx
         run: |
-          python3 -c "
-          import json, os
+          cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
+          import { SafeAreaView, StatusBar, View, ActivityIndicator } from 'react-native';
+          import { WebView } from 'react-native-webview';
+          import { useState, useEffect } from 'react';
+          import { Asset } from 'expo-asset';
+          import * as FileSystem from 'expo-file-system';
 
-          # Write the large inlined HTML as a plain JS module so TypeScript never
-          # compiles the huge string — Metro bundles plain JS without tsc overhead.
-          html = open('/tmp/fitness-tracker-inline.html', 'r', encoding='utf-8').read()
-          esc  = json.dumps(html, ensure_ascii=False)
-          js_path = '/tmp/FitnessTracker/htmlContent.js'
-          open(js_path, 'w', encoding='utf-8').write('module.exports = ' + esc + ';\n')
-          print('htmlContent.js:', os.path.getsize(js_path)//1024, 'KB')
+          export default function App() {
+            const [uri, setUri] = useState<string | null>(null);
 
-          # App.tsx: loading spinner + JS error bridge so black-screen failures
-          # surface as readable error messages instead of a blank dark screen.
-          lines = [
-            'import { SafeAreaView, StatusBar, View, Text, ActivityIndicator } from \"react-native\";',
-            'import { WebView } from \"react-native-webview\";',
-            'import { useState } from \"react\";',
-            '// eslint-disable-next-line @typescript-eslint/no-var-requires',
-            'const HTML: string = require(\"./htmlContent\");',
-            'const ERR_HOOK = `',
-            '  window.onerror = function(m,u,l) {',
-            '    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(',
-            '      JSON.stringify({t:\"e\", m:String(m), l:l})',
-            '    );',
-            '  };',
-            '  true;',
-            '`;',
-            'export default function App() {',
-            '  const [loading, setLoading] = useState(true);',
-            '  const [err, setErr]         = useState(\"\");',
-            '  return (',
-            '    <SafeAreaView style={{flex:1,backgroundColor:\"#080C0E\"}}>',
-            '      <StatusBar barStyle=\"light-content\" />',
-            '      {loading && (',
-            '        <View style={{position:\"absolute\",top:0,left:0,right:0,bottom:0,',
-            '          zIndex:10,justifyContent:\"center\",alignItems:\"center\",backgroundColor:\"#080C0E\"}}>',
-            '          <ActivityIndicator size=\"large\" color=\"#00E5A0\" />',
-            '        </View>',
-            '      )}',
-            '      {err ? (',
-            '        <View style={{flex:1,padding:20,backgroundColor:\"#111\"}}>',
-            '          <Text style={{color:\"red\",fontSize:11,fontFamily:\"monospace\"}}>{err}</Text>',
-            '        </View>',
-            '      ) : (',
-            '        <WebView',
-            '          source={{html: HTML, baseUrl: \"http://localhost/\"}}',
-            '          style={{flex:1}}',
-            '          javaScriptEnabled={true}',
-            '          domStorageEnabled={true}',
-            '          allowUniversalAccessFromFileURLs={true}',
-            '          mixedContentMode=\"always\"',
-            '          originWhitelist={[\"*\"]}',
-            '          injectedJavaScriptBeforeContentLoaded={ERR_HOOK}',
-            '          onMessage={e => {',
-            '            try {',
-            '              const d = JSON.parse(e.nativeEvent.data);',
-            '              if (d.t === \"e\") setErr(d.m + \" (line \" + d.l + \")\");',
-            '            } catch {}',
-            '          }}',
-            '          onLoadEnd={() => setLoading(false)}',
-            '          onError={e => { setLoading(false); setErr(e.nativeEvent.description); }}',
-            '        />',
-            '      )}',
-            '    </SafeAreaView>',
-            '  );',
-            '}',
-          ]
-          open('/tmp/FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
-          print('App.tsx written:', len('\n'.join(lines))//1024, 'KB')
-          "
+            useEffect(() => {
+              (async () => {
+                const [asset] = await Asset.loadAsync(
+                  // eslint-disable-next-line @typescript-eslint/no-var-requires
+                  require('./assets/app.html')
+                );
+                const dest = FileSystem.documentDirectory + 'app.html';
+                await FileSystem.copyAsync({ from: asset.localUri!, to: dest });
+                setUri(dest);
+              })();
+            }, []);
+
+            if (!uri) {
+              return (
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E',
+                  justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#00E5A0" />
+                </SafeAreaView>
+              );
+            }
+
+            return (
+              <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
+                <StatusBar barStyle="light-content" />
+                <WebView
+                  source={{ uri }}
+                  style={{ flex: 1 }}
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                  allowFileAccess={true}
+                  allowFileAccessFromFileURLs={true}
+                  allowUniversalAccessFromFileURLs={true}
+                  mixedContentMode="always"
+                  originWhitelist={['*']}
+                />
+              </SafeAreaView>
+            );
+          }
+          APPTSX
+          echo "App.tsx written"
 
       - name: Setup config files
         run: |
@@ -124,6 +124,7 @@ jobs:
           with open('/tmp/FitnessTracker/app.json','r') as f:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
+          config['expo']['assets']  = ['./assets/app.html']
           with open('/tmp/FitnessTracker/app.json','w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
