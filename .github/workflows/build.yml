@@ -75,6 +75,14 @@ jobs:
             json.dump(config, f, indent=2)
           print('app.json updated')
           "
+          # .easignore overrides the parent .gitignore when EAS creates the upload
+          # archive. Without it, 'git ls-files' excludes FitnessTracker/ (it's
+          # gitignored at the repo root) → empty archive → 'package.json not found'.
+          cat > FitnessTracker/.easignore << 'EOF'
+          node_modules/
+          .expo/
+          EOF
+          echo ".easignore created"
 
       - name: Check EXPO_TOKEN
         run: |
