@@ -38,9 +38,12 @@ jobs:
           react    = open('/tmp/libs/node_modules/react/umd/react.production.min.js', 'r', encoding='utf-8').read()
           reactdom = open('/tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js', 'r', encoding='utf-8').read()
           recharts = open('/tmp/libs/node_modules/recharts/umd/Recharts.js', 'r', encoding='utf-8').read()
-          html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + react + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + reactdom + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + recharts + '</script>')
+          # Escape </script> inside inlined JS so the HTML parser does not
+          # terminate the <script> block early when it hits that substring.
+          def safe(js): return js.replace('</', '<\\/')
+          html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + safe(react) + '</script>')
+          html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + safe(reactdom) + '</script>')
+          html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + safe(recharts) + '</script>')
           open('/tmp/fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
           print('Inline done, size:', len(html)//1024, 'KB')
           "
@@ -83,10 +86,24 @@ jobs:
       - name: Setup App.tsx
         run: |
           cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
-          import { SafeAreaView, StatusBar } from 'react-native';
+          import { SafeAreaView, StatusBar, View, Text } from 'react-native';
           import { WebView } from 'react-native-webview';
+          import { useState } from 'react';
 
           export default function App() {
+            const [err, setErr] = useState<string | null>(null);
+
+            if (err) {
+              return (
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E',
+                  justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: '#FF4444', padding: 24, textAlign: 'center' }}>
+                    {err}
+                  </Text>
+                </SafeAreaView>
+              );
+            }
+
             return (
               <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
                 <StatusBar barStyle="light-content" />
@@ -100,6 +117,8 @@ jobs:
                   allowUniversalAccessFromFileURLs={true}
                   mixedContentMode="always"
                   originWhitelist={['*']}
+                  onError={(e) => setErr('Load error: ' + e.nativeEvent.description)}
+                  onHttpError={(e) => setErr('HTTP ' + e.nativeEvent.statusCode)}
                 />
               </SafeAreaView>
             );
