@@ -13,6 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check EXPO_TOKEN early
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "::error::EXPO_TOKEN secret is not set — go to repo Settings → Secrets → Actions and add it."
+            exit 1
+          fi
+          echo "EXPO_TOKEN is set ✓"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -141,15 +149,6 @@ jobs:
           print('app.json updated')
           PYEOF
           python3 /tmp/patch_appjson.py
-
-      - name: Check EXPO_TOKEN
-        run: |
-          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
-            echo "::error::EXPO_TOKEN secret is not set. Go to repo Settings → Secrets → Actions and add EXPO_TOKEN."
-            echo "Get your token from https://expo.dev → Account → Access Tokens"
-            exit 1
-          fi
-          echo "EXPO_TOKEN is set ✓"
 
       - name: Init EAS project
         env:
