@@ -26,12 +26,11 @@ jobs:
         run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
-        # expo-asset + expo-file-system: load the HTML from the app bundle at
-        # runtime instead of embedding it as a JS string literal.
-        # A ~1 MB string literal causes Hermes AOT compilation to OOM/timeout.
+        # expo-asset: load the HTML asset URI synchronously from the APK bundle.
+        # No expo-file-system needed — Asset.fromModule().uri is ready immediately.
         run: |
           cd /tmp/FitnessTracker
-          npx expo install react-native-webview expo-asset expo-file-system
+          npx expo install react-native-webview expo-asset
 
       - name: Inline JS libraries into HTML
         run: |
@@ -66,28 +65,14 @@ jobs:
       - name: Setup App.tsx
         run: |
           cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
-          import { SafeAreaView, StatusBar, View, ActivityIndicator } from 'react-native';
+          import { SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
           import { WebView } from 'react-native-webview';
-          import { useState, useEffect } from 'react';
           import { Asset } from 'expo-asset';
-          import * as FileSystem from 'expo-file-system';
+
+          const { uri: htmlUri } = Asset.fromModule(require('./assets/app.html'));
 
           export default function App() {
-            const [uri, setUri] = useState<string | null>(null);
-
-            useEffect(() => {
-              (async () => {
-                const [asset] = await Asset.loadAsync(
-                  // eslint-disable-next-line @typescript-eslint/no-var-requires
-                  require('./assets/app.html')
-                );
-                const dest = FileSystem.documentDirectory + 'app.html';
-                await FileSystem.copyAsync({ from: asset.localUri!, to: dest });
-                setUri(dest);
-              })();
-            }, []);
-
-            if (!uri) {
+            if (!htmlUri) {
               return (
                 <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E',
                   justifyContent: 'center', alignItems: 'center' }}>
@@ -100,7 +85,7 @@ jobs:
               <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
                 <StatusBar barStyle="light-content" />
                 <WebView
-                  source={{ uri }}
+                  source={{ uri: htmlUri }}
                   style={{ flex: 1 }}
                   javaScriptEnabled={true}
                   domStorageEnabled={true}
