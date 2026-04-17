@@ -26,11 +26,9 @@ jobs:
         run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
-        # expo-asset: load the HTML asset URI synchronously from the APK bundle.
-        # No expo-file-system needed — Asset.fromModule().uri is ready immediately.
         run: |
           cd /tmp/FitnessTracker
-          npx expo install react-native-webview expo-asset
+          npx expo install react-native-webview
 
       - name: Inline JS libraries into HTML
         run: |
@@ -53,39 +51,47 @@ jobs:
           cp /tmp/fitness-tracker-inline.html /tmp/FitnessTracker/assets/app.html
           echo "Copied: $(wc -c < /tmp/FitnessTracker/assets/app.html) bytes"
 
-      - name: Configure Metro for .html assets
+      - name: Create Android assets config plugin
+        # Copies assets/app.html into android/app/src/main/assets/ during prebuild
+        # so WebView can load it via file:///android_asset/app.html — no network, no Expo
+        # asset system, no cleartext-traffic issues.
         run: |
-          cat > /tmp/FitnessTracker/metro.config.js << 'EOF'
-          const { getDefaultConfig } = require('expo/metro-config');
-          const config = getDefaultConfig(__dirname);
-          config.resolver.assetExts = [...config.resolver.assetExts, 'html'];
-          module.exports = config;
+          cat > /tmp/FitnessTracker/withAndroidAssets.js << 'EOF'
+          const { withDangerousMod } = require('@expo/config-plugins');
+          const fs = require('fs');
+          const path = require('path');
+          module.exports = function withAndroidAssets(config) {
+            return withDangerousMod(config, [
+              'android',
+              async (config) => {
+                const assetsDir = path.join(
+                  config.modRequest.platformProjectRoot,
+                  'app/src/main/assets'
+                );
+                fs.mkdirSync(assetsDir, { recursive: true });
+                fs.copyFileSync(
+                  path.join(config.modRequest.projectRoot, 'assets/app.html'),
+                  path.join(assetsDir, 'app.html')
+                );
+                console.log('withAndroidAssets: app.html copied to Android assets');
+                return config;
+              },
+            ]);
+          };
           EOF
 
       - name: Setup App.tsx
         run: |
           cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
-          import { SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+          import { SafeAreaView, StatusBar } from 'react-native';
           import { WebView } from 'react-native-webview';
-          import { Asset } from 'expo-asset';
-
-          const { uri: htmlUri } = Asset.fromModule(require('./assets/app.html'));
 
           export default function App() {
-            if (!htmlUri) {
-              return (
-                <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E',
-                  justifyContent: 'center', alignItems: 'center' }}>
-                  <ActivityIndicator size="large" color="#00E5A0" />
-                </SafeAreaView>
-              );
-            }
-
             return (
               <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
                 <StatusBar barStyle="light-content" />
                 <WebView
-                  source={{ uri: htmlUri }}
+                  source={{ uri: 'file:///android_asset/app.html' }}
                   style={{ flex: 1 }}
                   javaScriptEnabled={true}
                   domStorageEnabled={true}
@@ -109,7 +115,7 @@ jobs:
           with open('/tmp/FitnessTracker/app.json','r') as f:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
-          config['expo']['assets']  = ['./assets/app.html']
+          config['expo']['plugins'] = ['./withAndroidAssets']
           with open('/tmp/FitnessTracker/app.json','w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
