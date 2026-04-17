@@ -22,27 +22,46 @@ jobs:
 
       - name: Create Expo project
         # Build in /tmp — outside the git repo — so EAS CLI has no parent
-        # .gitignore to inherit. Previously, the repo .gitignore listed
-        # 'FitnessTracker/' which caused 'git ls-files' to exclude all project
-        # files, giving EAS an empty archive ("package.json not found").
+        # .gitignore to inherit (repo .gitignore lists FitnessTracker/).
         run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
         run: cd /tmp/FitnessTracker && npx expo install react-native-webview
 
+      - name: Inline JS libraries into HTML
+        run: |
+          npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
+          python3 -c "
+          html     = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+          react    = open('/tmp/libs/node_modules/react/umd/react.production.min.js', 'r', encoding='utf-8').read()
+          reactdom = open('/tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js', 'r', encoding='utf-8').read()
+          recharts = open('/tmp/libs/node_modules/recharts/umd/Recharts.js', 'r', encoding='utf-8').read()
+          html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + react + '</script>')
+          html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + reactdom + '</script>')
+          html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + recharts + '</script>')
+          open('/tmp/fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
+          print('Inline done, size:', len(html)//1024, 'KB')
+          "
+
       - name: Setup App.tsx
         run: |
           python3 -c "
-          import json
+          import json, os
 
-          html = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+          # Write the large inlined HTML as a plain JS module so TypeScript never
+          # compiles the huge string — Metro bundles plain JS without tsc overhead.
+          html = open('/tmp/fitness-tracker-inline.html', 'r', encoding='utf-8').read()
           esc  = json.dumps(html)
-          print('HTML size:', len(html)//1024, 'KB  |  JSON-encoded:', len(esc)//1024, 'KB')
+          js_path = '/tmp/FitnessTracker/htmlContent.js'
+          open(js_path, 'w', encoding='utf-8').write('module.exports = ' + esc + ';\n')
+          print('htmlContent.js:', os.path.getsize(js_path)//1024, 'KB')
 
+          # App.tsx stays small — just the WebView shell.
           lines = [
             'import { SafeAreaView, StatusBar } from \"react-native\";',
             'import { WebView } from \"react-native-webview\";',
-            'const HTML: string = ' + esc + ';',
+            '// eslint-disable-next-line @typescript-eslint/no-var-requires',
+            'const HTML: string = require(\"./htmlContent\");',
             'export default function App() {',
             '  return (',
             '    <SafeAreaView style={{flex:1,backgroundColor:\"#080C0E\"}}>',
