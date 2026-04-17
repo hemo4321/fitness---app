@@ -13,17 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check EXPO_TOKEN early
-        run: |
-          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
-            echo "::error::EXPO_TOKEN secret is not set — go to repo Settings → Secrets → Actions and add it."
-            exit 1
-          fi
-          echo "EXPO_TOKEN is set ✓"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Install EAS CLI
         run: npm install -g eas-cli@16
@@ -144,18 +141,25 @@ jobs:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
           config['expo']['plugins'] = ['./withAndroidAssets']
+          config['expo']['extra'] = {'eas': {'projectId': '7b50975b-dc4c-4c54-95e5-bfdff1915a08'}}
           with open('/tmp/FitnessTracker/app.json', 'w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
           PYEOF
           python3 /tmp/patch_appjson.py
 
-      - name: Init EAS project
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd /tmp/FitnessTracker && eas init --id 7b50975b-dc4c-4c54-95e5-bfdff1915a08 --force --non-interactive
+      - name: Build APK (local)
+        run: cd /tmp/FitnessTracker && eas build --platform android --profile preview --non-interactive --local
 
-      - name: Build APK
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd /tmp/FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
+      - name: Find APK
+        run: |
+          APK=$(find /tmp/FitnessTracker -name "*.apk" -type f | head -1)
+          echo "APK_PATH=$APK" >> $GITHUB_ENV
+          echo "Found: $APK ($(wc -c < "$APK") bytes)"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitness-tracker-apk
+          path: ${{ env.APK_PATH }}
+          if-no-files-found: error
