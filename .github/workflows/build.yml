@@ -17,13 +17,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli@latest
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Create Expo project
         # Build in /tmp — outside the git repo — so EAS CLI has no parent
         # .gitignore to inherit (repo .gitignore lists FitnessTracker/).
-        run: npx create-expo-app@latest /tmp/FitnessTracker --template blank-typescript --yes
+        # Pin to create-expo-app@3 to avoid breaking changes in @latest.
+        run: npx create-expo-app@3 /tmp/FitnessTracker --template blank-typescript --yes
 
       - name: Install dependencies
         run: |
