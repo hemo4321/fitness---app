@@ -89,20 +89,37 @@ jobs:
       - name: Setup App.tsx
         run: |
           cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
-          import { SafeAreaView, StatusBar, View, Text } from 'react-native';
+          import { SafeAreaView, StatusBar, Text, ScrollView } from 'react-native';
           import { WebView } from 'react-native-webview';
           import { useState } from 'react';
+
+          const ERROR_CATCH_JS = `
+            window.onerror = function(msg, src, line, col, err) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                t: 'err', msg: String(msg), line: line, src: String(src).slice(-60),
+                stack: err && err.stack ? String(err.stack).slice(0, 600) : ''
+              }));
+              return true;
+            };
+            window.addEventListener('unhandledrejection', function(e) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                t: 'rej', msg: e.reason ? String(e.reason) : 'unknown rejection'
+              }));
+            });
+            true;
+          `;
 
           export default function App() {
             const [err, setErr] = useState<string | null>(null);
 
             if (err) {
               return (
-                <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E',
-                  justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ color: '#FF4444', padding: 24, textAlign: 'center' }}>
-                    {err}
-                  </Text>
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
+                  <ScrollView contentContainerStyle={{ padding: 16 }}>
+                    <Text style={{ color: '#FF4444', fontFamily: 'monospace', fontSize: 11 }}>
+                      {err}
+                    </Text>
+                  </ScrollView>
                 </SafeAreaView>
               );
             }
@@ -120,6 +137,16 @@ jobs:
                   allowUniversalAccessFromFileURLs={true}
                   mixedContentMode="always"
                   originWhitelist={['*']}
+                  injectedJavaScriptBeforeContentLoaded={ERROR_CATCH_JS}
+                  onMessage={(e) => {
+                    try {
+                      const d = JSON.parse(e.nativeEvent.data);
+                      setErr('[' + d.t + '] ' + d.msg +
+                        (d.line ? ' (line ' + d.line + ')' : '') +
+                        (d.src  ? '\nsrc: ' + d.src : '') +
+                        (d.stack ? '\n' + d.stack : ''));
+                    } catch(_) { setErr(e.nativeEvent.data); }
+                  }}
                   onError={(e) => setErr('Load error: ' + e.nativeEvent.description)}
                   onHttpError={(e) => setErr('HTTP ' + e.nativeEvent.statusCode)}
                 />
