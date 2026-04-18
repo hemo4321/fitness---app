@@ -369,20 +369,7 @@ function Dashboard({
   todayData,
   logs,
   weightLog,
-  saveWeightLog,
-  onExport,
-  onImportParse,
-  onImportConfirm,
-  importMsg,
-  showImport,
-  setShowImport,
-  importJson,
-  setImportJson,
-  exportText,
-  setExportText,
-  importStep,
-  setImportStep,
-  importPreview
+  saveWeightLog
 }) {
   const {
     meals = [],
@@ -809,193 +796,9 @@ function Dashboard({
     value: net,
     unit: "\u0643\u0627\u0644",
     color: net < PROFILE.dailyCalories ? '#00E5A0' : '#FF4444'
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#0E151A',
-      borderRadius: 16,
-      padding: 14,
-      border: '1px solid #1C2730'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      marginBottom: 10,
-      color: '#3D5560'
-    }
-  }, "\uD83D\uDCBE \u0646\u0633\u062E \u0627\u062D\u062A\u064A\u0627\u0637\u064A"), /*#__PURE__*/React.createElement("button", {
-    onClick: onExport,
-    style: {
-      width: '100%',
-      background: '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '11px',
-      color: '#E8F0F2',
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      marginBottom: 8,
-      textAlign: 'center'
-    }
-  }, "\u2B06\uFE0F \u062A\u0635\u062F\u064A\u0631 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A"), exportText && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: '#3D5560',
-      marginBottom: 5
-    }
-  }, "\u0627\u0636\u063A\u0637 \u0645\u0637\u0648\u0644\u0627\u064B \u0639\u0644\u0649 \u0627\u0644\u0646\u0635 \u062B\u0645 \"\u062A\u062D\u062F\u064A\u062F \u0627\u0644\u0643\u0644\" \u0644\u0644\u0646\u0633\u062E:"), /*#__PURE__*/React.createElement("textarea", {
-    readOnly: true,
-    value: exportText,
-    rows: 3,
-    style: {
-      width: '100%',
-      background: '#0A1015',
-      border: '1px solid #00E5A040',
-      borderRadius: 10,
-      padding: '10px 12px',
-      color: '#00E5A0',
-      fontSize: 11,
-      outline: 'none',
-      resize: 'none',
-      direction: 'ltr',
-      wordBreak: 'break-all'
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setExportText(''),
-    style: {
-      width: '100%',
-      background: 'none',
-      border: 'none',
-      color: '#3D5560',
-      fontSize: 11,
-      padding: '4px',
-      cursor: 'pointer'
-    }
-  }, "\u2715 \u0625\u063A\u0644\u0627\u0642")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setShowImport(!showImport);
-      setImportStep('paste');
-      setImportPreview(null);
-    },
-    style: {
-      width: '100%',
-      background: showImport ? '#252E38' : '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '11px',
-      color: '#E8F0F2',
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      textAlign: 'center',
-      marginBottom: showImport ? 8 : 0
-    }
-  }, "\u2B07\uFE0F \u0627\u0633\u062A\u064A\u0631\u0627\u062F \u2014 \u0644\u0635\u0642 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A"), showImport && importStep === 'paste' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: '#3D5560',
-      marginBottom: 6
-    }
-  }, "\u0627\u0644\u0635\u0642 \u0647\u0646\u0627 \u0627\u0644\u0646\u0635 \u0627\u0644\u0645\u0646\u0633\u0648\u062E \u0645\u0646 \u0627\u0644\u062A\u0635\u062F\u064A\u0631:"), /*#__PURE__*/React.createElement("textarea", {
-    rows: 5,
-    value: importJson,
-    onChange: e => setImportJson(e.target.value),
-    placeholder: "{\"version\":1,...}",
-    style: {
-      width: '100%',
-      background: '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '10px 12px',
-      color: '#E8F0F2',
-      fontSize: 11,
-      outline: 'none',
-      resize: 'vertical',
-      marginBottom: 8,
-      direction: 'ltr',
-      wordBreak: 'break-all'
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: onImportParse,
-    disabled: !importJson.trim(),
-    style: {
-      width: '100%',
-      background: importJson.trim() ? '#5B9CF6' : '#1C2730',
-      color: importJson.trim() ? '#fff' : '#3D5560',
-      border: 'none',
-      borderRadius: 10,
-      padding: '10px',
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0641\u062D\u0635 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u2192")), showImport && importStep === 'confirm' && importPreview && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#141D24',
-      borderRadius: 12,
-      padding: 14,
-      border: '1px solid #FF8C4260'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: '#FF8C42',
-      marginBottom: 10
-    }
-  }, "\u26A0\uFE0F \u062A\u062D\u0630\u064A\u0631 \u2014 \u0633\u062A\u064F\u0633\u062A\u0628\u062F\u0644 \u0628\u064A\u0627\u0646\u0627\u062A\u0643 \u0627\u0644\u062D\u0627\u0644\u064A\u0629"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: '#C0CDD4',
-      marginBottom: 12,
-      lineHeight: 1.7
-    }
-  }, "\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u062A\u064A \u0633\u062A\u064F\u0633\u062A\u0648\u0631\u062F:", /*#__PURE__*/React.createElement("br", null), "\uD83C\uDF7D\uFE0F ", importPreview.mealCount, " \u0648\u062C\u0628\u0629 \xB7 \uD83C\uDFCB\uFE0F ", importPreview.workoutCount, " \u062A\u0645\u0631\u064A\u0646 \xB7 \u2696\uFE0F ", importPreview.weightCount, " \u0642\u064A\u0627\u0633 \u0648\u0632\u0646 \xB7 \uD83D\uDCAA ", importPreview.muscleCount, " \u062A\u0645\u0631\u064A\u0646 \u0641\u064A \u0627\u0644\u0645\u062C\u0645\u0648\u0639\u0627\u062A"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onImportConfirm,
-    style: {
-      flex: 1,
-      background: '#FF8C42',
-      color: '#080C0E',
-      border: 'none',
-      borderRadius: 10,
-      padding: '10px',
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0646\u0639\u0645\u060C \u0627\u0633\u062A\u0648\u0631\u062F \u0648\u0627\u0633\u062A\u0628\u062F\u0644"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setImportStep('paste');
-      setImportPreview(null);
-    },
-    style: {
-      background: '#141D24',
-      color: '#E8F0F2',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '10px 14px',
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0625\u0644\u063A\u0627\u0621"))), importMsg && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      marginTop: 8,
-      color: importMsg.ok ? '#00E5A0' : '#FF4444',
-      textAlign: 'center'
-    }
-  }, importMsg.text)));
+  })));
 }
+
 
 // ── DATE BAR ──────────────────────────────────────────────────────────────────
 function DateBar({
@@ -6213,49 +6016,150 @@ const BACKUP_DATA = {
 };
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
-function Settings() {
+function Settings({ lang, setLang, logs, weightLog, muscleGroups, saveLogs, saveWeightLog, saveMuscleGroups }) {
+  const ar = lang === 'ar';
   const [key, setKey] = useState(localStorage.getItem('fit_api_key') || '');
   const [saved, setSaved] = useState(false);
-  const save = () => {
+  // export/import state — all local to Settings
+  const [exportText, setExportText] = useState('');
+  const [showImport, setShowImport] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importStep, setImportStep] = useState('paste');
+  const [importPreview, setImportPreview] = useState(null);
+  const [importMsg, setImportMsg] = useState(null);
+
+  const saveKey = () => {
     localStorage.setItem('fit_api_key', key.trim());
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
-  const inputStyle = {
-    background: '#131D24', border: '1px solid #1C2730', borderRadius: 10,
-    padding: '11px 14px', color: '#E8F0F2', fontSize: 13, width: '100%',
-    outline: 'none', direction: 'ltr', textAlign: 'left', marginBottom: 10
+  const onExport = () => {
+    setExportText(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), fit_logs_v3: logs, fit_weight_v3: weightLog, fit_muscles_v1: muscleGroups }));
   };
-  const cardStyle = {
-    background: '#0D1318', borderRadius: 16, padding: '16px 16px 12px', marginBottom: 14
+  const onImportParse = () => {
+    try {
+      const data = JSON.parse(importJson.trim());
+      if (!data.version) throw new Error();
+      setImportPreview({
+        data,
+        mealCount: Object.values(data.fit_logs_v3||{}).reduce((s,d)=>s+(d.meals?.length||0),0),
+        workoutCount: Object.values(data.fit_logs_v3||{}).reduce((s,d)=>s+(d.workouts?.length||0),0),
+        weightCount: (data.fit_weight_v3||[]).length,
+        muscleCount: (data.fit_muscles_v1||[]).reduce((s,g)=>s+(g.exercises?.length||0),0),
+      });
+      setImportStep('confirm');
+    } catch {
+      setImportMsg({ ok: false, text: ar ? '❌ النص غير صالح — تأكد من نسخه كاملاً' : '❌ Invalid JSON — copy it completely' });
+      setTimeout(() => setImportMsg(null), 4000);
+    }
   };
-  return /*#__PURE__*/React.createElement("div", {style: {padding: '20px 16px 12px', direction: 'rtl'}},
-    /*#__PURE__*/React.createElement("div", {style: {fontSize: 27, fontWeight: 800, fontFamily: 'system-ui,-apple-system,sans-serif', letterSpacing: '-0.5px', marginBottom: 18}}, "الإعدادات ⚙️"),
+  const onImportConfirm = async () => {
+    try {
+      const data = importPreview.data;
+      if (data.fit_logs_v3) await saveLogs(data.fit_logs_v3);
+      if (data.fit_weight_v3) await saveWeightLog(data.fit_weight_v3);
+      if (data.fit_muscles_v1) await saveMuscleGroups(data.fit_muscles_v1);
+      setImportMsg({ ok: true, text: ar ? '✅ تم الاستيراد بنجاح' : '✅ Import successful' });
+      setShowImport(false); setImportJson(''); setImportStep('paste'); setImportPreview(null);
+    } catch {
+      setImportMsg({ ok: false, text: ar ? '❌ فشل الاستيراد' : '❌ Import failed' });
+    }
+    setTimeout(() => setImportMsg(null), 4000);
+  };
+
+  const inputStyle = { background: '#131D24', border: '1px solid #1C2730', borderRadius: 10, padding: '11px 14px', color: '#E8F0F2', fontSize: 13, width: '100%', outline: 'none', direction: 'ltr', textAlign: 'left', marginBottom: 10 };
+  const cardStyle = { background: '#0D1318', borderRadius: 16, padding: '16px 16px 12px', marginBottom: 14 };
+  const btnStyle = (active) => ({ width: '100%', background: active ? '#1C2D3A' : '#141D24', border: `1px solid ${active ? '#5B9CF6' : '#1C2730'}`, borderRadius: 10, padding: '11px', color: active ? '#5B9CF6' : '#E8F0F2', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center', marginBottom: 8 });
+
+  return /*#__PURE__*/React.createElement("div", {style: {padding: '20px 16px 12px', direction: ar ? 'rtl' : 'ltr'}},
+    /*#__PURE__*/React.createElement("div", {style: {fontSize: 27, fontWeight: 800, fontFamily: 'system-ui,-apple-system,sans-serif', letterSpacing: '-0.5px', marginBottom: 18}},
+      ar ? 'الإعدادات ⚙️' : 'Settings ⚙️'),
+
+    /* ── Language ── */
     /*#__PURE__*/React.createElement("div", {style: cardStyle},
-      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 6}}, "مفتاح Claude API"),
-      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', marginBottom: 12, lineHeight: 1.6}},
-        "يُستخدم لميزة تقدير الوجبات والتمارين بالذكاء الاصطناعي. يُحفظ محلياً على جهازك فقط ولا يُرسل لأي خادم."
-      ),
-      /*#__PURE__*/React.createElement("input", {
-        type: 'password',
-        value: key,
-        onChange: e => { setKey(e.target.value); setSaved(false); },
-        placeholder: 'sk-ant-api03-...',
-        style: inputStyle
-      }),
-      /*#__PURE__*/React.createElement("button", {
-        onClick: save,
-        style: {
-          background: saved ? '#00C87A' : '#00E5A0', color: '#080C0E', border: 'none',
-          borderRadius: 10, padding: '11px 20px', fontWeight: 700, fontSize: 14,
-          cursor: 'pointer', width: '100%', transition: 'background 0.2s'
-        }
-      }, saved ? '✓ تم الحفظ' : 'حفظ المفتاح')
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 12}},
+        ar ? '🌐 اللغة' : '🌐 Language'),
+      /*#__PURE__*/React.createElement("div", {style: {display: 'flex', gap: 8}},
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => { setLang('ar'); localStorage.setItem('fit_lang', 'ar'); },
+          style: { flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${ar ? '#00E5A0' : '#1C2730'}`, background: ar ? '#0A1F18' : '#141D24', color: ar ? '#00E5A0' : '#E8F0F2', fontWeight: 700, fontSize: 14, cursor: 'pointer' }
+        }, 'العربية'),
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => { setLang('en'); localStorage.setItem('fit_lang', 'en'); },
+          style: { flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${!ar ? '#00E5A0' : '#1C2730'}`, background: !ar ? '#0A1F18' : '#141D24', color: !ar ? '#00E5A0' : '#E8F0F2', fontWeight: 700, fontSize: 14, cursor: 'pointer' }
+        }, 'English')
+      )
     ),
-    /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', lineHeight: 1.7, padding: '0 4px'}},
-      "للحصول على مفتاح API: سجّل الدخول على ",
-      /*#__PURE__*/React.createElement("span", {style: {color: '#00E5A0'}}, "console.anthropic.com"),
-      " ← API Keys ← Create Key"
+
+    /* ── Claude API Key ── */
+    /*#__PURE__*/React.createElement("div", {style: cardStyle},
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 6}},
+        ar ? 'مفتاح Claude API' : 'Claude API Key'),
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', marginBottom: 12, lineHeight: 1.6}},
+        ar ? 'يُستخدم لميزة تقدير الوجبات والتمارين بالذكاء الاصطناعي. يُحفظ محلياً على جهازك فقط.'
+           : 'Used for AI meal and workout estimation. Stored locally on your device only.'),
+      /*#__PURE__*/React.createElement("input", { type: 'password', value: key, onChange: e => { setKey(e.target.value); setSaved(false); }, placeholder: 'sk-ant-api03-...', style: inputStyle }),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: saveKey,
+        style: { background: saved ? '#00C87A' : '#00E5A0', color: '#080C0E', border: 'none', borderRadius: 10, padding: '11px 20px', fontWeight: 700, fontSize: 14, cursor: 'pointer', width: '100%' }
+      }, saved ? (ar ? '✓ تم الحفظ' : '✓ Saved') : (ar ? 'حفظ المفتاح' : 'Save Key')),
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', lineHeight: 1.7, marginTop: 10}},
+        ar ? 'للحصول على مفتاح: ' : 'Get a key at: ',
+        /*#__PURE__*/React.createElement("span", {style: {color: '#00E5A0'}}, "console.anthropic.com"),
+        " ← API Keys ← Create Key")
+    ),
+
+    /* ── Backup ── */
+    /*#__PURE__*/React.createElement("div", {style: cardStyle},
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 12}},
+        ar ? '💾 نسخ احتياطي' : '💾 Backup'),
+      /*#__PURE__*/React.createElement("button", { onClick: onExport, style: btnStyle(!!exportText) },
+        ar ? '⬆️ تصدير البيانات' : '⬆️ Export Data'),
+      exportText && /*#__PURE__*/React.createElement("div", {style: {marginBottom: 8}},
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 10, color: '#3D5560', marginBottom: 5}},
+          ar ? 'اضغط مطولاً ثم "تحديد الكل" للنسخ:' : 'Long-press then "Select All" to copy:'),
+        /*#__PURE__*/React.createElement("textarea", { readOnly: true, value: exportText, rows: 3,
+          style: {width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:10,outline:'none',resize:'vertical',direction:'ltr',wordBreak:'break-all',marginBottom:6} }),
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExportText(''),
+          style: {background:'#1C2730',border:'none',borderRadius:8,padding:'6px 14px',color:'#E8F0F2',fontSize:11,cursor:'pointer',width:'100%'}
+        }, ar ? 'إغلاق' : 'Close')
+      ),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: () => { setShowImport(!showImport); setImportStep('paste'); setImportPreview(null); },
+        style: btnStyle(showImport)
+      }, ar ? '⬇️ استيراد — لصق البيانات' : '⬇️ Import — Paste Data'),
+      showImport && importStep === 'paste' && /*#__PURE__*/React.createElement("div", null,
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 10, color: '#3D5560', marginBottom: 6}},
+          ar ? 'الصق هنا النص المنسوخ من التصدير:' : 'Paste the exported text here:'),
+        /*#__PURE__*/React.createElement("textarea", { rows: 5, value: importJson, onChange: e => setImportJson(e.target.value), placeholder: '{"version":1,...}',
+          style: {width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:11,outline:'none',resize:'vertical',marginBottom:8,direction:'ltr',wordBreak:'break-all'} }),
+        /*#__PURE__*/React.createElement("button", { onClick: onImportParse, disabled: !importJson.trim(),
+          style: {width:'100%',background:importJson.trim()?'#5B9CF6':'#1C2730',color:importJson.trim()?'#fff':'#3D5560',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}
+        }, ar ? 'فحص البيانات →' : 'Inspect Data →')
+      ),
+      showImport && importStep === 'confirm' && importPreview && /*#__PURE__*/React.createElement("div", {style: {background:'#141D24',borderRadius:12,padding:14,border:'1px solid #FF8C4260'}},
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 12, fontWeight: 700, color: '#FF8C42', marginBottom: 10}},
+          ar ? '⚠️ تحذير — ستُستبدل بياناتك الحالية' : '⚠️ Warning — your current data will be replaced'),
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#C0CDD4', marginBottom: 12, lineHeight: 1.7}},
+          ar ? 'البيانات التي ستُستورد:' : 'Data to import:',
+          /*#__PURE__*/React.createElement("br", null),
+          '🍽️ ', importPreview.mealCount, ar ? ' وجبة · ' : ' meals · ',
+          '🏋️ ', importPreview.workoutCount, ar ? ' تمرين · ' : ' workouts · ',
+          '⚖️ ', importPreview.weightCount, ar ? ' قياس وزن · ' : ' weight entries · ',
+          '💪 ', importPreview.muscleCount, ar ? ' تمرين في المجموعات' : ' muscle exercises'
+        ),
+        /*#__PURE__*/React.createElement("div", {style: {display:'flex', gap:8}},
+          /*#__PURE__*/React.createElement("button", { onClick: onImportConfirm,
+            style: {flex:1,background:'#FF4444',border:'none',borderRadius:10,padding:'10px',color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}
+          }, ar ? 'تأكيد الاستيراد' : 'Confirm Import'),
+          /*#__PURE__*/React.createElement("button", { onClick: () => { setShowImport(false); setImportStep('paste'); setImportPreview(null); },
+            style: {flex:1,background:'#1C2730',border:'none',borderRadius:10,padding:'10px',color:'#E8F0F2',fontWeight:600,fontSize:13,cursor:'pointer'}
+          }, ar ? 'إلغاء' : 'Cancel')
+        )
+      ),
+      importMsg && /*#__PURE__*/React.createElement("div", {style: {fontSize:11, marginTop:8, color: importMsg.ok?'#00E5A0':'#FF4444', textAlign:'center'}},
+        importMsg.text)
     )
   );
 }
@@ -6263,15 +6167,10 @@ function Settings() {
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function FitnessApp() {
   const [tab, setTab] = useState('dashboard');
+  const [lang, setLang] = useState(localStorage.getItem('fit_lang') || 'ar');
   const [logs, setLogs] = useState({});
   const [weightLog, setWeightLog] = useState([]);
   const [muscleGroups, setMuscleGroups] = useState(MUSCLE_GROUPS_DEFAULT);
-  const [importMsg, setImportMsg] = useState(null);
-  const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [exportText, setExportText] = useState('');
-  const [importStep, setImportStep] = useState('paste');
-  const [importPreview, setImportPreview] = useState(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     (async () => {
@@ -6322,62 +6221,6 @@ function FitnessApp() {
     try {
       await window.storage.set('fit_muscles_v1', JSON.stringify(mg));
     } catch (e) {}
-  };
-  const onExport = () => {
-    const payload = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      fit_logs_v3: logs,
-      fit_weight_v3: weightLog,
-      fit_muscles_v1: muscleGroups
-    };
-    setExportText(JSON.stringify(payload));
-  };
-  const onImportParse = () => {
-    try {
-      const data = JSON.parse(importJson.trim());
-      if (!data.version) throw new Error();
-      const mealCount = Object.values(data.fit_logs_v3 || {}).reduce((s, d) => s + (d.meals?.length || 0), 0);
-      const workoutCount = Object.values(data.fit_logs_v3 || {}).reduce((s, d) => s + (d.workouts?.length || 0), 0);
-      const weightCount = (data.fit_weight_v3 || []).length;
-      const muscleCount = (data.fit_muscles_v1 || []).reduce((s, g) => s + (g.exercises?.length || 0), 0);
-      setImportPreview({
-        data,
-        mealCount,
-        workoutCount,
-        weightCount,
-        muscleCount
-      });
-      setImportStep('confirm');
-    } catch {
-      setImportMsg({
-        ok: false,
-        text: '❌ النص غير صالح — تأكد من نسخه كاملاً'
-      });
-      setTimeout(() => setImportMsg(null), 4000);
-    }
-  };
-  const onImportConfirm = async () => {
-    try {
-      const data = importPreview.data;
-      if (data.fit_logs_v3) await saveLogs(data.fit_logs_v3);
-      if (data.fit_weight_v3) await saveWeightLog(data.fit_weight_v3);
-      if (data.fit_muscles_v1) await saveMuscleGroups(data.fit_muscles_v1);
-      setImportMsg({
-        ok: true,
-        text: '✅ تم الاستيراد بنجاح'
-      });
-      setShowImport(false);
-      setImportJson('');
-      setImportStep('paste');
-      setImportPreview(null);
-    } catch {
-      setImportMsg({
-        ok: false,
-        text: '❌ فشل الاستيراد'
-      });
-    }
-    setTimeout(() => setImportMsg(null), 4000);
   };
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const t = selectedDate;
@@ -6482,20 +6325,7 @@ function FitnessApp() {
     todayData: todayData,
     logs: logs,
     weightLog: weightLog,
-    saveWeightLog: saveWeightLog,
-    onExport: onExport,
-    onImportParse: onImportParse,
-    onImportConfirm: onImportConfirm,
-    importMsg: importMsg,
-    showImport: showImport,
-    setShowImport: setShowImport,
-    importJson: importJson,
-    setImportJson: setImportJson,
-    exportText: exportText,
-    setExportText: setExportText,
-    importStep: importStep,
-    setImportStep: setImportStep,
-    importPreview: importPreview
+    saveWeightLog: saveWeightLog
   }), tab === 'nutrition' && /*#__PURE__*/React.createElement(Nutrition, {
     todayData: todayData,
     addMeal: addMeal,
@@ -6519,7 +6349,11 @@ function FitnessApp() {
   }), tab === 'progress' && /*#__PURE__*/React.createElement(Progress, {
     logs: logs,
     weightLog: weightLog
-  }), tab === 'settings' && /*#__PURE__*/React.createElement(Settings, null),
+  }), tab === 'settings' && /*#__PURE__*/React.createElement(Settings, {
+    lang: lang, setLang: setLang,
+    logs: logs, weightLog: weightLog, muscleGroups: muscleGroups,
+    saveLogs: saveLogs, saveWeightLog: saveWeightLog, saveMuscleGroups: saveMuscleGroups
+  }),
   /*#__PURE__*/React.createElement(BottomNav, {
     tab: tab,
     setTab: setTab
