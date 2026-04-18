@@ -17,8 +17,17 @@ select { -webkit-appearance: none; }
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div id="debug-loading" style="color:#fff;background:#c00;padding:16px;font-size:14px;direction:ltr;font-family:monospace">LOADING... if you see this, HTML loaded but React did not mount.</div></div>
 <script>
+window.onerror = function(msg, src, line, col, err) {
+  var d = document.getElementById('debug-loading') || document.getElementById('root');
+  d.innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">JS ERROR:\n' + msg + '\n' + src + ':' + line + '\n' + (err&&err.stack||'') + '</pre>';
+};
+window.onunhandledrejection = function(ev) {
+  var e = ev.reason;
+  var d = document.getElementById('debug-loading') || document.getElementById('root');
+  d.innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">UNHANDLED PROMISE REJECTION:\n' + String(e) + '\n' + (e&&e.stack||'') + '</pre>';
+};
 window.storage = {
   get: async (key) => {
     try { const val = localStorage.getItem(key); return val ? {key, value: val} : null; } catch(e) { return null; }
@@ -6534,10 +6543,12 @@ class ErrorBoundary extends React.Component {
 }
 
 try {
+  var _dl = document.getElementById('debug-loading');
+  if (_dl) _dl.textContent = 'React mounting...';
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(React.createElement(ErrorBoundary, null, React.createElement(FitnessApp)));
 } catch(e) {
-  document.getElementById("root").innerHTML = '<div style="color:red;padding:20px;font-size:12px;word-break:break-all;background:#111;direction:ltr">' + e.name + ': ' + e.message + '<br><br>' + (e.stack||'').substring(0,500) + '</div>';
+  document.getElementById("root").innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">SYNC ERROR:\n' + e.name + ': ' + e.message + '\n' + (e.stack||'').substring(0,800) + '</pre>';
 }
 
 
