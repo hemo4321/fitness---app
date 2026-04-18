@@ -58,9 +58,16 @@ jobs:
 
           def safe(js): return re.sub(r'</', r'<\\/', js)
 
+          # Wrap recharts in an IIFE that shadows module/exports so the UMD
+          # falls through to the browser-global branch and sets window.Recharts.
+          # Cordova's WebView can expose a module-like environment that tricks
+          # recharts' UMD into taking the CommonJS path and never setting the global.
+          recharts_wrapped = '(function(){var module=undefined;var exports={};' + safe(recharts) + '})();'
+          print('recharts wrapped size:', len(recharts_wrapped)//1024, 'KB')
+
           html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>',    '<script>' + safe(react)    + '</script>')
           html = html.replace('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>', '<script>' + safe(reactdom) + '</script>')
-          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>',        '<script>' + safe(recharts) + '</script>')
+          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>',        '<script>' + recharts_wrapped + '</script>')
 
           for cdn in ['unpkg.com/react@18', 'unpkg.com/react-dom@18', 'unpkg.com/recharts']:
             if cdn in html:
