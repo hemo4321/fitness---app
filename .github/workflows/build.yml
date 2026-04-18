@@ -22,9 +22,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Accept Android SDK licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
       - name: Create Expo project
         # Build in /tmp — outside the git repo — so EAS CLI has no parent
         # .gitignore to inherit (repo .gitignore lists FitnessTracker/).
@@ -149,24 +146,13 @@ jobs:
       - name: Prebuild Android project
         run: cd /tmp/FitnessTracker && npx expo prebuild --platform android --clean --non-interactive
 
-      - name: Bundle JS
-        run: |
-          cd /tmp/FitnessTracker
-          mkdir -p android/app/src/main/assets
-          # Expo SDK 50+ uses expo/AppEntry.js as main; create index.js shim if absent
-          [ -f index.js ] || echo "import 'expo/AppEntry';" > index.js
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file index.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res
-
       - name: Build APK with Gradle
         run: |
           cd /tmp/FitnessTracker/android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          # bundleDebugJsAndAssets runs Metro and embeds index.android.bundle;
+          # assembleDebug then packages it into the APK.
+          ./gradlew bundleDebugJsAndAssets assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
