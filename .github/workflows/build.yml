@@ -149,11 +149,24 @@ jobs:
       - name: Prebuild Android project
         run: cd /tmp/FitnessTracker && npx expo prebuild --platform android --clean --non-interactive
 
+      - name: Bundle JS
+        run: |
+          cd /tmp/FitnessTracker
+          mkdir -p android/app/src/main/assets
+          # Expo SDK 50+ uses expo/AppEntry.js as main; create index.js shim if absent
+          [ -f index.js ] || echo "import 'expo/AppEntry';" > index.js
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
+
       - name: Build APK with Gradle
         run: |
           cd /tmp/FitnessTracker/android
           chmod +x gradlew
-          ./gradlew assembleDebug -PbundleInDebug=true --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
