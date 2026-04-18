@@ -22,8 +22,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli@16
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Create Expo project
         # Build in /tmp — outside the git repo — so EAS CLI has no parent
@@ -132,34 +132,32 @@ jobs:
           APPTSX
           echo "App.tsx written"
 
-      - name: Setup config files
+      - name: Setup app.json
         run: |
-          echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > /tmp/FitnessTracker/eas.json
           cat > /tmp/patch_appjson.py << 'PYEOF'
           import json
           with open('/tmp/FitnessTracker/app.json', 'r') as f:
             config = json.load(f)
           config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
           config['expo']['plugins'] = ['./withAndroidAssets']
-          config['expo']['extra'] = {'eas': {'projectId': '7b50975b-dc4c-4c54-95e5-bfdff1915a08'}}
           with open('/tmp/FitnessTracker/app.json', 'w') as f:
             json.dump(config, f, indent=2)
           print('app.json updated')
           PYEOF
           python3 /tmp/patch_appjson.py
 
-      - name: Build APK (local)
-        run: cd /tmp/FitnessTracker && eas build --platform android --profile preview --non-interactive --local
+      - name: Prebuild Android project
+        run: cd /tmp/FitnessTracker && npx expo prebuild --platform android --clean --non-interactive
 
-      - name: Find APK
+      - name: Build APK with Gradle
         run: |
-          APK=$(find /tmp/FitnessTracker -name "*.apk" -type f | head -1)
-          echo "APK_PATH=$APK" >> $GITHUB_ENV
-          echo "Found: $APK ($(wc -c < "$APK") bytes)"
+          cd /tmp/FitnessTracker/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: fitness-tracker-apk
-          path: ${{ env.APK_PATH }}
+          path: /tmp/FitnessTracker/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
