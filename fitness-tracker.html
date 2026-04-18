@@ -6518,9 +6518,24 @@ function FitnessApp() {
   }));
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  componentDidCatch(e, info) { console.error('ErrorBoundary caught:', e, info); }
+  render() {
+    if (this.state.error) {
+      const e = this.state.error;
+      return React.createElement('pre', {
+        style: { color: 'red', padding: '20px', fontSize: '11px', wordBreak: 'break-all', direction: 'ltr', background: '#111', margin: 0, whiteSpace: 'pre-wrap' }
+      }, String(e) + '\n\n' + (e.stack || '').substring(0, 1200));
+    }
+    return this.props.children;
+  }
+}
+
 try {
   const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(React.createElement(FitnessApp));
+  root.render(React.createElement(ErrorBoundary, null, React.createElement(FitnessApp)));
 } catch(e) {
   document.getElementById("root").innerHTML = '<div style="color:red;padding:20px;font-size:12px;word-break:break-all;background:#111;direction:ltr">' + e.name + ': ' + e.message + '<br><br>' + (e.stack||'').substring(0,500) + '</div>';
 }
