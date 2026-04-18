@@ -32,33 +32,16 @@ jobs:
         run: cd /tmp/FitnessApp && cordova platform add android
 
       - name: Set up consistent debug keystore
-        # Uses a fixed keystore stored as a repo secret so every APK build
-        # is signed with the same key. This allows installing new builds
-        # over old ones without uninstalling first.
-        # To set up: generate once with keytool, base64-encode it, then add
-        # as a GitHub Actions secret named DEBUG_KEYSTORE_B64.
-        #   keytool -genkeypair -keystore debug.keystore -alias androiddebugkey
-        #           -keypass android -storepass android
-        #           -dname "CN=Android Debug,O=Android,C=US"
-        #           -keyalg RSA -keysize 2048 -validity 10000
-        #   base64 -w0 debug.keystore > keystore.b64  (then paste into secret)
+        # Uses debug.keystore committed to the repo so every build is signed
+        # with the same key — APKs can be installed as updates without uninstalling.
         run: |
           mkdir -p ~/.android
           if [ -n "${{ secrets.DEBUG_KEYSTORE_B64 }}" ]; then
-            echo "Using repository keystore secret"
+            echo "Using DEBUG_KEYSTORE_B64 secret"
             echo "${{ secrets.DEBUG_KEYSTORE_B64 }}" | base64 -d > ~/.android/debug.keystore
           else
-            echo "WARNING: DEBUG_KEYSTORE_B64 secret not set — generating a temporary keystore."
-            echo "Each build will use a different key, requiring uninstall before reinstall."
-            echo "See workflow comments for setup instructions."
-            keytool -genkeypair \
-              -keystore ~/.android/debug.keystore \
-              -alias androiddebugkey \
-              -keypass android \
-              -storepass android \
-              -dname "CN=Android Debug,O=Android,C=US" \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -noprompt
+            echo "Using committed debug.keystore from repo"
+            cp debug.keystore ~/.android/debug.keystore
           fi
 
       - name: Inline JS libraries into HTML
