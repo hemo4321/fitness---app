@@ -22,32 +22,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Create Expo project
-        # Build in /tmp — outside the git repo — so EAS CLI has no parent
-        # .gitignore to inherit (repo .gitignore lists FitnessTracker/).
-        # Pin to create-expo-app@3 to avoid breaking changes in @latest.
-        run: npx create-expo-app@3 /tmp/FitnessTracker --template blank-typescript --yes
+      - name: Install Cordova
+        run: npm install -g cordova@12
 
-      - name: Install dependencies
-        run: |
-          cd /tmp/FitnessTracker
-          npx expo install react-native-webview
+      - name: Create Cordova project
+        run: cordova create /tmp/FitnessApp com.hemo4321.fitnesstracker FitnessTracker
 
-      - name: Inline JS libraries into HTML and export as TS module
-        # Embeds React/ReactDOM/Recharts into the HTML as inline <script> blocks,
-        # then exports the whole HTML string as html.ts so App.tsx can pass it
-        # directly to WebView via source={{ html }} — no file:// access needed,
-        # no CDN calls at runtime.
+      - name: Add Android platform
+        run: cd /tmp/FitnessApp && cordova platform add android
+
+      - name: Inline JS libraries into HTML
+        # Replaces CDN <script> tags with self-contained inline versions so the
+        # WebView works fully offline. Fails hard if any CDN URL survives.
         run: |
           npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
           cat > /tmp/inline.py << 'PYEOF'
-          import re, json, sys, os
+          import re, sys, os
 
           html     = open('fitness-tracker.html', 'r', encoding='utf-8').read()
           react    = open('/tmp/libs/node_modules/react/umd/react.production.min.js', 'r', encoding='utf-8').read()
           reactdom = open('/tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js', 'r', encoding='utf-8').read()
 
-          # Try multiple paths for Recharts UMD (package layout varies by version)
           recharts = None
           for p in [
             '/tmp/libs/node_modules/recharts/umd/Recharts.js',
@@ -56,82 +51,33 @@ jobs:
           ]:
             if os.path.exists(p):
               recharts = open(p, 'r', encoding='utf-8').read()
-              print('Recharts loaded from:', p, 'size:', len(recharts)//1024, 'KB')
+              print('recharts:', p, len(recharts)//1024, 'KB')
               break
           if recharts is None:
-            print('ERROR: recharts UMD not found', file=sys.stderr)
-            sys.exit(1)
+            sys.exit('ERROR: recharts UMD file not found')
 
           def safe(js): return re.sub(r'</', r'<\\/', js)
 
-          html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>', '<script>' + safe(react) + '</script>')
+          html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>',    '<script>' + safe(react)    + '</script>')
           html = html.replace('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>', '<script>' + safe(reactdom) + '</script>')
-          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>', '<script>' + safe(recharts) + '</script>')
+          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>',        '<script>' + safe(recharts) + '</script>')
 
-          # Verify all CDN URLs replaced
           for cdn in ['unpkg.com/react@18', 'unpkg.com/react-dom@18', 'unpkg.com/recharts']:
             if cdn in html:
-              print('ERROR: CDN URL still present:', cdn, file=sys.stderr)
-              sys.exit(1)
+              sys.exit('ERROR: CDN URL still present after inlining: ' + cdn)
 
-          print('Inline done, size:', len(html)//1024, 'KB')
-
-          # Export as a TypeScript string module so App.tsx can import it
-          ts = 'const HTML: string = ' + json.dumps(html, ensure_ascii=False) + ';\nexport default HTML;\n'
-          open('/tmp/FitnessTracker/html.ts', 'w', encoding='utf-8').write(ts)
-          print('html.ts written, size:', len(ts)//1024, 'KB')
+          out = '/tmp/FitnessApp/www/index.html'
+          open(out, 'w', encoding='utf-8').write(html)
+          print('Inlined OK, size:', len(html)//1024, 'KB, written to', out)
           PYEOF
           python3 /tmp/inline.py
 
-      - name: Setup App.tsx
-        run: |
-          cat > /tmp/FitnessTracker/App.tsx << 'APPTSX'
-          import { SafeAreaView, StatusBar } from 'react-native';
-          import { WebView } from 'react-native-webview';
-          import HTML from './html';
-
-          export default function App() {
-            return (
-              <SafeAreaView style={{ flex: 1, backgroundColor: '#080C0E' }}>
-                <StatusBar barStyle="light-content" />
-                <WebView
-                  source={{ html: HTML, baseUrl: 'file:///android_asset/' }}
-                  style={{ flex: 1 }}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                  originWhitelist={['*']}
-                />
-              </SafeAreaView>
-            );
-          }
-          APPTSX
-          echo "App.tsx written"
-
-      - name: Setup app.json
-        run: |
-          cat > /tmp/patch_appjson.py << 'PYEOF'
-          import json
-          with open('/tmp/FitnessTracker/app.json', 'r') as f:
-            config = json.load(f)
-          config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
-          with open('/tmp/FitnessTracker/app.json', 'w') as f:
-            json.dump(config, f, indent=2)
-          print('app.json updated')
-          PYEOF
-          python3 /tmp/patch_appjson.py
-
-      - name: Prebuild Android project
-        run: cd /tmp/FitnessTracker && npx expo prebuild --platform android --clean --non-interactive
-
-      - name: Build APK with Gradle
-        run: |
-          cd /tmp/FitnessTracker/android
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+      - name: Build APK
+        run: cd /tmp/FitnessApp && cordova build android
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: fitness-tracker-apk
-          path: /tmp/FitnessTracker/android/app/build/outputs/apk/release/app-release.apk
+          path: /tmp/FitnessApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
