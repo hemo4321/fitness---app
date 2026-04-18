@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -17,8 +17,17 @@ select { -webkit-appearance: none; }
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div id="debug-loading" style="color:#fff;background:#c00;padding:16px;font-size:14px;direction:ltr;font-family:monospace">LOADING... if you see this, HTML loaded but React did not mount.</div></div>
 <script>
+window.onerror = function(msg, src, line, col, err) {
+  var d = document.getElementById('debug-loading') || document.getElementById('root');
+  d.innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">JS ERROR:\n' + msg + '\n' + src + ':' + line + '\n' + (err&&err.stack||'') + '</pre>';
+};
+window.onunhandledrejection = function(ev) {
+  var e = ev.reason;
+  var d = document.getElementById('debug-loading') || document.getElementById('root');
+  d.innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">UNHANDLED PROMISE REJECTION:\n' + String(e) + '\n' + (e&&e.stack||'') + '</pre>';
+};
 window.storage = {
   get: async (key) => {
     try { const val = localStorage.getItem(key); return val ? {key, value: val} : null; } catch(e) { return null; }
@@ -82,45 +91,29 @@ const EXERCISES_AR = [
 // شراغز
 'شراغز', 'أخرى'];
 const CARDIO_TYPES = [{
-  ar: 'جري',
-  icon: '🏃',
-  met: 8.0,
-  k: 1.04
+  ar: 'جري', en: 'Running',
+  icon: '🏃', met: 8.0, k: 1.04
 }, {
-  ar: 'مشي سريع',
-  icon: '🚶',
-  met: 4.3,
-  k: 0.86
+  ar: 'مشي سريع', en: 'Brisk Walk',
+  icon: '🚶', met: 4.3, k: 0.86
 }, {
-  ar: 'مشي عادي',
-  icon: '🚶',
-  met: 3.0,
-  k: 0.48
+  ar: 'مشي عادي', en: 'Walking',
+  icon: '🚶', met: 3.0, k: 0.48
 }, {
-  ar: 'دراجة',
-  icon: '🚲',
-  met: 7.0,
-  k: 0.48
+  ar: 'دراجة', en: 'Cycling',
+  icon: '🚲', met: 7.0, k: 0.48
 }, {
-  ar: 'سباحة',
-  icon: '🏊',
-  met: 7.0,
-  k: 0.70
+  ar: 'سباحة', en: 'Swimming',
+  icon: '🏊', met: 7.0, k: 0.70
 }, {
-  ar: 'HIIT',
-  icon: '⚡',
-  met: 10.0,
-  k: 0.90
+  ar: 'HIIT', en: 'HIIT',
+  icon: '⚡', met: 10.0, k: 0.90
 }, {
-  ar: 'إليبتيكال',
-  icon: '🔄',
-  met: 5.0,
-  k: 0.55
+  ar: 'إليبتيكال', en: 'Elliptical',
+  icon: '🔄', met: 5.0, k: 0.55
 }, {
-  ar: 'روينج',
-  icon: '🚣',
-  met: 7.0,
-  k: 0.65
+  ar: 'روينج', en: 'Rowing',
+  icon: '🚣', met: 7.0, k: 0.65
 }];
 const GROUP_COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#A8E6CF', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F0B27A', '#C3B1E1', '#87CEEB'];
 const MUSCLE_GROUPS_DEFAULT = [{
@@ -192,8 +185,9 @@ const daysSince = dateStr => {
 const genId = () => Math.random().toString(36).substr(2, 9);
 const todayStr = () => new Date().toISOString().split('T')[0];
 const fmtDate = d => {
+  const locale = (localStorage.getItem('fit_lang') || 'ar') === 'ar' ? 'ar-SA' : 'en-US';
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString('ar-SA', {
+    return new Date(d + 'T00:00:00').toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric'
     });
@@ -202,18 +196,22 @@ const fmtDate = d => {
   }
 };
 const fmtDay = d => {
+  const locale = (localStorage.getItem('fit_lang') || 'ar') === 'ar' ? 'ar-SA' : 'en-US';
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString('ar-SA', {
+    return new Date(d + 'T00:00:00').toLocaleDateString(locale, {
       weekday: 'short'
     });
   } catch (e) {
     return d;
   }
 };
-const nowTime = () => new Date().toLocaleTimeString('ar', {
-  hour: '2-digit',
-  minute: '2-digit'
-});
+const nowTime = () => {
+  const locale = (localStorage.getItem('fit_lang') || 'ar') === 'ar' ? 'ar' : 'en-US';
+  return new Date().toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 const fmt = (n, d = 1) => {
   const r = parseFloat((+n).toFixed(d));
   return isNaN(r) ? 0 : r;
@@ -279,32 +277,34 @@ function Ring({
 // ── BOTTOM NAV ────────────────────────────────────────────────────────────────
 function BottomNav({
   tab,
-  setTab
+  setTab,
+  lang
 }) {
+  const ar = lang === 'ar';
   const items = [{
     id: 'dashboard',
     icon: '⚡',
-    label: 'اليوم'
+    label: ar ? 'اليوم' : 'Today'
   }, {
     id: 'nutrition',
     icon: '🥗',
-    label: 'تغذية'
+    label: ar ? 'تغذية' : 'Nutrition'
   }, {
     id: 'workout',
     icon: '🏋️',
-    label: 'تمارين'
+    label: ar ? 'تمارين' : 'Workout'
   }, {
     id: 'muscles',
     icon: '💪',
-    label: 'عضلات'
+    label: ar ? 'عضلات' : 'Muscles'
   }, {
     id: 'progress',
     icon: '📈',
-    label: 'تحليل'
+    label: ar ? 'تحليل' : 'Progress'
   }, {
     id: 'settings',
     icon: '⚙️',
-    label: 'إعدادات'
+    label: ar ? 'إعدادات' : 'Settings'
   }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -361,20 +361,9 @@ function Dashboard({
   logs,
   weightLog,
   saveWeightLog,
-  onExport,
-  onImportParse,
-  onImportConfirm,
-  importMsg,
-  showImport,
-  setShowImport,
-  importJson,
-  setImportJson,
-  exportText,
-  setExportText,
-  importStep,
-  setImportStep,
-  importPreview
+  lang
 }) {
+  const ar = lang === 'ar';
   const {
     meals = [],
     workouts = []
@@ -446,7 +435,7 @@ function Dashboard({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '20px 16px 12px',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -457,7 +446,7 @@ function Dashboard({
       fontSize: 11,
       color: '#3D5560'
     }
-  }, new Date().toLocaleDateString('ar-SA', {
+  }, new Date().toLocaleDateString(ar ? 'ar-SA' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -466,11 +455,11 @@ function Dashboard({
     style: {
       fontSize: 27,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       marginTop: 2,
       letterSpacing: '-0.5px'
     }
-  }, "\u0644\u0648\u062D\u0629 \u0627\u0644\u064A\u0648\u0645 \u26A1")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0644\u0648\u062D\u0629 \u0627\u0644\u064A\u0648\u0645 \u26A1' : 'Dashboard \u26A1')), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 22,
@@ -491,7 +480,7 @@ function Dashboard({
     style: {
       fontSize: 22,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: over ? '#FF4444' : '#00E5A0',
       lineHeight: 1
     }
@@ -501,12 +490,12 @@ function Dashboard({
       color: '#3D5560',
       marginTop: 2
     }
-  }, "\u0645\u0646 ", PROFILE.dailyCalories), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0645\u0646 ' : 'of ', PROFILE.dailyCalories), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0633\u0639\u0631\u0629")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0633\u0639\u0631\u0629' : 'cal')), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: 'flex',
@@ -518,11 +507,11 @@ function Dashboard({
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0645\u062A\u0628\u0642\u064A \u0627\u0644\u064A\u0648\u0645"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0645\u062A\u0628\u0642\u064A \u0627\u0644\u064A\u0648\u0645' : 'Remaining'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 26,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: remaining >= 0 ? '#00E5A0' : '#FF4444',
       lineHeight: 1.1
     }
@@ -531,7 +520,7 @@ function Dashboard({
       fontSize: 11,
       fontWeight: 400
     }
-  }, " \u0643\u0627\u0644"))), /*#__PURE__*/React.createElement("div", {
+  }, ar ? ' \u0643\u0627\u0644' : ' kcal'))), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 1,
       background: '#1C2730'
@@ -546,7 +535,7 @@ function Dashboard({
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0645\u062D\u0631\u0648\u0642"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0645\u062D\u0631\u0648\u0642' : 'Burned'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 17,
       fontWeight: 600,
@@ -556,12 +545,12 @@ function Dashboard({
     style: {
       fontSize: 9
     }
-  }, " \u0643\u0627\u0644"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, ar ? ' \u0643\u0627\u0644' : ' kcal'))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0628\u0631\u0648\u062A\u064A\u0646"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0628\u0631\u0648\u062A\u064A\u0646' : 'Protein'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 17,
       fontWeight: 600,
@@ -591,7 +580,7 @@ function Dashboard({
       fontSize: 12,
       fontWeight: 600
     }
-  }, "\uD83E\uDD69 \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646"), /*#__PURE__*/React.createElement("span", {
+  }, ar ? '\uD83E\uDD69 \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646' : '\uD83E\uDD69 Protein'), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: protein >= PROFILE.dailyProtein ? '#00E5A0' : '#E8F0F2',
@@ -625,7 +614,7 @@ function Dashboard({
       fontSize: 10,
       color: '#3D5560'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u0645\u062A\u0628\u0642\u064A: ", fmt(Math.max(PROFILE.dailyProtein - protein, 0), 1), "g"), /*#__PURE__*/React.createElement("span", null, Math.min(Math.round(protein / PROFILE.dailyProtein * 100), 100), "%"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, ar ? '\u0645\u062A\u0628\u0642\u064A: ' : 'Left: ', fmt(Math.max(PROFILE.dailyProtein - protein, 0), 1), "g"), /*#__PURE__*/React.createElement("span", null, Math.min(Math.round(protein / PROFILE.dailyProtein * 100), 100), "%"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 20,
@@ -645,12 +634,12 @@ function Dashboard({
       fontSize: 13,
       fontWeight: 700
     }
-  }, "\u2696\uFE0F \u0633\u062C\u0644 \u0627\u0644\u0648\u0632\u0646"), lastW && /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u2696\uFE0F \u0633\u062C\u0644 \u0627\u0644\u0648\u0632\u0646' : '\u2696\uFE0F Weight Log'), lastW && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: todayW ? '#00E5A0' : '#3D5560'
     }
-  }, todayW ? '✓ سجّلت اليوم' : `آخر تسجيل: ${fmtDate(lastW.date)}`)), /*#__PURE__*/React.createElement("div", {
+  }, todayW ? (ar ? '✓ سجّلت اليوم' : '✓ Logged today') : (ar ? `آخر تسجيل: ${fmtDate(lastW.date)}` : `Last: ${fmtDate(lastW.date)}`))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
@@ -658,7 +647,7 @@ function Dashboard({
     }
   }, /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0648\u0632\u0646\u0643 \u0627\u0644\u062D\u0627\u0644\u064A (kg)",
+    placeholder: ar ? '\u0648\u0632\u0646\u0643 \u0627\u0644\u062D\u0627\u0644\u064A (kg)' : 'Your weight (kg)',
     value: newWeight,
     onChange: e => setNewWeight(e.target.value),
     onKeyDown: e => e.key === 'Enter' && logWeight(),
@@ -684,23 +673,23 @@ function Dashboard({
       fontSize: 13,
       cursor: 'pointer'
     }
-  }, "\u0633\u062C\u0644")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? '\u0633\u062C\u0644' : 'Log')), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8
     }
   }, [{
-    l: 'الوزن الحالي',
+    l: ar ? 'الوزن الحالي' : 'Weight',
     v: `${currentWeight}`,
     u: 'kg',
     c: '#00E5A0'
   }, {
-    l: 'خسرت',
+    l: ar ? 'خسرت' : 'Lost',
     v: lostSoFar > 0 ? `${lostSoFar}` : '0',
     u: 'kg',
     c: lostSoFar > 0 ? '#00E5A0' : '#3D5560'
   }, {
-    l: 'باقي للهدف',
+    l: ar ? 'باقي للهدف' : 'To Goal',
     v: remainKg,
     u: 'kg',
     c: '#FF8C42'
@@ -750,7 +739,7 @@ function Dashboard({
       fontSize: 13,
       fontWeight: 700
     }
-  }, "\uD83C\uDFAF \u0627\u0644\u062A\u0642\u062F\u0645 \u0646\u062D\u0648 \u0627\u0644\u0647\u062F\u0641"), /*#__PURE__*/React.createElement("span", {
+  }, ar ? '\uD83C\uDFAF \u0627\u0644\u062A\u0642\u062F\u0645 \u0646\u062D\u0648 \u0627\u0644\u0647\u062F\u0641' : '\uD83C\uDFAF Goal Progress'), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: '#00E5A0',
@@ -779,220 +768,38 @@ function Dashboard({
       fontSize: 10,
       color: '#3D5560'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u0627\u0644\u0628\u062F\u0627\u064A\u0629: ", PROFILE.startWeight, "kg"), /*#__PURE__*/React.createElement("span", null, "\u0627\u0644\u0647\u062F\u0641: ", PROFILE.goalWeight, "kg | 6 \u0623\u0634\u0647\u0631"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, ar ? '\u0627\u0644\u0628\u062F\u0627\u064A\u0629: ' : 'Start: ', PROFILE.startWeight, "kg"), /*#__PURE__*/React.createElement("span", null, ar ? '\u0627\u0644\u0647\u062F\u0641: ' : 'Goal: ', PROFILE.goalWeight, "ar ? "kg | 6 \u0623\u0634\u0647\u0631" : "kg | 6 mo"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,
       marginBottom: 12
     }
   }, /*#__PURE__*/React.createElement(Badge, {
-    label: "\u0648\u062C\u0628\u0627\u062A \u0627\u0644\u064A\u0648\u0645",
+    label: ar ? '\u0648\u062C\u0628\u0627\u062A \u0627\u0644\u064A\u0648\u0645' : 'Meals Today',
     value: meals.length,
-    unit: "\u0648\u062C\u0628\u0629",
+    unit: ar ? '\u0648\u062C\u0628\u0629' : 'meal',
     color: "#E8F0F2"
   }), /*#__PURE__*/React.createElement(Badge, {
-    label: "\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u064A\u0648\u0645",
+    label: ar ? '\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u064A\u0648\u0645' : 'Workouts Today',
     value: workouts.length,
-    unit: "\u062A\u0645\u0631\u064A\u0646",
+    unit: ar ? '\u062A\u0645\u0631\u064A\u0646' : 'workout',
     color: "#E8F0F2"
   }), /*#__PURE__*/React.createElement(Badge, {
-    label: "\u0635\u0627\u0641\u064A \u0627\u0644\u0633\u0639\u0631\u0627\u062A",
+    label: ar ? '\u0635\u0627\u0641\u064A \u0627\u0644\u0633\u0639\u0631\u0627\u062A' : 'Net Cal',
     value: net,
-    unit: "\u0643\u0627\u0644",
+    unit: ar ? "\u0643\u0627\u0644" : "kcal",
     color: net < PROFILE.dailyCalories ? '#00E5A0' : '#FF4444'
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#0E151A',
-      borderRadius: 16,
-      padding: 14,
-      border: '1px solid #1C2730'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      marginBottom: 10,
-      color: '#3D5560'
-    }
-  }, "\uD83D\uDCBE \u0646\u0633\u062E \u0627\u062D\u062A\u064A\u0627\u0637\u064A"), /*#__PURE__*/React.createElement("button", {
-    onClick: onExport,
-    style: {
-      width: '100%',
-      background: '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '11px',
-      color: '#E8F0F2',
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      marginBottom: 8,
-      textAlign: 'center'
-    }
-  }, "\u2B06\uFE0F \u062A\u0635\u062F\u064A\u0631 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A"), exportText && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: '#3D5560',
-      marginBottom: 5
-    }
-  }, "\u0627\u0636\u063A\u0637 \u0645\u0637\u0648\u0644\u0627\u064B \u0639\u0644\u0649 \u0627\u0644\u0646\u0635 \u062B\u0645 \"\u062A\u062D\u062F\u064A\u062F \u0627\u0644\u0643\u0644\" \u0644\u0644\u0646\u0633\u062E:"), /*#__PURE__*/React.createElement("textarea", {
-    readOnly: true,
-    value: exportText,
-    rows: 3,
-    style: {
-      width: '100%',
-      background: '#0A1015',
-      border: '1px solid #00E5A040',
-      borderRadius: 10,
-      padding: '10px 12px',
-      color: '#00E5A0',
-      fontSize: 11,
-      outline: 'none',
-      resize: 'none',
-      direction: 'ltr',
-      wordBreak: 'break-all'
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setExportText(''),
-    style: {
-      width: '100%',
-      background: 'none',
-      border: 'none',
-      color: '#3D5560',
-      fontSize: 11,
-      padding: '4px',
-      cursor: 'pointer'
-    }
-  }, "\u2715 \u0625\u063A\u0644\u0627\u0642")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setShowImport(!showImport);
-      setImportStep('paste');
-      setImportPreview(null);
-    },
-    style: {
-      width: '100%',
-      background: showImport ? '#252E38' : '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '11px',
-      color: '#E8F0F2',
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      textAlign: 'center',
-      marginBottom: showImport ? 8 : 0
-    }
-  }, "\u2B07\uFE0F \u0627\u0633\u062A\u064A\u0631\u0627\u062F \u2014 \u0644\u0635\u0642 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A"), showImport && importStep === 'paste' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: '#3D5560',
-      marginBottom: 6
-    }
-  }, "\u0627\u0644\u0635\u0642 \u0647\u0646\u0627 \u0627\u0644\u0646\u0635 \u0627\u0644\u0645\u0646\u0633\u0648\u062E \u0645\u0646 \u0627\u0644\u062A\u0635\u062F\u064A\u0631:"), /*#__PURE__*/React.createElement("textarea", {
-    rows: 5,
-    value: importJson,
-    onChange: e => setImportJson(e.target.value),
-    placeholder: "{\"version\":1,...}",
-    style: {
-      width: '100%',
-      background: '#141D24',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '10px 12px',
-      color: '#E8F0F2',
-      fontSize: 11,
-      outline: 'none',
-      resize: 'vertical',
-      marginBottom: 8,
-      direction: 'ltr',
-      wordBreak: 'break-all'
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: onImportParse,
-    disabled: !importJson.trim(),
-    style: {
-      width: '100%',
-      background: importJson.trim() ? '#5B9CF6' : '#1C2730',
-      color: importJson.trim() ? '#fff' : '#3D5560',
-      border: 'none',
-      borderRadius: 10,
-      padding: '10px',
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0641\u062D\u0635 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u2192")), showImport && importStep === 'confirm' && importPreview && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#141D24',
-      borderRadius: 12,
-      padding: 14,
-      border: '1px solid #FF8C4260'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: '#FF8C42',
-      marginBottom: 10
-    }
-  }, "\u26A0\uFE0F \u062A\u062D\u0630\u064A\u0631 \u2014 \u0633\u062A\u064F\u0633\u062A\u0628\u062F\u0644 \u0628\u064A\u0627\u0646\u0627\u062A\u0643 \u0627\u0644\u062D\u0627\u0644\u064A\u0629"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: '#C0CDD4',
-      marginBottom: 12,
-      lineHeight: 1.7
-    }
-  }, "\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u062A\u064A \u0633\u062A\u064F\u0633\u062A\u0648\u0631\u062F:", /*#__PURE__*/React.createElement("br", null), "\uD83C\uDF7D\uFE0F ", importPreview.mealCount, " \u0648\u062C\u0628\u0629 \xB7 \uD83C\uDFCB\uFE0F ", importPreview.workoutCount, " \u062A\u0645\u0631\u064A\u0646 \xB7 \u2696\uFE0F ", importPreview.weightCount, " \u0642\u064A\u0627\u0633 \u0648\u0632\u0646 \xB7 \uD83D\uDCAA ", importPreview.muscleCount, " \u062A\u0645\u0631\u064A\u0646 \u0641\u064A \u0627\u0644\u0645\u062C\u0645\u0648\u0639\u0627\u062A"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onImportConfirm,
-    style: {
-      flex: 1,
-      background: '#FF8C42',
-      color: '#080C0E',
-      border: 'none',
-      borderRadius: 10,
-      padding: '10px',
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0646\u0639\u0645\u060C \u0627\u0633\u062A\u0648\u0631\u062F \u0648\u0627\u0633\u062A\u0628\u062F\u0644"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setImportStep('paste');
-      setImportPreview(null);
-    },
-    style: {
-      background: '#141D24',
-      color: '#E8F0F2',
-      border: '1px solid #1C2730',
-      borderRadius: 10,
-      padding: '10px 14px',
-      fontSize: 13,
-      cursor: 'pointer'
-    }
-  }, "\u0625\u0644\u063A\u0627\u0621"))), importMsg && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      marginTop: 8,
-      color: importMsg.ok ? '#00E5A0' : '#FF4444',
-      textAlign: 'center'
-    }
-  }, importMsg.text)));
+  })));
 }
+
 
 // ── DATE BAR ──────────────────────────────────────────────────────────────────
 function DateBar({
   selectedDate,
-  setSelectedDate
+  setSelectedDate,
+  lang
 }) {
+  const ar = lang === 'ar';
   const today = todayStr();
   const isToday = selectedDate === today;
   const shift = days => {
@@ -1001,7 +808,7 @@ function DateBar({
     const next = d.toISOString().split('T')[0];
     if (next <= today) setSelectedDate(next);
   };
-  const label = isToday ? 'اليوم' : selectedDate === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? 'أمس' : fmtDate(selectedDate);
+  const label = isToday ? (ar ? 'اليوم' : 'Today') : selectedDate === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? (ar ? 'أمس' : 'Yesterday') : fmtDate(selectedDate);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1072,7 +879,7 @@ function DateBar({
       fontWeight: 600,
       cursor: 'pointer'
     }
-  }, "\u0627\u0644\u064A\u0648\u0645"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0627\u0644\u064A\u0648\u0645" : "Today"), /*#__PURE__*/React.createElement("input", {
     type: "date",
     value: selectedDate,
     max: today,
@@ -1114,8 +921,10 @@ function Nutrition({
   deleteMeal,
   editMeal,
   selectedDate,
-  setSelectedDate
+  setSelectedDate,
+  lang
 }) {
+  const ar = lang === 'ar';
   const {
     meals = []
   } = todayData;
@@ -1175,7 +984,7 @@ function Nutrition({
       const text = data.content[0].text.replace(/```json|```/g, '').trim();
       setAiResult(JSON.parse(text));
     } catch (e) {
-      setAiError(!localStorage.getItem('fit_api_key') ? 'أضف مفتاح API من تبويب الإعدادات ⚙️' : 'حدث خطأ، تأكد من صحة مفتاح API وجرب مرة أخرى');
+      setAiError(!localStorage.getItem('fit_api_key') ? (ar ? 'أضف مفتاح API من تبويب الإعدادات ⚙️' : 'Add an API key in Settings ⚙️') : (ar ? 'حدث خطأ، تأكد من صحة مفتاح API وجرب مرة أخرى' : 'Error — check your API key and try again'));
     }
     setAiLoading(false);
   };
@@ -1201,7 +1010,7 @@ function Nutrition({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '20px 16px 12px',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1211,18 +1020,19 @@ function Nutrition({
     style: {
       fontSize: 27,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       letterSpacing: '-0.5px'
     }
-  }, "\u0627\u0644\u062A\u063A\u0630\u064A\u0629 \uD83E\uDD57"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u062A\u063A\u0630\u064A\u0629 \uD83E\uDD57" : "Nutrition \uD83E\uDD57"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#3D5560',
       marginTop: 4
     }
-  }, "\u0647\u062F\u0641: ", PROFILE.dailyCalories, " \u0643\u0627\u0644 \xB7 ", PROFILE.dailyProtein, "g \u0628\u0631\u0648\u062A\u064A\u0646")), /*#__PURE__*/React.createElement(DateBar, {
+  }, ar ? "\u0647\u062F\u0641: " : "Goal: ", PROFILE.dailyCalories, ar ? " \u0643\u0627\u0644 \xB7 " : " kcal · ", PROFILE.dailyProtein, ar ? "g \u0628\u0631\u0648\u062A\u064A\u0646" : "g protein")), /*#__PURE__*/React.createElement(DateBar, {
     selectedDate: selectedDate,
-    setSelectedDate: setSelectedDate
+    setSelectedDate: setSelectedDate,
+    lang: lang
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1230,23 +1040,23 @@ function Nutrition({
       marginBottom: 18
     }
   }, [{
-    l: 'مستهلك',
+    l: ar ? 'مستهلك' : 'Consumed',
     v: totalCal,
-    u: 'كال',
+    u: ar ? 'كال' : 'kcal',
     c: totalCal > PROFILE.dailyCalories ? '#FF4444' : '#00E5A0',
-    note: `هدف ${PROFILE.dailyCalories}`
+    note: ar ? `هدف ${PROFILE.dailyCalories}` : `Goal ${PROFILE.dailyCalories}`
   }, {
-    l: 'بروتين',
+    l: ar ? 'بروتين' : 'Protein',
     v: totalProt,
     u: 'g',
     c: '#5B9CF6',
-    note: `هدف ${PROFILE.dailyProtein}g`
+    note: ar ? `هدف ${PROFILE.dailyProtein}g` : `Goal ${PROFILE.dailyProtein}g`
   }, {
-    l: 'متبقي',
+    l: ar ? 'متبقي' : 'Remaining',
     v: fmt(PROFILE.dailyCalories - totalCal, 1),
-    u: 'كال',
+    u: ar ? 'كال' : 'kcal',
     c: PROFILE.dailyCalories - totalCal >= 0 ? '#00E5A0' : '#FF4444',
-    note: 'للهدف'
+    note: ar ? 'للهدف' : 'of goal'
   }].map(s => /*#__PURE__*/React.createElement("div", {
     key: s.l,
     style: {
@@ -1313,12 +1123,12 @@ function Nutrition({
       fontSize: 14,
       fontWeight: 700
     }
-  }, "\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u062A\u063A\u0630\u064A\u0629 \u0627\u0644\u0630\u0643\u064A"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u062A\u063A\u0630\u064A\u0629 \u0627\u0644\u0630\u0643\u064A" : "AI Nutrition Assistant"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560'
     }
-  }, "\u0635\u0641 \u0648\u062C\u0628\u062A\u0643 \u0648\u0623\u0646\u0627 \u0623\u062D\u0633\u0628 \u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0648\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646"))), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0635\u0641 \u0648\u062C\u0628\u062A\u0643 \u0648\u0623\u0646\u0627 \u0623\u062D\u0633\u0628 \u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0648\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646" : "Describe your meal and I'll estimate calories & protein"))), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 1,
       background: '#1C2730',
@@ -1326,7 +1136,7 @@ function Nutrition({
     }
   }), /*#__PURE__*/React.createElement("textarea", {
     rows: 2,
-    placeholder: "\u0645\u062B\u0627\u0644: \u0635\u062D\u0646 \u0643\u0628\u0633\u0629 \u062F\u062C\u0627\u062C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0628\u064A\u0636\u062A\u064A\u0646 \u0645\u0642\u0644\u064A\u062A\u064A\u0646 \u0645\u0639 \u0634\u0631\u064A\u062D\u062A\u064A\u0646 \u062E\u0628\u0632...",
+    placeholder: ar ? "\u0645\u062B\u0627\u0644: \u0635\u062D\u0646 \u0643\u0628\u0633\u0629 \u062F\u062C\u0627\u062C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0628\u064A\u0636\u062A\u064A\u0646 \u0645\u0642\u0644\u064A\u062A\u064A\u0646 \u0645\u0639 \u0634\u0631\u064A\u062D\u062A\u064A\u0646 \u062E\u0628\u0632..." : "e.g. grilled chicken breast with rice and salad...",
     value: aiText,
     onChange: e => setAiText(e.target.value),
     style: {
@@ -1350,7 +1160,7 @@ function Nutrition({
       transition: 'all 0.2s',
       marginBottom: aiResult || aiError ? 12 : 0
     }
-  }, aiLoading ? '⏳ جاري التحليل...' : '⚡ قدّر السعرات'), aiError && /*#__PURE__*/React.createElement("div", {
+  }, aiLoading ? (ar ? '⏳ جاري التحليل...' : '⏳ Analyzing...') : (ar ? '⚡ قدّر السعرات' : '⚡ Estimate Calories')), aiError && /*#__PURE__*/React.createElement("div", {
     style: {
       color: '#FF4444',
       fontSize: 12,
@@ -1382,11 +1192,11 @@ function Nutrition({
       color: '#3D5560',
       marginBottom: 2
     }
-  }, "\u0627\u0644\u0633\u0639\u0631\u0627\u062A"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0633\u0639\u0631\u0627\u062A" : "Calories"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 28,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#00E5A0',
       lineHeight: 1
     }
@@ -1396,11 +1206,11 @@ function Nutrition({
       color: '#3D5560',
       marginBottom: 2
     }
-  }, "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646" : "Protein"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 28,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#5B9CF6',
       lineHeight: 1
     }
@@ -1426,7 +1236,7 @@ function Nutrition({
       fontSize: 13,
       cursor: 'pointer'
     }
-  }, "\u2705 \u0623\u0636\u0641 \u0644\u0644\u0633\u062C\u0644"), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u2705 \u0623\u0636\u0641 \u0644\u0644\u0633\u062C\u0644" : "\u2705 Add to Log"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setAiResult(null),
     style: {
       background: '#1C2730',
@@ -1451,7 +1261,7 @@ function Nutrition({
       textAlign: 'center',
       cursor: 'pointer'
     }
-  }, showManual ? '✕ إغلاق' : '➕ إضافة يدوية'), showManual && /*#__PURE__*/React.createElement("div", {
+  }, showManual ? (ar ? '✕ إغلاق' : '✕ Close') : (ar ? '➕ إضافة يدوية' : '➕ Add Manually')), showManual && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 20,
@@ -1466,7 +1276,7 @@ function Nutrition({
       gap: 10
     }
   }, /*#__PURE__*/React.createElement("input", {
-    placeholder: "\u0627\u0633\u0645 \u0627\u0644\u0648\u062C\u0628\u0629 *",
+    placeholder: ar ? "\u0627\u0633\u0645 \u0627\u0644\u0648\u062C\u0628\u0629 *" : "Meal name *",
     value: manual.name,
     onChange: e => setManual({
       ...manual,
@@ -1475,7 +1285,7 @@ function Nutrition({
     style: inp
   }), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0627\u0644\u062D\u0631\u0627\u0631\u064A\u0629 *",
+    placeholder: ar ? "\u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0627\u0644\u062D\u0631\u0627\u0631\u064A\u0629 *" : "Calories *",
     value: manual.calories,
     onChange: e => setManual({
       ...manual,
@@ -1484,7 +1294,7 @@ function Nutrition({
     style: inp
   }), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 (\u062C\u0631\u0627\u0645) - \u0627\u062E\u062A\u064A\u0627\u0631\u064A",
+    placeholder: ar ? "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 (\u062C\u0631\u0627\u0645) - \u0627\u062E\u062A\u064A\u0627\u0631\u064A" : "Protein (g) — optional",
     value: manual.protein,
     onChange: e => setManual({
       ...manual,
@@ -1503,13 +1313,13 @@ function Nutrition({
       fontSize: 14,
       cursor: 'pointer'
     }
-  }, "\u062D\u0641\u0638 \u0627\u0644\u0648\u062C\u0628\u0629"))), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u062D\u0641\u0638 \u0627\u0644\u0648\u062C\u0628\u0629" : "Save Meal"))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       fontWeight: 700,
       marginBottom: 10
     }
-  }, "\u0648\u062C\u0628\u0627\u062A \u0627\u0644\u064A\u0648\u0645 (", meals.length, ")"), meals.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0648\u062C\u0628\u0627\u062A \u0627\u0644\u064A\u0648\u0645 (" : "Today's Meals (", meals.length, ")"), meals.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       color: '#3D5560',
@@ -1519,7 +1329,7 @@ function Nutrition({
       borderRadius: 16,
       border: '1px solid #1C2730'
     }
-  }, "\u0644\u0627 \u062A\u0648\u062C\u062F \u0648\u062C\u0628\u0627\u062A \u0645\u0633\u062C\u0644\u0629 \u0627\u0644\u064A\u0648\u0645 \uD83C\uDF7D\uFE0F") : /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0648\u062C\u0628\u0627\u062A \u0645\u0633\u062C\u0644\u0629 \u0627\u0644\u064A\u0648\u0645 \uD83C\uDF7D\uFE0F" : "No meals logged today \uD83C\uDF7D\uFE0F") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -1550,7 +1360,7 @@ function Nutrition({
       ...editVals,
       name: e.target.value
     }),
-    placeholder: "\u0627\u0633\u0645 \u0627\u0644\u0648\u062C\u0628\u0629",
+    placeholder: ar ? "\u0627\u0633\u0645 \u0627\u0644\u0648\u062C\u0628\u0629" : "Meal name",
     style: {
       ...inp,
       fontSize: 13
@@ -1570,7 +1380,7 @@ function Nutrition({
       color: '#3D5560',
       marginBottom: 4
     }
-  }, "\u0627\u0644\u0633\u0639\u0631\u0627\u062A"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0627\u0644\u0633\u0639\u0631\u0627\u062A" : "Calories"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     value: editVals.calories,
     onChange: e => setEditVals({
@@ -1592,7 +1402,7 @@ function Nutrition({
       color: '#3D5560',
       marginBottom: 4
     }
-  }, "\u0628\u0631\u0648\u062A\u064A\u0646 (g)"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0628\u0631\u0648\u062A\u064A\u0646 (g)" : "Protein (g)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     value: editVals.protein,
     onChange: e => setEditVals({
@@ -1630,7 +1440,7 @@ function Nutrition({
       fontSize: 13,
       cursor: 'pointer'
     }
-  }, "\u2713 \u062D\u0641\u0638"), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u2713 \u062D\u0641\u0638" : "\u2713 Save"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditingId(null),
     style: {
       background: '#141D24',
@@ -1673,7 +1483,7 @@ function Nutrition({
       color: '#00E5A0',
       fontWeight: 700
     }
-  }, m.calories, " \u0643\u0627\u0644"), m.protein > 0 && /*#__PURE__*/React.createElement("span", {
+  }, m.calories, ar ? ' \u0643\u0627\u0644' : ' kcal'), m.protein > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: '#5B9CF6'
@@ -1724,8 +1534,10 @@ function Workout({
   logs,
   muscleGroups,
   selectedDate,
-  setSelectedDate
+  setSelectedDate,
+  lang
 }) {
+  const ar = lang === 'ar';
   const {
     workouts = []
   } = todayData;
@@ -1780,9 +1592,9 @@ function Workout({
   const exGroup = muscleGroups?.find(g => getExsFlat(g).includes(exName));
   const fmtLastDate = dateStr => {
     const d = daysSince(dateStr);
-    if (d === 0) return 'اليوم';
-    if (d === 1) return 'أمس';
-    return `منذ ${d} أيام (${fmtDate(dateStr)})`;
+    if (d === 0) return ar ? 'اليوم' : 'Today';
+    if (d === 1) return ar ? 'أمس' : 'Yesterday';
+    return ar ? `منذ ${d} أيام (${fmtDate(dateStr)})` : `${d} days ago (${fmtDate(dateStr)})`;
   };
   const submitResistance = () => {
     const exName = exercise === 'أخرى' ? customEx : exercise;
@@ -1844,7 +1656,7 @@ function Workout({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '20px 16px 12px',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1857,18 +1669,19 @@ function Workout({
     style: {
       fontSize: 27,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       letterSpacing: '-0.5px'
     }
-  }, "\u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \uD83C\uDFCB\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \uD83C\uDFCB\uFE0F" : "Workout \uD83C\uDFCB\uFE0F"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#3D5560',
       marginTop: 4
     }
-  }, workouts.length, " \u062A\u0645\u0631\u064A\u0646 \xB7 ", totalBurned, " \u0643\u0627\u0644 \u0645\u062D\u0631\u0648\u0642"))), /*#__PURE__*/React.createElement(DateBar, {
+  }, workouts.length, ar ? " \u062A\u0645\u0631\u064A\u0646 \xB7 " : " workouts · ", totalBurned, ar ? " \u0643\u0627\u0644 \u0645\u062D\u0631\u0648\u0642" : " kcal burned"))), /*#__PURE__*/React.createElement(DateBar, {
     selectedDate: selectedDate,
-    setSelectedDate: setSelectedDate
+    setSelectedDate: setSelectedDate,
+    lang: lang
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1894,7 +1707,7 @@ function Workout({
       cursor: 'pointer',
       transition: 'all 0.2s'
     }
-  }, m === 'resistance' ? '🏋️ مقاومة' : '🏃 كارديو'))), mode === 'resistance' && /*#__PURE__*/React.createElement("div", {
+  }, m === 'resistance' ? (ar ? '🏋️ مقاومة' : '🏋️ Resistance') : (ar ? '🏃 كارديو' : '🏃 Cardio')))), mode === 'resistance' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 22,
@@ -1908,7 +1721,7 @@ function Workout({
       fontWeight: 700,
       marginBottom: 14
     }
-  }, "\u0633\u062C\u0644 \u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0642\u0648\u0629"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0633\u062C\u0644 \u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0642\u0648\u0629" : "Log Resistance Workout"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
@@ -1918,7 +1731,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 8
     }
-  }, "\u2460 \u0627\u062E\u062A\u0631 \u0627\u0644\u0645\u062C\u0645\u0648\u0639\u0629 \u0627\u0644\u0639\u0636\u0644\u064A\u0629"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u2460 \u0627\u062E\u062A\u0631 \u0627\u0644\u0645\u062C\u0645\u0648\u0639\u0629 \u0627\u0644\u0639\u0636\u0644\u064A\u0629" : "\u2460 Select Muscle Group"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -1958,7 +1771,7 @@ function Workout({
       color: muscleFilter === 'all' ? '#080C0E' : '#3D5560',
       border: muscleFilter === 'all' ? 'none' : '1px solid #1C2730'
     }
-  }, "\u0627\u0644\u0643\u0644"))), muscleFilter && /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0643\u0644" : "All"))), muscleFilter && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
@@ -1968,7 +1781,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u2461 \u0627\u062E\u062A\u0631 \u0627\u0644\u062A\u0645\u0631\u064A\u0646"), (() => {
+  }, ar ? "\u2461 \u0627\u062E\u062A\u0631 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "\u2461 Select Exercise"), (() => {
     const filtered = muscleFilter === 'all' ? EXERCISES_AR : [...(getExsFlat(muscleGroups.find(g => g.id === muscleFilter) || {}) || []), 'أخرى'];
     const grp = muscleGroups.find(g => g.id === muscleFilter);
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("select", {
@@ -1984,7 +1797,7 @@ function Workout({
       key: ex,
       value: ex
     }, ex))), exercise === 'أخرى' && /*#__PURE__*/React.createElement("input", {
-      placeholder: "\u0627\u0633\u0645 \u0627\u0644\u062A\u0645\u0631\u064A\u0646",
+      placeholder: ar ? "\u0627\u0633\u0645 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "Exercise name",
       value: customEx,
       onChange: e => setCustomEx(e.target.value),
       style: {
@@ -2023,7 +1836,7 @@ function Workout({
       color: '#3D5560',
       fontSize: 12
     }
-  }, "\uD83D\uDC46 \u0627\u062E\u062A\u0631 \u0645\u062C\u0645\u0648\u0639\u0629 \u0639\u0636\u0644\u064A\u0629 \u0623\u0648\u0644\u0627\u064B"), lastResistance && /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDC46 \u0627\u062E\u062A\u0631 \u0645\u062C\u0645\u0648\u0639\u0629 \u0639\u0636\u0644\u064A\u0629 \u0623\u0648\u0644\u0627\u064B" : "\uD83D\uDC46 Select a muscle group first"), lastResistance && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#141D24',
       borderRadius: 12,
@@ -2037,7 +1850,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\uD83D\uDCC5 \u0622\u062E\u0631 \u062C\u0644\u0633\u0629 \u2014 ", fmtLastDate(lastResistance.date)), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCC5 \u0622\u062E\u0631 \u062C\u0644\u0633\u0629 \u2014 " : "\uD83D\uDCC5 Last session — ", fmtLastDate(lastResistance.date)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -2059,7 +1872,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 8
     }
-  }, "\u0627\u0644\u062C\u0644\u0633\u0627\u062A (\u0648\u0632\u0646 \u0643\u064A\u0644\u0648 \xD7 \u062A\u0643\u0631\u0627\u0631)"), sets.map((s, i) => /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u062C\u0644\u0633\u0627\u062A (\u0648\u0632\u0646 \u0643\u064A\u0644\u0648 \xD7 \u062A\u0643\u0631\u0627\u0631)" : "Sets (weight kg \xD7 reps)"), sets.map((s, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: 'flex',
@@ -2077,7 +1890,7 @@ function Workout({
     }
   }, "#", i + 1), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0648\u0632\u0646",
+    placeholder: ar ? "\u0648\u0632\u0646" : "kg",
     value: s.weight,
     onChange: e => setSets(sets.map((ss, idx) => idx === i ? {
       ...ss,
@@ -2094,7 +1907,7 @@ function Workout({
     }
   }, "\xD7"), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u062A\u0643\u0631\u0627\u0631",
+    placeholder: ar ? "\u062A\u0643\u0631\u0627\u0631" : "reps",
     value: s.reps,
     onChange: e => setSets(sets.map((ss, idx) => idx === i ? {
       ...ss,
@@ -2130,8 +1943,8 @@ function Workout({
       marginBottom: 12,
       cursor: 'pointer'
     }
-  }, "+ \u0625\u0636\u0627\u0641\u0629 \u062C\u0644\u0633\u0629"), /*#__PURE__*/React.createElement("input", {
-    placeholder: "\u0645\u0644\u0627\u062D\u0638\u0627\u062A (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)",
+  }, ar ? "+ \u0625\u0636\u0627\u0641\u0629 \u062C\u0644\u0633\u0629" : "+ Add Set"), /*#__PURE__*/React.createElement("input", {
+    placeholder: ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)" : "Notes (optional)",
     value: notes,
     onChange: e => setNotes(e.target.value),
     style: {
@@ -2152,7 +1965,7 @@ function Workout({
       fontSize: 14,
       cursor: 'pointer'
     }
-  }, "\uD83D\uDCBE \u062D\u0641\u0638 \u0627\u0644\u062A\u0645\u0631\u064A\u0646")), mode === 'cardio' && /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCBE \u062D\u0641\u0638 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "\uD83D\uDCBE Save Workout")), mode === 'cardio' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 22,
@@ -2166,13 +1979,13 @@ function Workout({
       fontWeight: 700,
       marginBottom: 14
     }
-  }, "\u0633\u062C\u0644 \u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u0627\u0631\u062F\u064A\u0648"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0633\u062C\u0644 \u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u0627\u0631\u062F\u064A\u0648" : "Log Cardio Workout"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560',
       marginBottom: 8
     }
-  }, "\u0646\u0648\u0639 \u0627\u0644\u062A\u0645\u0631\u064A\u0646"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0646\u0648\u0639 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "Exercise Type"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -2193,7 +2006,7 @@ function Workout({
       color: cardioType.ar === ct.ar ? '#080C0E' : '#E8F0F2',
       border: cardioType.ar === ct.ar ? 'none' : '1px solid #1C2730'
     }
-  }, ct.icon, " ", ct.ar))), lastCardio && /*#__PURE__*/React.createElement("div", {
+  }, ct.icon, " ", ar ? ct.ar : ct.en))), lastCardio && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#141D24',
       borderRadius: 12,
@@ -2207,18 +2020,18 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\uD83D\uDCC5 \u0622\u062E\u0631 \u062C\u0644\u0633\u0629 \u2014 ", fmtLastDate(lastCardio.date)), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCC5 \u0622\u062E\u0631 \u062C\u0644\u0633\u0629 \u2014 " : "\uD83D\uDCC5 Last session — ", fmtLastDate(lastCardio.date)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 16,
       fontSize: 12,
       color: '#C0CDD4'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u23F1 ", lastCardio.duration, " \u062F\u0642\u064A\u0642\u0629"), lastCardio.distance && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCCD ", lastCardio.distance, " \u0643\u0645"), lastCardio.distance && lastCardio.duration && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", (lastCardio.distance / lastCardio.duration * 60).toFixed(1), " km/h"), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u23F1 ", lastCardio.duration, ar ? " \u062F\u0642\u064A\u0642\u0629" : " min"), lastCardio.distance && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCCD ", lastCardio.distance, ar ? " \u0643\u0645" : " km"), lastCardio.distance && lastCardio.duration && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", (lastCardio.distance / lastCardio.duration * 60).toFixed(1), " km/h"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#FF8C42'
     }
-  }, lastCardio.caloriesBurned, " \u0643\u0627\u0644"))), /*#__PURE__*/React.createElement("div", {
+  }, lastCardio.caloriesBurned, ar ? ' \u0643\u0627\u0644' : ' kcal'))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
@@ -2234,7 +2047,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u0627\u0644\u0645\u062F\u0629 (\u062F\u0642\u064A\u0642\u0629) *"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0627\u0644\u0645\u062F\u0629 (\u062F\u0642\u064A\u0642\u0629) *" : "Duration (min) *"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     placeholder: "30",
     value: duration,
@@ -2253,9 +2066,9 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u0627\u0644\u0645\u0633\u0627\u0641\u0629 (\u0643\u0645)"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0627\u0644\u0645\u0633\u0627\u0641\u0629 (\u0643\u0645)" : "Distance (km)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0627\u062E\u062A\u064A\u0627\u0631\u064A",
+    placeholder: ar ? "\u0627\u062E\u062A\u064A\u0627\u0631\u064A" : "optional",
     value: distance,
     onChange: e => setDistance(e.target.value),
     style: {
@@ -2278,9 +2091,9 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u0645\u062A\u0648\u0633\u0637 \u0627\u0644\u0633\u0631\u0639\u0629 (km/h)"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0645\u062A\u0648\u0633\u0637 \u0627\u0644\u0633\u0631\u0639\u0629 (km/h)" : "Avg Speed (km/h)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: "\u0627\u062E\u062A\u064A\u0627\u0631\u064A",
+    placeholder: ar ? "\u0627\u062E\u062A\u064A\u0627\u0631\u064A" : "optional",
     value: avgSpeed,
     onChange: e => setAvgSpeed(e.target.value),
     style: {
@@ -2297,9 +2110,9 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642 (\u064A\u062F\u0648\u064A)"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642 (\u064A\u062F\u0648\u064A)" : "Cal Burned (manual)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
-    placeholder: `تلقائي: ${calcCardio()}`,
+    placeholder: ar ? `تلقائي: ${calcCardio()}` : `auto: ${calcCardio()}`,
     value: manualCalories,
     onChange: e => setManualCalories(e.target.value),
     style: {
@@ -2321,11 +2134,11 @@ function Workout({
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642" : "Cal Burned"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 26,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#FF8C42',
       lineHeight: 1.1
     }
@@ -2334,11 +2147,11 @@ function Workout({
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0627\u0644\u0633\u0631\u0639\u0629"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0633\u0631\u0639\u0629" : "Speed"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 26,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       lineHeight: 1.1
     }
   }, avgSpeed || speed, /*#__PURE__*/React.createElement("span", {
@@ -2350,16 +2163,16 @@ function Workout({
       fontSize: 9,
       color: '#3D5560'
     }
-  }, "\u0645\u062D\u0631\u0648\u0642 (\u064A\u062F\u0648\u064A)"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0645\u062D\u0631\u0648\u0642 (\u064A\u062F\u0648\u064A)" : "Burned (manual)"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 26,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#FF8C42',
       lineHeight: 1.1
     }
   }, manualCalories))), /*#__PURE__*/React.createElement("input", {
-    placeholder: "\u0645\u0644\u0627\u062D\u0638\u0627\u062A (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)",
+    placeholder: ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)" : "Notes (optional)",
     value: cardioNotes,
     onChange: e => setCardioNotes(e.target.value),
     style: {
@@ -2380,13 +2193,13 @@ function Workout({
       fontSize: 14,
       cursor: 'pointer'
     }
-  }, "\uD83D\uDCBE \u062D\u0641\u0638 \u0627\u0644\u0643\u0627\u0631\u062F\u064A\u0648")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCBE \u062D\u0641\u0638 \u0627\u0644\u0643\u0627\u0631\u062F\u064A\u0648" : "\uD83D\uDCBE Save Cardio")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       fontWeight: 700,
       marginBottom: 10
     }
-  }, "\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u064A\u0648\u0645"), workouts.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u064A\u0648\u0645" : "Today's Workouts"), workouts.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       color: '#3D5560',
@@ -2396,7 +2209,7 @@ function Workout({
       borderRadius: 16,
       border: '1px solid #1C2730'
     }
-  }, "\u0644\u0645 \u062A\u0633\u062C\u0644 \u0623\u064A \u062A\u0645\u0627\u0631\u064A\u0646 \u0628\u0639\u062F \uD83D\uDCAA") : /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0644\u0645 \u062A\u0633\u062C\u0644 \u0623\u064A \u062A\u0645\u0627\u0631\u064A\u0646 \u0628\u0639\u062F \uD83D\uDCAA" : "No workouts logged yet \uD83D\uDCAA") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -2422,7 +2235,7 @@ function Workout({
       marginBottom: 10,
       color: '#00E5A0'
     }
-  }, "\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u062A\u0645\u0631\u064A\u0646"), w.type === 'resistance' && /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "Edit Workout"), w.type === 'resistance' && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 10
     }
@@ -2432,7 +2245,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 6
     }
-  }, "\u0627\u0644\u062C\u0644\u0633\u0627\u062A (\u0648\u0632\u0646 kg \xD7 \u062A\u0643\u0631\u0627\u0631)"), (editWVals.sets || []).map((s, i) => /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u062C\u0644\u0633\u0627\u062A (\u0648\u0632\u0646 kg \xD7 \u062A\u0643\u0631\u0627\u0631)" : "Sets (weight kg \xD7 reps)"), (editWVals.sets || []).map((s, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: 'flex',
@@ -2462,7 +2275,7 @@ function Workout({
       flex: 1,
       padding: '7px 10px'
     },
-    placeholder: "\u0648\u0632\u0646"
+    placeholder: ar ? "\u0648\u0632\u0646" : "kg"
   }), /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#3D5560',
@@ -2483,7 +2296,7 @@ function Workout({
       flex: 1,
       padding: '7px 10px'
     },
-    placeholder: "\u062A\u0643\u0631\u0627\u0631"
+    placeholder: ar ? "\u062A\u0643\u0631\u0627\u0631" : "reps"
   })))), w.type === 'cardio' && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -2491,7 +2304,7 @@ function Workout({
       gap: 8,
       marginBottom: 10
     }
-  }, [['duration', 'المدة (د)'], ['distance', 'المسافة (كم)'], ['avgSpeed', 'السرعة (km/h)']].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
+  }, [['duration', ar ? 'المدة (د)' : 'Duration (min)'], ['distance', ar ? 'المسافة (كم)' : 'Distance (km)'], ['avgSpeed', 'Speed (km/h)']].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
     key: k,
     style: {
       flex: 1,
@@ -2531,7 +2344,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 4
     }
-  }, "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0643\u0627\u0644\u0648\u0631\u064A \u0645\u062D\u0631\u0648\u0642" : "Cal Burned"), /*#__PURE__*/React.createElement("input", {
     type: "number",
     value: editWVals.caloriesBurned || '',
     onChange: e => setEditWVals({
@@ -2553,7 +2366,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: 4
     }
-  }, "\u0645\u0644\u0627\u062D\u0638\u0627\u062A"), /*#__PURE__*/React.createElement("input", {
+  }, ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Notes"), /*#__PURE__*/React.createElement("input", {
     value: editWVals.notes || '',
     onChange: e => setEditWVals({
       ...editWVals,
@@ -2596,7 +2409,7 @@ function Workout({
       fontSize: 13,
       cursor: 'pointer'
     }
-  }, "\u2713 \u062D\u0641\u0638"), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u2713 \u062D\u0641\u0638" : "\u2713 Save"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditingWId(null),
     style: {
       background: '#141D24',
@@ -2629,7 +2442,7 @@ function Workout({
       color: '#FF8C42',
       fontWeight: 700
     }
-  }, w.caloriesBurned, " \u0643\u0627\u0644")), w.type === 'resistance' && w.sets && /*#__PURE__*/React.createElement("div", {
+  }, w.caloriesBurned, ar ? ' \u0643\u0627\u0644' : ' kcal')), w.type === 'resistance' && w.sets && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -2654,7 +2467,7 @@ function Workout({
       color: '#3D5560',
       marginBottom: w.notes ? 6 : 0
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u23F1 ", w.duration, " \u062F\u0642\u064A\u0642\u0629"), w.distance && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCCD ", w.distance, " \u0643\u0645"), w.avgSpeed && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", w.avgSpeed, " km/h"), !w.avgSpeed && w.distance && w.duration && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", (w.distance / w.duration * 60).toFixed(1), " km/h")), w.notes && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u23F1 ", w.duration, ar ? " \u062F\u0642\u064A\u0642\u0629" : " min"), w.distance && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCCD ", w.distance, ar ? " \u0643\u0645" : " km"), w.avgSpeed && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", w.avgSpeed, " km/h"), !w.avgSpeed && w.distance && w.duration && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE80 ", (w.distance / w.duration * 60).toFixed(1), " km/h")), w.notes && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#3D5560',
@@ -2707,8 +2520,10 @@ function Workout({
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
 function Progress({
   logs,
-  weightLog
+  weightLog,
+  lang
 }) {
+  const ar = lang === 'ar';
   const [range, setRange] = useState(7);
   const getDates = n => Array.from({
     length: n
@@ -2747,17 +2562,17 @@ function Progress({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '20px 16px 12px',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 27,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       letterSpacing: '-0.5px',
       marginBottom: 18
     }
-  }, "\u0627\u0644\u062A\u062D\u0644\u064A\u0644 \uD83D\uDCC8"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u062A\u062D\u0644\u064A\u0646 \uD83D\uDCC8" : "Progress \uD83D\uDCC8"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 16,
@@ -2818,7 +2633,7 @@ function Progress({
     style: {
       fontSize: 22,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#00E5A0',
       lineHeight: 1
     }
@@ -2828,7 +2643,7 @@ function Progress({
       color: '#3D5560',
       marginTop: 2
     }
-  }, "\u064A\u0648\u0645")), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u064A\u0648\u0645" : "days")), /*#__PURE__*/React.createElement("button", {
     onClick: () => setRange(r => Math.min(180, r + 1)),
     style: {
       width: 38,
@@ -2853,29 +2668,29 @@ function Progress({
       marginBottom: 16
     }
   }, [{
-    l: 'متوسط السعرات',
+    l: ar ? 'متوسط السعرات' : 'Avg Cal',
     v: avgCal,
-    u: 'كال',
+    u: ar ? 'كال' : 'kcal',
     c: '#00E5A0',
-    note: `هدف ${PROFILE.dailyCalories}`
+    note: ar ? `هدف ${PROFILE.dailyCalories}` : `Goal ${PROFILE.dailyCalories}`
   }, {
-    l: 'متوسط البروتين',
+    l: ar ? 'متوسط البروتين' : 'Avg Protein',
     v: avgProt,
     u: 'g',
     c: '#5B9CF6',
-    note: `هدف ${PROFILE.dailyProtein}g`
+    note: ar ? `هدف ${PROFILE.dailyProtein}g` : `Goal ${PROFILE.dailyProtein}g`
   }, {
-    l: 'أيام التمرين',
+    l: ar ? 'أيام التمرين' : 'Workout Days',
     v: workoutDays,
     u: `/${range}`,
     c: '#FF8C42',
-    note: 'يوم مكتمل'
+    note: ar ? 'يوم مكتمل' : 'completed'
   }, {
-    l: 'إجمالي المحروق',
+    l: ar ? 'إجمالي المحروق' : 'Total Burned',
     v: totalBurned,
-    u: 'كال',
+    u: ar ? 'كال' : 'kcal',
     c: '#FF5D5D',
-    note: `آخر ${range} أيام`
+    note: ar ? `آخر ${range} أيام` : `Last ${range} days`
   }].map(s => /*#__PURE__*/React.createElement("div", {
     key: s.l,
     style: {
@@ -2896,7 +2711,7 @@ function Progress({
     style: {
       fontSize: 22,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: s.c,
       lineHeight: 1
     }
@@ -2926,7 +2741,7 @@ function Progress({
       fontWeight: 700,
       marginBottom: 12
     }
-  }, "\u2696\uFE0F \u0645\u0646\u062D\u0646\u0649 \u0627\u0644\u0648\u0632\u0646"), /*#__PURE__*/React.createElement(ResponsiveContainer, {
+  }, ar ? "\u2696\uFE0F \u0645\u0646\u062D\u0646\u0649 \u0627\u0644\u0648\u0632\u0646" : "\u2696\uFE0F Weight Trend"), /*#__PURE__*/React.createElement(ResponsiveContainer, {
     width: "100%",
     height: 140
   }, /*#__PURE__*/React.createElement(AreaChart, {
@@ -2951,7 +2766,7 @@ function Progress({
   }), /*#__PURE__*/React.createElement(Area, {
     type: "monotone",
     dataKey: "weight",
-    name: "\u0627\u0644\u0648\u0632\u0646 (kg)",
+    name: ar ? "\u0627\u0644\u0648\u0632\u0646 (kg)" : "Weight (kg)",
     stroke: "#00E5A0",
     fill: "#00E5A010",
     strokeWidth: 2.5
@@ -2969,7 +2784,7 @@ function Progress({
       fontWeight: 700,
       marginBottom: 2
     }
-  }, "\uD83D\uDD25 \u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0627\u0644\u064A\u0648\u0645\u064A\u0629"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDD25 \u0627\u0644\u0633\u0639\u0631\u0627\u062A \u0627\u0644\u064A\u0648\u0645\u064A\u0629" : "\uD83D\uDD25 Daily Calories"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560',
@@ -2979,15 +2794,15 @@ function Progress({
     style: {
       color: '#00E5A0'
     }
-  }, "\u25A0"), " \u0645\u0633\u062A\u0647\u0644\u0643 \xA0", /*#__PURE__*/React.createElement("span", {
+  }, "\u25A0"), ar ? " \u0645\u0633\u062A\u0647\u0644\u0643 \xA0" : " Consumed \xA0", /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#FF8C42'
     }
-  }, "\u25A0"), " \u0645\u062D\u0631\u0648\u0642 \xA0", /*#__PURE__*/React.createElement("span", {
+  }, "\u25A0"), ar ? " \u0645\u062D\u0631\u0648\u0642 \xA0" : " Burned \xA0", /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#3D5560'
     }
-  }, "-- "), " \u0647\u062F\u0641 ", PROFILE.dailyCalories), /*#__PURE__*/React.createElement(ResponsiveContainer, {
+  }, "-- "), ar ? " \u0647\u062F\u0641 " : " Goal ", PROFILE.dailyCalories), /*#__PURE__*/React.createElement(ResponsiveContainer, {
     width: "100%",
     height: 150
   }, /*#__PURE__*/React.createElement(BarChart, {
@@ -3016,12 +2831,12 @@ function Progress({
     strokeDasharray: "4 4"
   }), /*#__PURE__*/React.createElement(Bar, {
     dataKey: "consumed",
-    name: "\u0645\u0633\u062A\u0647\u0644\u0643",
+    name: ar ? "\u0645\u0633\u062A\u0647\u0644\u0643" : "Consumed",
     fill: "#00E5A0",
     radius: [4, 4, 0, 0]
   }), /*#__PURE__*/React.createElement(Bar, {
     dataKey: "burned",
-    name: "\u0645\u062D\u0631\u0648\u0642",
+    name: ar ? '\u0645\u062D\u0631\u0648\u0642' : 'Burned',
     fill: "#FF8C42",
     radius: [4, 4, 0, 0]
   })))), /*#__PURE__*/React.createElement("div", {
@@ -3038,7 +2853,7 @@ function Progress({
       fontWeight: 700,
       marginBottom: 2
     }
-  }, "\uD83D\uDCAA \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 \u0627\u0644\u064A\u0648\u0645\u064A"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCAA \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 \u0627\u0644\u064A\u0648\u0645\u064A" : "\uD83D\uDCAA Daily Protein"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560',
@@ -3048,7 +2863,7 @@ function Progress({
     style: {
       color: '#3D5560'
     }
-  }, "-- "), " \u0647\u062F\u0641 ", PROFILE.dailyProtein, "g"), /*#__PURE__*/React.createElement(ResponsiveContainer, {
+  }, "-- "), ar ? " \u0647\u062F\u0641 " : " Goal ", PROFILE.dailyProtein, "g"), /*#__PURE__*/React.createElement(ResponsiveContainer, {
     width: "100%",
     height: 130
   }, /*#__PURE__*/React.createElement(BarChart, {
@@ -3076,7 +2891,7 @@ function Progress({
     strokeDasharray: "4 4"
   }), /*#__PURE__*/React.createElement(Bar, {
     dataKey: "protein",
-    name: "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 (g)",
+    name: ar ? "\u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 (g)" : "Protein (g)",
     fill: "#5B9CF6",
     radius: [4, 4, 0, 0]
   })))), /*#__PURE__*/React.createElement("div", {
@@ -3093,14 +2908,14 @@ function Progress({
       fontWeight: 700,
       marginBottom: 12
     }
-  }, "\uD83D\uDCC5 \u0633\u062C\u0644 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646"), dates.filter(d => (logs[d]?.workouts || []).length > 0).length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCC5 \u0633\u062C\u0644 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646" : "\uD83D\uDCC5 Workout Log"), dates.filter(d => (logs[d]?.workouts || []).length > 0).length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       color: '#3D5560',
       fontSize: 12,
       textAlign: 'center',
       padding: 20
     }
-  }, "\u0644\u0627 \u064A\u0648\u062C\u062F \u0633\u062C\u0644 \u062A\u0645\u0627\u0631\u064A\u0646 \u0644\u0644\u0641\u062A\u0631\u0629 \u0627\u0644\u0645\u062D\u062F\u062F\u0629") : dates.filter(d => (logs[d]?.workouts || []).length > 0).reverse().map(d => /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0644\u0627 \u064A\u0648\u062C\u062F \u0633\u062C\u0644 \u062A\u0645\u0627\u0631\u064A\u0646 \u0644\u0644\u0641\u062A\u0631\u0629 \u0627\u0644\u0645\u062D\u062F\u062F\u0629" : "No workouts in this period") : dates.filter(d => (logs[d]?.workouts || []).length > 0).reverse().map(d => /*#__PURE__*/React.createElement("div", {
     key: d,
     style: {
       borderBottom: '1px solid #1C2730',
@@ -3123,12 +2938,12 @@ function Progress({
       marginBottom: 3,
       color: '#C0CDD4'
     }
-  }, /*#__PURE__*/React.createElement("span", null, w.type === 'resistance' ? '🏋️' : '🏃', " ", w.exercise || w.activity, w.type === 'resistance' && w.sets ? ` · ${w.sets.length} جلسات` : '', w.type === 'cardio' && w.duration ? ` · ${w.duration} دقيقة` : ''), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, w.type === 'resistance' ? '🏋️' : '🏃', " ", w.exercise || w.activity, w.type === 'resistance' && w.sets ? (ar ? ` · ${w.sets.length} جلسات` : ` · ${w.sets.length} sets`) : '', w.type === 'cardio' && w.duration ? (ar ? ` · ${w.duration} دقيقة` : ` · ${w.duration} min`) : ''), /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#FF8C42',
       fontWeight: 600
     }
-  }, w.caloriesBurned, " \u0643\u0627\u0644")))))));
+  }, w.caloriesBurned, ar ? ' \u0643\u0627\u0644' : ' kcal')))))));
 }
 
 // ── MUSCLE SVG IDS mapping (which SVG parts to highlight per exercise) ────────
@@ -4753,8 +4568,10 @@ function ExerciseDemoSVG({
 function ExerciseModal({
   exercise,
   groupColor,
-  onClose
+  onClose,
+  lang
 }) {
+  const ar = lang === 'ar';
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const highlights = EXERCISE_MUSCLES_SVG[exercise] || [];
@@ -4803,7 +4620,7 @@ function ExerciseModal({
       zIndex: 300,
       display: 'flex',
       alignItems: 'flex-end',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     },
     onClick: e => e.target === e.currentTarget && onClose()
   }, /*#__PURE__*/React.createElement("div", {
@@ -4852,7 +4669,7 @@ function ExerciseModal({
       flex: 1,
       fontSize: 18,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif'
+      fontFamily: 'system-ui,-apple-system,sans-serif'
     }
   }, exercise), /*#__PURE__*/React.createElement("a", {
     href: `https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery(exercise))}`,
@@ -4873,7 +4690,7 @@ function ExerciseModal({
       textDecoration: 'none',
       flexShrink: 0
     }
-  }, "\u25B6 \u064A\u0648\u062A\u064A\u0648\u0628"), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u25B6 \u064A\u0648\u062A\u064A\u0648\u0628" : "\u25B6 YouTube"), /*#__PURE__*/React.createElement("button", {
     onClick: onClose,
     style: {
       background: '#1C2730',
@@ -4927,12 +4744,12 @@ function ExerciseModal({
       color: '#E8F0F2',
       marginBottom: 2
     }
-  }, "\u0634\u0627\u0647\u062F \u0634\u0631\u062D \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0639\u0644\u0649 \u064A\u0648\u062A\u064A\u0648\u0628"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0634\u0627\u0647\u062F \u0634\u0631\u062D \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0639\u0644\u0649 \u064A\u0648\u062A\u064A\u0648\u0628" : "Watch tutorial on YouTube"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560'
     }
-  }, "\u0627\u0636\u063A\u0637 \u0644\u062A\u0634\u0627\u0647\u062F \u0637\u0631\u064A\u0642\u0629 \u0627\u0644\u0623\u062F\u0627\u0621 \u0627\u0644\u0635\u062D\u064A\u062D\u0629"))), loading ? /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0636\u063A\u0637 \u0644\u062A\u0634\u0627\u0647\u062F \u0637\u0631\u064A\u0642\u0629 \u0627\u0644\u0623\u062F\u0627\u0621 \u0627\u0644\u0635\u062D\u064A\u062D\u0629" : "Tap to watch the correct form"))), loading ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       padding: 20,
@@ -4947,7 +4764,7 @@ function ExerciseModal({
     style: {
       fontSize: 12
     }
-  }, "\u062C\u0627\u0631\u064A \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0634\u0631\u062D...")) : info ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u062C\u0627\u0631\u064A \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0634\u0631\u062D..." : "Loading exercise info...")) : info ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#141D24',
       borderRadius: 14,
@@ -4962,7 +4779,7 @@ function ExerciseModal({
       fontWeight: 700,
       marginBottom: 5
     }
-  }, "\u0639\u0646 \u0627\u0644\u062A\u0645\u0631\u064A\u0646"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0639\u0646 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "About"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: '#C0CDD4',
@@ -4993,7 +4810,7 @@ function ExerciseModal({
       fontWeight: 700,
       color: '#E8F0F2'
     }
-  }, "\u0627\u0644\u0623\u062F\u0648\u0627\u062A")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0623\u062F\u0648\u0627\u062A" : "Equipment")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -5042,7 +4859,7 @@ function ExerciseModal({
       fontWeight: 700,
       color: '#E8F0F2'
     }
-  }, "\u062E\u0637\u0648\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621")), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u062E\u0637\u0648\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "How To")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -5092,7 +4909,7 @@ function ExerciseModal({
       fontWeight: 700,
       marginBottom: 8
     }
-  }, "\uD83D\uDCA1 \u0646\u0635\u0627\u0626\u062D \u062A\u0642\u0646\u064A\u0629"), info.tips.map((tip, i) => /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\uD83D\uDCA1 \u0646\u0635\u0627\u0626\u062D \u062A\u0642\u0646\u064A\u0629" : "\uD83D\uDCA1 Tips"), info.tips.map((tip, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 12,
@@ -5114,15 +4931,17 @@ function ExerciseModal({
       color: '#3D5560',
       fontSize: 13
     }
-  }, "\u062A\u0639\u0630\u0651\u0631 \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0634\u0631\u062D\u060C \u062D\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649"))));
+  }, ar ? "\u062A\u0639\u0630\u0651\u0631 \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0634\u0631\u062D\u060C \u062D\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649" : "Failed to load info, please try again"))));
 }
 
 // ── MUSCLE MAP ────────────────────────────────────────────────────────────────
 function MuscleMap({
   logs,
   muscleGroups,
-  saveMuscleGroups
+  saveMuscleGroups,
+  lang
 }) {
+  const ar = lang === 'ar';
   const [editMode, setEditMode] = useState(false);
   const [range, setRange] = useState(7);
   const [mergeSource, setMergeSource] = useState(null);
@@ -5157,10 +4976,10 @@ function MuscleMap({
     return '#FF6B6B';
   };
   const statusLabel = days => {
-    if (days === null) return 'لم تتمرن بعد';
-    if (days === 0) return 'اليوم ✓';
-    if (days === 1) return 'أمس';
-    return `منذ ${days} أيام`;
+    if (days === null) return ar ? 'لم تتمرن بعد' : 'Not trained';
+    if (days === 0) return ar ? 'اليوم ✓' : 'Today ✓';
+    if (days === 1) return ar ? 'أمس' : 'Yesterday';
+    return ar ? `منذ ${days} أيام` : `${days} days ago`;
   };
 
   // Helper: get all exercises flat from group (supports subGroups)
@@ -5349,12 +5168,13 @@ function MuscleMap({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '20px 16px 12px',
-      direction: 'rtl'
+      direction: ar ? 'rtl' : 'ltr'
     }
   }, selectedEx && /*#__PURE__*/React.createElement(ExerciseModal, {
     exercise: selectedEx,
     groupColor: selectedGrpColor,
-    onClose: () => setSelectedEx(null)
+    onClose: () => setSelectedEx(null),
+    lang: lang
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
@@ -5387,12 +5207,12 @@ function MuscleMap({
       fontSize: 13,
       fontWeight: 700
     }
-  }, "\u0645\u0635\u0646\u0651\u0641 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u0630\u0643\u064A"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0645\u0635\u0646\u0651\u0641 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \u0627\u0644\u0630\u0643\u064A" : "AI Exercise Classifier"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: '#3D5560'
     }
-  }, "\u0623\u062F\u062E\u0644 \u0627\u0633\u0645 \u062A\u0645\u0631\u064A\u0646 \u0623\u0648 \u062C\u0647\u0627\u0632 \u0648\u064A\u0635\u0646\u0651\u0641\u0647 \u062A\u0644\u0642\u0627\u0626\u064A\u0627\u064B"))), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0623\u062F\u062E\u0644 \u0627\u0633\u0645 \u062A\u0645\u0631\u064A\u0646 \u0623\u0648 \u062C\u0647\u0627\u0632 \u0648\u064A\u0635\u0646\u0651\u0641\u0647 \u062A\u0644\u0642\u0627\u0626\u064A\u0627\u064B" : "Enter an exercise name to auto-classify it"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
@@ -5499,7 +5319,7 @@ function MuscleMap({
       fontSize: 13,
       cursor: 'pointer'
     }
-  }, "\u2705 \u0623\u0636\u0641 \u0644\u0644\u0642\u0627\u0626\u0645\u0629"), /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u2705 \u0623\u0636\u0641 \u0644\u0644\u0642\u0627\u0626\u0645\u0629" : "\u2705 Add to List"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setAiExResult(null);
       setAiExInput('');
@@ -5524,16 +5344,16 @@ function MuscleMap({
     style: {
       fontSize: 27,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       letterSpacing: '-0.5px'
     }
-  }, "\u0627\u0644\u0639\u0636\u0644\u0627\u062A \uD83D\uDCAA"), /*#__PURE__*/React.createElement("div", {
+  }, ar ? "\u0627\u0644\u0639\u0636\u0644\u0627\u062A \uD83D\uDCAA" : "Muscles \uD83D\uDCAA"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#3D5560',
       marginTop: 4
     }
-  }, coveredCount, "/", totalCount, " \u0645\u062C\u0645\u0648\u0639\u0629 \u062E\u0644\u0627\u0644 \u0622\u062E\u0631 ", range, " \u0623\u064A\u0627\u0645")), /*#__PURE__*/React.createElement("button", {
+  }, coveredCount, "/", totalCount, ar ? " \u0645\u062C\u0645\u0648\u0639\u0629 \u062E\u0644\u0627\u0644 \u0622\u062E\u0631 " : " groups in last ", range, ar ? " \u0623\u064A\u0627\u0645" : " days")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setEditMode(!editMode);
       setMergeSource(null);
@@ -5549,7 +5369,7 @@ function MuscleMap({
       fontWeight: 700,
       cursor: 'pointer'
     }
-  }, editMode ? '✓ حفظ' : '✏️ تعديل')), !editMode && /*#__PURE__*/React.createElement("div", {
+  }, editMode ? (ar ? '✓ حفظ' : '✓ Done') : (ar ? '✏️ تعديل' : '✏️ Edit'))), !editMode && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 14,
@@ -5566,7 +5386,7 @@ function MuscleMap({
       color: '#3D5560',
       flex: 1
     }
-  }, "\u0627\u0644\u0641\u062A\u0631\u0629"), [7, 14, 30].map(r => /*#__PURE__*/React.createElement("button", {
+  }, ar ? "\u0627\u0644\u0641\u062A\u0631\u0629" : "Period"), [7, 14, 30].map(r => /*#__PURE__*/React.createElement("button", {
     key: r,
     onClick: () => setRange(r),
     style: {
@@ -5595,7 +5415,7 @@ function MuscleMap({
     style: {
       fontSize: 15,
       fontWeight: 800,
-      fontFamily: 'Syne,sans-serif',
+      fontFamily: 'system-ui,-apple-system,sans-serif',
       color: '#00E5A0',
       minWidth: 50,
       textAlign: 'center'
@@ -5706,7 +5526,7 @@ function MuscleMap({
         cursor: 'pointer',
         fontWeight: 600
       }
-    }, "\u062F\u0645\u062C \u25BE"), isMergeSrc && /*#__PURE__*/React.createElement("div", {
+    }, ar ? "\u062F\u0645\u062C \u25BE" : "Merge \u25BE"), isMergeSrc && /*#__PURE__*/React.createElement("div", {
       style: {
         position: 'absolute',
         left: 0,
@@ -5726,7 +5546,7 @@ function MuscleMap({
         color: '#3D5560',
         padding: '4px 8px 6px'
       }
-    }, "\u062F\u0645\u062C \u0645\u0639:"), muscleGroups.filter(g => g.id !== group.id).map(g => /*#__PURE__*/React.createElement("div", {
+    }, ar ? "\u062F\u0645\u062C \u0645\u0639:" : "Merge with:"), muscleGroups.filter(g => g.id !== group.id).map(g => /*#__PURE__*/React.createElement("div", {
       key: g.id,
       onClick: () => mergeGroups(group.id, g.id),
       style: {
@@ -5761,7 +5581,7 @@ function MuscleMap({
         cursor: 'pointer',
         fontWeight: 600
       }
-    }, "\u0641\u0635\u0644"), getExs(group).length === 0 && /*#__PURE__*/React.createElement("button", {
+    }, ar ? "\u0641\u0635\u0644" : "Split"), getExs(group).length === 0 && /*#__PURE__*/React.createElement("button", {
       onClick: () => saveMuscleGroups(muscleGroups.filter(g => g.id !== group.id)),
       style: {
         background: '#FF444420',
@@ -5783,7 +5603,7 @@ function MuscleMap({
           fontSize: 11,
           color: '#252E38'
         }
-      }, editMode ? 'فارغة — احذفها أو أضف تمارين' : 'لا توجد تمارين');
+      }, editMode ? (ar ? 'فارغة — احذفها أو أضف تمارين' : 'Empty — delete or add exercises') : (ar ? 'لا توجد تمارين' : 'No exercises'));
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: 'flex',
@@ -5870,7 +5690,7 @@ function MuscleMap({
             });
             setRenameExVal(ex);
           },
-          title: "\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0627\u0633\u0645",
+          title: ar ? "\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0627\u0633\u0645" : "Rename",
           style: {
             background: 'none',
             border: 'none',
@@ -5918,7 +5738,7 @@ function MuscleMap({
             color: '#3D5560',
             padding: '4px 8px 6px'
           }
-        }, "\u0646\u0642\u0644 \u0625\u0644\u0649:"), muscleGroups.filter(g2 => g2.id !== group.id).map(g2 => /*#__PURE__*/React.createElement("div", {
+        }, ar ? "\u0646\u0642\u0644 \u0625\u0644\u0649:" : "Move to:"), muscleGroups.filter(g2 => g2.id !== group.id).map(g2 => /*#__PURE__*/React.createElement("div", {
           key: g2.id,
           onClick: () => moveExercise(ex, group.id, g2.id),
           style: {
@@ -5952,7 +5772,7 @@ function MuscleMap({
             ...g,
             exercises: (g.exercises || []).filter(e => e !== ex)
           })),
-          title: "\u062D\u0630\u0641 \u0627\u0644\u062A\u0645\u0631\u064A\u0646",
+          title: ar ? "\u062D\u0630\u0641 \u0627\u0644\u062A\u0645\u0631\u064A\u0646" : "Remove",
           style: {
             background: 'none',
             border: 'none',
@@ -5983,7 +5803,7 @@ function MuscleMap({
       cursor: 'pointer',
       textAlign: 'center'
     }
-  }, "+ \u0625\u0636\u0627\u0641\u0629 \u0645\u062C\u0645\u0648\u0639\u0629 \u062C\u062F\u064A\u062F\u0629")));
+  }, ar ? "+ \u0625\u0636\u0627\u0641\u0629 \u0645\u062C\u0645\u0648\u0639\u0629 \u062C\u062F\u064A\u062F\u0629" : "+ Add New Group")));
 }
 
 // ── EMBEDDED BACKUP (fallback if storage empty) ───────────────────────────────
@@ -6204,49 +6024,150 @@ const BACKUP_DATA = {
 };
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
-function Settings() {
+function Settings({ lang, setLang, logs, weightLog, muscleGroups, saveLogs, saveWeightLog, saveMuscleGroups }) {
+  const ar = lang === 'ar';
   const [key, setKey] = useState(localStorage.getItem('fit_api_key') || '');
   const [saved, setSaved] = useState(false);
-  const save = () => {
+  // export/import state — all local to Settings
+  const [exportText, setExportText] = useState('');
+  const [showImport, setShowImport] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importStep, setImportStep] = useState('paste');
+  const [importPreview, setImportPreview] = useState(null);
+  const [importMsg, setImportMsg] = useState(null);
+
+  const saveKey = () => {
     localStorage.setItem('fit_api_key', key.trim());
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
-  const inputStyle = {
-    background: '#131D24', border: '1px solid #1C2730', borderRadius: 10,
-    padding: '11px 14px', color: '#E8F0F2', fontSize: 13, width: '100%',
-    outline: 'none', direction: 'ltr', textAlign: 'left', marginBottom: 10
+  const onExport = () => {
+    setExportText(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), fit_logs_v3: logs, fit_weight_v3: weightLog, fit_muscles_v1: muscleGroups }));
   };
-  const cardStyle = {
-    background: '#0D1318', borderRadius: 16, padding: '16px 16px 12px', marginBottom: 14
+  const onImportParse = () => {
+    try {
+      const data = JSON.parse(importJson.trim());
+      if (!data.version) throw new Error();
+      setImportPreview({
+        data,
+        mealCount: Object.values(data.fit_logs_v3||{}).reduce((s,d)=>s+(d.meals?.length||0),0),
+        workoutCount: Object.values(data.fit_logs_v3||{}).reduce((s,d)=>s+(d.workouts?.length||0),0),
+        weightCount: (data.fit_weight_v3||[]).length,
+        muscleCount: (data.fit_muscles_v1||[]).reduce((s,g)=>s+(g.exercises?.length||0),0),
+      });
+      setImportStep('confirm');
+    } catch {
+      setImportMsg({ ok: false, text: ar ? '❌ النص غير صالح — تأكد من نسخه كاملاً' : '❌ Invalid JSON — copy it completely' });
+      setTimeout(() => setImportMsg(null), 4000);
+    }
   };
-  return /*#__PURE__*/React.createElement("div", {style: {padding: '20px 16px 12px', direction: 'rtl'}},
-    /*#__PURE__*/React.createElement("div", {style: {fontSize: 27, fontWeight: 800, fontFamily: 'Syne,sans-serif', letterSpacing: '-0.5px', marginBottom: 18}}, "الإعدادات ⚙️"),
+  const onImportConfirm = async () => {
+    try {
+      const data = importPreview.data;
+      if (data.fit_logs_v3) await saveLogs(data.fit_logs_v3);
+      if (data.fit_weight_v3) await saveWeightLog(data.fit_weight_v3);
+      if (data.fit_muscles_v1) await saveMuscleGroups(data.fit_muscles_v1);
+      setImportMsg({ ok: true, text: ar ? '✅ تم الاستيراد بنجاح' : '✅ Import successful' });
+      setShowImport(false); setImportJson(''); setImportStep('paste'); setImportPreview(null);
+    } catch {
+      setImportMsg({ ok: false, text: ar ? '❌ فشل الاستيراد' : '❌ Import failed' });
+    }
+    setTimeout(() => setImportMsg(null), 4000);
+  };
+
+  const inputStyle = { background: '#131D24', border: '1px solid #1C2730', borderRadius: 10, padding: '11px 14px', color: '#E8F0F2', fontSize: 13, width: '100%', outline: 'none', direction: 'ltr', textAlign: 'left', marginBottom: 10 };
+  const cardStyle = { background: '#0D1318', borderRadius: 16, padding: '16px 16px 12px', marginBottom: 14 };
+  const btnStyle = (active) => ({ width: '100%', background: active ? '#1C2D3A' : '#141D24', border: `1px solid ${active ? '#5B9CF6' : '#1C2730'}`, borderRadius: 10, padding: '11px', color: active ? '#5B9CF6' : '#E8F0F2', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center', marginBottom: 8 });
+
+  return /*#__PURE__*/React.createElement("div", {style: {padding: '20px 16px 12px', direction: ar ? 'rtl' : 'ltr'}},
+    /*#__PURE__*/React.createElement("div", {style: {fontSize: 27, fontWeight: 800, fontFamily: 'system-ui,-apple-system,sans-serif', letterSpacing: '-0.5px', marginBottom: 18}},
+      ar ? 'الإعدادات ⚙️' : 'Settings ⚙️'),
+
+    /* ── Language ── */
     /*#__PURE__*/React.createElement("div", {style: cardStyle},
-      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 6}}, "مفتاح Claude API"),
-      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', marginBottom: 12, lineHeight: 1.6}},
-        "يُستخدم لميزة تقدير الوجبات والتمارين بالذكاء الاصطناعي. يُحفظ محلياً على جهازك فقط ولا يُرسل لأي خادم."
-      ),
-      /*#__PURE__*/React.createElement("input", {
-        type: 'password',
-        value: key,
-        onChange: e => { setKey(e.target.value); setSaved(false); },
-        placeholder: 'sk-ant-api03-...',
-        style: inputStyle
-      }),
-      /*#__PURE__*/React.createElement("button", {
-        onClick: save,
-        style: {
-          background: saved ? '#00C87A' : '#00E5A0', color: '#080C0E', border: 'none',
-          borderRadius: 10, padding: '11px 20px', fontWeight: 700, fontSize: 14,
-          cursor: 'pointer', width: '100%', transition: 'background 0.2s'
-        }
-      }, saved ? '✓ تم الحفظ' : 'حفظ المفتاح')
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 12}},
+        ar ? '🌐 اللغة' : '🌐 Language'),
+      /*#__PURE__*/React.createElement("div", {style: {display: 'flex', gap: 8}},
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => { setLang('ar'); localStorage.setItem('fit_lang', 'ar'); },
+          style: { flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${ar ? '#00E5A0' : '#1C2730'}`, background: ar ? '#0A1F18' : '#141D24', color: ar ? '#00E5A0' : '#E8F0F2', fontWeight: 700, fontSize: 14, cursor: 'pointer' }
+        }, 'العربية'),
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => { setLang('en'); localStorage.setItem('fit_lang', 'en'); },
+          style: { flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${!ar ? '#00E5A0' : '#1C2730'}`, background: !ar ? '#0A1F18' : '#141D24', color: !ar ? '#00E5A0' : '#E8F0F2', fontWeight: 700, fontSize: 14, cursor: 'pointer' }
+        }, 'English')
+      )
     ),
-    /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', lineHeight: 1.7, padding: '0 4px'}},
-      "للحصول على مفتاح API: سجّل الدخول على ",
-      /*#__PURE__*/React.createElement("span", {style: {color: '#00E5A0'}}, "console.anthropic.com"),
-      " ← API Keys ← Create Key"
+
+    /* ── Claude API Key ── */
+    /*#__PURE__*/React.createElement("div", {style: cardStyle},
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 6}},
+        ar ? 'مفتاح Claude API' : 'Claude API Key'),
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', marginBottom: 12, lineHeight: 1.6}},
+        ar ? 'يُستخدم لميزة تقدير الوجبات والتمارين بالذكاء الاصطناعي. يُحفظ محلياً على جهازك فقط.'
+           : 'Used for AI meal and workout estimation. Stored locally on your device only.'),
+      /*#__PURE__*/React.createElement("input", { type: 'password', value: key, onChange: e => { setKey(e.target.value); setSaved(false); }, placeholder: 'sk-ant-api03-...', style: inputStyle }),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: saveKey,
+        style: { background: saved ? '#00C87A' : '#00E5A0', color: '#080C0E', border: 'none', borderRadius: 10, padding: '11px 20px', fontWeight: 700, fontSize: 14, cursor: 'pointer', width: '100%' }
+      }, saved ? (ar ? '✓ تم الحفظ' : '✓ Saved') : (ar ? 'حفظ المفتاح' : 'Save Key')),
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#3D5560', lineHeight: 1.7, marginTop: 10}},
+        ar ? 'للحصول على مفتاح: ' : 'Get a key at: ',
+        /*#__PURE__*/React.createElement("span", {style: {color: '#00E5A0'}}, "console.anthropic.com"),
+        " ← API Keys ← Create Key")
+    ),
+
+    /* ── Backup ── */
+    /*#__PURE__*/React.createElement("div", {style: cardStyle},
+      /*#__PURE__*/React.createElement("div", {style: {fontSize: 13, fontWeight: 700, color: '#E8F0F2', marginBottom: 12}},
+        ar ? '💾 نسخ احتياطي' : '💾 Backup'),
+      /*#__PURE__*/React.createElement("button", { onClick: onExport, style: btnStyle(!!exportText) },
+        ar ? '⬆️ تصدير البيانات' : '⬆️ Export Data'),
+      exportText && /*#__PURE__*/React.createElement("div", {style: {marginBottom: 8}},
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 10, color: '#3D5560', marginBottom: 5}},
+          ar ? 'اضغط مطولاً ثم "تحديد الكل" للنسخ:' : 'Long-press then "Select All" to copy:'),
+        /*#__PURE__*/React.createElement("textarea", { readOnly: true, value: exportText, rows: 3,
+          style: {width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:10,outline:'none',resize:'vertical',direction:'ltr',wordBreak:'break-all',marginBottom:6} }),
+        /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExportText(''),
+          style: {background:'#1C2730',border:'none',borderRadius:8,padding:'6px 14px',color:'#E8F0F2',fontSize:11,cursor:'pointer',width:'100%'}
+        }, ar ? 'إغلاق' : 'Close')
+      ),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: () => { setShowImport(!showImport); setImportStep('paste'); setImportPreview(null); },
+        style: btnStyle(showImport)
+      }, ar ? '⬇️ استيراد — لصق البيانات' : '⬇️ Import — Paste Data'),
+      showImport && importStep === 'paste' && /*#__PURE__*/React.createElement("div", null,
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 10, color: '#3D5560', marginBottom: 6}},
+          ar ? 'الصق هنا النص المنسوخ من التصدير:' : 'Paste the exported text here:'),
+        /*#__PURE__*/React.createElement("textarea", { rows: 5, value: importJson, onChange: e => setImportJson(e.target.value), placeholder: '{"version":1,...}',
+          style: {width:'100%',background:'#141D24',border:'1px solid #1C2730',borderRadius:10,padding:'10px 12px',color:'#E8F0F2',fontSize:11,outline:'none',resize:'vertical',marginBottom:8,direction:'ltr',wordBreak:'break-all'} }),
+        /*#__PURE__*/React.createElement("button", { onClick: onImportParse, disabled: !importJson.trim(),
+          style: {width:'100%',background:importJson.trim()?'#5B9CF6':'#1C2730',color:importJson.trim()?'#fff':'#3D5560',border:'none',borderRadius:10,padding:'10px',fontWeight:700,fontSize:13,cursor:'pointer'}
+        }, ar ? 'فحص البيانات →' : 'Inspect Data →')
+      ),
+      showImport && importStep === 'confirm' && importPreview && /*#__PURE__*/React.createElement("div", {style: {background:'#141D24',borderRadius:12,padding:14,border:'1px solid #FF8C4260'}},
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 12, fontWeight: 700, color: '#FF8C42', marginBottom: 10}},
+          ar ? '⚠️ تحذير — ستُستبدل بياناتك الحالية' : '⚠️ Warning — your current data will be replaced'),
+        /*#__PURE__*/React.createElement("div", {style: {fontSize: 11, color: '#C0CDD4', marginBottom: 12, lineHeight: 1.7}},
+          ar ? 'البيانات التي ستُستورد:' : 'Data to import:',
+          /*#__PURE__*/React.createElement("br", null),
+          '🍽️ ', importPreview.mealCount, ar ? ' وجبة · ' : ' meals · ',
+          '🏋️ ', importPreview.workoutCount, ar ? ' تمرين · ' : ' workouts · ',
+          '⚖️ ', importPreview.weightCount, ar ? ' قياس وزن · ' : ' weight entries · ',
+          '💪 ', importPreview.muscleCount, ar ? ' تمرين في المجموعات' : ' muscle exercises'
+        ),
+        /*#__PURE__*/React.createElement("div", {style: {display:'flex', gap:8}},
+          /*#__PURE__*/React.createElement("button", { onClick: onImportConfirm,
+            style: {flex:1,background:'#FF4444',border:'none',borderRadius:10,padding:'10px',color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}
+          }, ar ? 'تأكيد الاستيراد' : 'Confirm Import'),
+          /*#__PURE__*/React.createElement("button", { onClick: () => { setShowImport(false); setImportStep('paste'); setImportPreview(null); },
+            style: {flex:1,background:'#1C2730',border:'none',borderRadius:10,padding:'10px',color:'#E8F0F2',fontWeight:600,fontSize:13,cursor:'pointer'}
+          }, ar ? 'إلغاء' : 'Cancel')
+        )
+      ),
+      importMsg && /*#__PURE__*/React.createElement("div", {style: {fontSize:11, marginTop:8, color: importMsg.ok?'#00E5A0':'#FF4444', textAlign:'center'}},
+        importMsg.text)
     )
   );
 }
@@ -6254,15 +6175,10 @@ function Settings() {
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function FitnessApp() {
   const [tab, setTab] = useState('dashboard');
+  const [lang, setLang] = useState(localStorage.getItem('fit_lang') || 'ar');
   const [logs, setLogs] = useState({});
   const [weightLog, setWeightLog] = useState([]);
   const [muscleGroups, setMuscleGroups] = useState(MUSCLE_GROUPS_DEFAULT);
-  const [importMsg, setImportMsg] = useState(null);
-  const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [exportText, setExportText] = useState('');
-  const [importStep, setImportStep] = useState('paste');
-  const [importPreview, setImportPreview] = useState(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     (async () => {
@@ -6313,62 +6229,6 @@ function FitnessApp() {
     try {
       await window.storage.set('fit_muscles_v1', JSON.stringify(mg));
     } catch (e) {}
-  };
-  const onExport = () => {
-    const payload = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      fit_logs_v3: logs,
-      fit_weight_v3: weightLog,
-      fit_muscles_v1: muscleGroups
-    };
-    setExportText(JSON.stringify(payload));
-  };
-  const onImportParse = () => {
-    try {
-      const data = JSON.parse(importJson.trim());
-      if (!data.version) throw new Error();
-      const mealCount = Object.values(data.fit_logs_v3 || {}).reduce((s, d) => s + (d.meals?.length || 0), 0);
-      const workoutCount = Object.values(data.fit_logs_v3 || {}).reduce((s, d) => s + (d.workouts?.length || 0), 0);
-      const weightCount = (data.fit_weight_v3 || []).length;
-      const muscleCount = (data.fit_muscles_v1 || []).reduce((s, g) => s + (g.exercises?.length || 0), 0);
-      setImportPreview({
-        data,
-        mealCount,
-        workoutCount,
-        weightCount,
-        muscleCount
-      });
-      setImportStep('confirm');
-    } catch {
-      setImportMsg({
-        ok: false,
-        text: '❌ النص غير صالح — تأكد من نسخه كاملاً'
-      });
-      setTimeout(() => setImportMsg(null), 4000);
-    }
-  };
-  const onImportConfirm = async () => {
-    try {
-      const data = importPreview.data;
-      if (data.fit_logs_v3) await saveLogs(data.fit_logs_v3);
-      if (data.fit_weight_v3) await saveWeightLog(data.fit_weight_v3);
-      if (data.fit_muscles_v1) await saveMuscleGroups(data.fit_muscles_v1);
-      setImportMsg({
-        ok: true,
-        text: '✅ تم الاستيراد بنجاح'
-      });
-      setShowImport(false);
-      setImportJson('');
-      setImportStep('paste');
-      setImportPreview(null);
-    } catch {
-      setImportMsg({
-        ok: false,
-        text: '❌ فشل الاستيراد'
-      });
-    }
-    setTimeout(() => setImportMsg(null), 4000);
   };
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const t = selectedDate;
@@ -6461,40 +6321,29 @@ function FitnessApp() {
       position: 'relative',
       paddingBottom: 80
     }
-  }, /*#__PURE__*/React.createElement("style", null, `
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@700;800&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; font-family:'DM Sans',sans-serif; }
+  }, /*#__PURE__*/React.createElement("style", null, (() => `
+        * { box-sizing:border-box; margin:0; padding:0; font-family:system-ui,-apple-system,sans-serif; }
+        body { direction: ${lang === 'ar' ? 'rtl' : 'ltr'}; text-align: ${lang === 'ar' ? 'right' : 'left'}; }
         ::-webkit-scrollbar { width:3px }
         ::-webkit-scrollbar-track { background:#080C0E }
         ::-webkit-scrollbar-thumb { background:#1C2730; border-radius:2px }
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0 }
         select { -webkit-appearance:none; }
-      `), tab === 'dashboard' && /*#__PURE__*/React.createElement(Dashboard, {
+      `)(), tab === 'dashboard' && /*#__PURE__*/React.createElement(Dashboard, {
     todayData: todayData,
     logs: logs,
     weightLog: weightLog,
-    saveWeightLog: saveWeightLog,
-    onExport: onExport,
-    onImportParse: onImportParse,
-    onImportConfirm: onImportConfirm,
-    importMsg: importMsg,
-    showImport: showImport,
-    setShowImport: setShowImport,
-    importJson: importJson,
-    setImportJson: setImportJson,
-    exportText: exportText,
-    setExportText: setExportText,
-    importStep: importStep,
-    setImportStep: setImportStep,
-    importPreview: importPreview
+    lang: lang,
+    saveWeightLog: saveWeightLog
   }), tab === 'nutrition' && /*#__PURE__*/React.createElement(Nutrition, {
     todayData: todayData,
     addMeal: addMeal,
     deleteMeal: deleteMeal,
     editMeal: editMeal,
     selectedDate: selectedDate,
-    setSelectedDate: setSelectedDate
+    setSelectedDate: setSelectedDate,
+    lang: lang
   }), tab === 'workout' && /*#__PURE__*/React.createElement(Workout, {
     todayData: todayData,
     addWorkout: addWorkout,
@@ -6503,26 +6352,51 @@ function FitnessApp() {
     logs: logs,
     muscleGroups: muscleGroups,
     selectedDate: selectedDate,
-    setSelectedDate: setSelectedDate
+    setSelectedDate: setSelectedDate,
+    lang: lang
   }), tab === 'muscles' && /*#__PURE__*/React.createElement(MuscleMap, {
     logs: logs,
     muscleGroups: muscleGroups,
-    saveMuscleGroups: saveMuscleGroups
+    saveMuscleGroups: saveMuscleGroups,
+    lang: lang
   }), tab === 'progress' && /*#__PURE__*/React.createElement(Progress, {
     logs: logs,
-    weightLog: weightLog
-  }), tab === 'settings' && /*#__PURE__*/React.createElement(Settings, null),
+    weightLog: weightLog,
+    lang: lang
+  }), tab === 'settings' && /*#__PURE__*/React.createElement(Settings, {
+    lang: lang, setLang: setLang,
+    logs: logs, weightLog: weightLog, muscleGroups: muscleGroups,
+    saveLogs: saveLogs, saveWeightLog: saveWeightLog, saveMuscleGroups: saveMuscleGroups
+  }),
   /*#__PURE__*/React.createElement(BottomNav, {
     tab: tab,
-    setTab: setTab
+    setTab: setTab,
+    lang: lang
   }));
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  componentDidCatch(e, info) { console.error('ErrorBoundary caught:', e, info); }
+  render() {
+    if (this.state.error) {
+      const e = this.state.error;
+      return React.createElement('pre', {
+        style: { color: 'red', padding: '20px', fontSize: '11px', wordBreak: 'break-all', direction: 'ltr', background: '#111', margin: 0, whiteSpace: 'pre-wrap' }
+      }, String(e) + '\n\n' + (e.stack || '').substring(0, 1200));
+    }
+    return this.props.children;
+  }
+}
+
 try {
+  var _dl = document.getElementById('debug-loading');
+  if (_dl) _dl.textContent = 'React mounting...';
   const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(React.createElement(FitnessApp));
+  root.render(React.createElement(ErrorBoundary, null, React.createElement(FitnessApp)));
 } catch(e) {
-  document.getElementById("root").innerHTML = '<div style="color:red;padding:20px;font-size:12px;word-break:break-all;background:#111;direction:ltr">' + e.name + ': ' + e.message + '<br><br>' + (e.stack||'').substring(0,500) + '</div>';
+  document.getElementById("root").innerHTML = '<pre style="color:#fff;background:#900;padding:16px;font-size:12px;direction:ltr;white-space:pre-wrap">SYNC ERROR:\n' + e.name + ': ' + e.message + '\n' + (e.stack||'').substring(0,800) + '</pre>';
 }
 
 

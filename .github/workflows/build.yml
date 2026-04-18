@@ -3,6 +3,8 @@ name: Build APK
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -15,89 +17,154 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      - name: Create Expo project
-        run: npx create-expo-app@latest FitnessTracker --template blank-typescript
+      - name: Install Cordova
+        run: npm install -g cordova@12
 
-      - name: Install dependencies
-        run: cd FitnessTracker && npx expo install react-native-webview
+      - name: Create Cordova project
+        run: cordova create /tmp/FitnessApp com.hemo4321.fitnesstracker FitnessTracker
 
-      - name: Download JS libraries via npm
+      - name: Add Android platform
+        run: cd /tmp/FitnessApp && cordova platform add android
+
+      - name: Set up consistent debug keystore
+        # Uses debug.keystore committed to the repo so every build is signed
+        # with the same key — APKs can be installed as updates without uninstalling.
+        run: |
+          mkdir -p ~/.android
+          if [ -n "${{ secrets.DEBUG_KEYSTORE_B64 }}" ]; then
+            echo "Using DEBUG_KEYSTORE_B64 secret"
+            echo "${{ secrets.DEBUG_KEYSTORE_B64 }}" | base64 -d > ~/.android/debug.keystore
+          else
+            echo "Using committed debug.keystore from repo"
+            cp debug.keystore ~/.android/debug.keystore
+          fi
+
+      - name: Inline JS libraries into HTML
+        # Bundles React + ReactDOM + Recharts with esbuild into a single IIFE that
+        # explicitly sets window.React / window.ReactDOM / window.Recharts.
+        # This bypasses all UMD detection logic which misfires in Cordova's WebView.
         run: |
           npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
-          cp /tmp/libs/node_modules/react/umd/react.production.min.js /tmp/react.js
-          cp /tmp/libs/node_modules/react-dom/umd/react-dom.production.min.js /tmp/react-dom.js
-          cp /tmp/libs/node_modules/recharts/umd/Recharts.js /tmp/recharts.js
-          echo "react: $(wc -c < /tmp/react.js) bytes"
-          echo "react-dom: $(wc -c < /tmp/react-dom.js) bytes"
-          echo "recharts: $(wc -c < /tmp/recharts.js) bytes"
+          npm install -g esbuild
 
-      - name: Inline libraries into HTML
-        run: |
-          python3 -c "
-          html     = open('fitness-tracker.html', 'r', encoding='utf-8').read()
-          react    = open('/tmp/react.js',         'r', encoding='utf-8').read()
-          reactdom = open('/tmp/react-dom.js',     'r', encoding='utf-8').read()
-          recharts = open('/tmp/recharts.js',      'r', encoding='utf-8').read()
-          html = html.replace('<script src=\"https://unpkg.com/react@18/umd/react.production.min.js\"></script>', '<script>' + react + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/react-dom@18/umd/react-dom.production.min.js\"></script>', '<script>' + reactdom + '</script>')
-          html = html.replace('<script src=\"https://unpkg.com/recharts@2.10.0/umd/Recharts.js\"></script>', '<script>' + recharts + '</script>')
-          open('fitness-tracker-inline.html', 'w', encoding='utf-8').write(html)
-          print('Inline done, size:', len(html)//1024, 'KB')
-          "
+          # Entry: explicitly assign all three globals
+          cat > /tmp/bundle-entry.js << 'EOF'
+          var React = require('react');
+          var ReactDOM = require('react-dom');
+          var Recharts = require('recharts');
+          window.React = React;
+          window.ReactDOM = ReactDOM;
+          window.Recharts = Recharts;
+          EOF
 
-      - name: Setup App.tsx
-        run: |
-          python3 -c "
-          import json
-          html = open('fitness-tracker-inline.html','r',encoding='utf-8').read()
-          esc = json.dumps(html)
-          lines = [
-            'import { SafeAreaView, StatusBar } from \"react-native\";',
-            'import { WebView } from \"react-native-webview\";',
-            'const HTML: string = ' + esc + ';',
-            'export default function App() {',
-            '  return (',
-            '    <SafeAreaView style={{flex:1,backgroundColor:\"#080C0E\"}}>',
-            '      <StatusBar barStyle=\"light-content\" />',
-            '      <WebView',
-            '        source={{html: HTML, baseUrl: \"http://localhost/\"}}',
-            '        style={{flex:1}}',
-            '        javaScriptEnabled={true}',
-            '        domStorageEnabled={true}',
-            '        allowUniversalAccessFromFileURLs={true}',
-            '        mixedContentMode=\"always\"',
-            '        originWhitelist={[\"*\"]}',
-            '      />',
-            '    </SafeAreaView>',
-            '  );',
-            '}',
-          ]
-          open('FitnessTracker/App.tsx','w',encoding='utf-8').write('\n'.join(lines))
-          print('App.tsx written, size:', len('\n'.join(lines))//1024, 'KB')
-          "
+          NODE_PATH=/tmp/libs/node_modules esbuild /tmp/bundle-entry.js \
+            --bundle \
+            --format=iife \
+            --platform=browser \
+            --minify \
+            --define:process.env.NODE_ENV='"production"' \
+            --outfile=/tmp/react-recharts-bundle.js
+          echo "Bundle size: $(wc -c < /tmp/react-recharts-bundle.js) bytes"
 
-      - name: Setup config files
-        run: |
-          echo '{"cli":{"version":">= 16.0.0"},"build":{"preview":{"android":{"buildType":"apk"}}}}' > FitnessTracker/eas.json
-          python3 -c "
-          import json
-          with open('FitnessTracker/app.json','r') as f:
-            config = json.load(f)
-          config['expo']['android'] = {'package': 'com.hemo4321.fitnesstracker'}
-          with open('FitnessTracker/app.json','w') as f:
-            json.dump(config, f, indent=2)
-          print('app.json updated')
-          "
+          cat > /tmp/inline.py << 'PYEOF'
+          import re, sys, os
 
-      - name: Init EAS project
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd FitnessTracker && eas init --id 7b50975b-dc4c-4c54-95e5-bfdff1915a08 --force --non-interactive
+          html   = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+          bundle = open('/tmp/react-recharts-bundle.js', 'r', encoding='utf-8').read()
+          print('bundle:', len(bundle)//1024, 'KB')
+
+          def safe(js): return re.sub(r'</', r'<\\/', js)
+
+          # Remove the separate React and ReactDOM CDN tags (covered by bundle)
+          html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>', '')
+          html = html.replace('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>', '')
+          # Replace Recharts CDN tag with the all-in-one bundle
+          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>',
+                              '<script>' + safe(bundle) + '</script>')
+
+          for cdn in ['unpkg.com/react@18', 'unpkg.com/react-dom@18', 'unpkg.com/recharts']:
+            if cdn in html:
+              sys.exit('ERROR: CDN URL still present after inlining: ' + cdn)
+
+          out = '/tmp/FitnessApp/www/index.html'
+          open(out, 'w', encoding='utf-8').write(html)
+          print('Inlined OK, size:', len(html)//1024, 'KB, written to', out)
+          PYEOF
+          python3 /tmp/inline.py
 
       - name: Build APK
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: cd FitnessTracker && EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile preview --non-interactive
+        run: cd /tmp/FitnessApp && cordova build android
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitness-tracker-apk
+          path: /tmp/FitnessApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+        # Bundles React + ReactDOM + Recharts with esbuild into a single IIFE that
+        # explicitly sets window.React / window.ReactDOM / window.Recharts.
+        # This bypasses all UMD detection logic which misfires in Cordova's WebView.
+        run: |
+          npm install react@18.2.0 react-dom@18.2.0 recharts@2.10.0 --prefix /tmp/libs
+          npm install -g esbuild
+
+          # Entry: explicitly assign all three globals
+          cat > /tmp/bundle-entry.js << 'EOF'
+          var React = require('react');
+          var ReactDOM = require('react-dom');
+          var Recharts = require('recharts');
+          window.React = React;
+          window.ReactDOM = ReactDOM;
+          window.Recharts = Recharts;
+          EOF
+
+          NODE_PATH=/tmp/libs/node_modules esbuild /tmp/bundle-entry.js \
+            --bundle \
+            --format=iife \
+            --platform=browser \
+            --minify \
+            --define:process.env.NODE_ENV='"production"' \
+            --outfile=/tmp/react-recharts-bundle.js
+          echo "Bundle size: $(wc -c < /tmp/react-recharts-bundle.js) bytes"
+
+          cat > /tmp/inline.py << 'PYEOF'
+          import re, sys, os
+
+          html   = open('fitness-tracker.html', 'r', encoding='utf-8').read()
+          bundle = open('/tmp/react-recharts-bundle.js', 'r', encoding='utf-8').read()
+          print('bundle:', len(bundle)//1024, 'KB')
+
+          def safe(js): return re.sub(r'</', r'<\\/', js)
+
+          # Remove the separate React and ReactDOM CDN tags (covered by bundle)
+          html = html.replace('<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>', '')
+          html = html.replace('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>', '')
+          # Replace Recharts CDN tag with the all-in-one bundle
+          html = html.replace('<script src="https://unpkg.com/recharts@2.10.0/umd/Recharts.js"></script>',
+                              '<script>' + safe(bundle) + '</script>')
+
+          for cdn in ['unpkg.com/react@18', 'unpkg.com/react-dom@18', 'unpkg.com/recharts']:
+            if cdn in html:
+              sys.exit('ERROR: CDN URL still present after inlining: ' + cdn)
+
+          out = '/tmp/FitnessApp/www/index.html'
+          open(out, 'w', encoding='utf-8').write(html)
+          print('Inlined OK, size:', len(html)//1024, 'KB, written to', out)
+          PYEOF
+          python3 /tmp/inline.py
+
+      - name: Build APK
+        run: cd /tmp/FitnessApp && cordova build android
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitness-tracker-apk
+          path: /tmp/FitnessApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
