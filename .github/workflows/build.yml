@@ -150,13 +150,13 @@ jobs:
         run: |
           cd /tmp/FitnessTracker/android
           chmod +x gradlew
-          # bundleDebugJsAndAssets runs Metro and embeds index.android.bundle;
-          # assembleDebug then packages it into the APK.
-          ./gradlew bundleDebugJsAndAssets assembleDebug --no-daemon
+          # assembleRelease always bundles JS (no flag needed) and Expo's
+          # prebuild configures it to sign with the debug keystore by default.
+          ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: fitness-tracker-apk
-          path: /tmp/FitnessTracker/android/app/build/outputs/apk/debug/app-debug.apk
+          path: /tmp/FitnessTracker/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
