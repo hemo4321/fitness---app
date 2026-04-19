@@ -32,17 +32,25 @@ jobs:
         run: cd /tmp/FitnessApp && cordova platform add android
 
       - name: Set up consistent debug keystore
-        # Uses debug.keystore committed to the repo so every build is signed
-        # with the same key — APKs can be installed as updates without uninstalling.
+        # Explicitly configure Cordova to use the committed debug.keystore via
+        # build.json so Gradle never auto-generates a random one.
         run: |
           mkdir -p ~/.android
-          if [ -n "${{ secrets.DEBUG_KEYSTORE_B64 }}" ]; then
-            echo "Using DEBUG_KEYSTORE_B64 secret"
-            echo "${{ secrets.DEBUG_KEYSTORE_B64 }}" | base64 -d > ~/.android/debug.keystore
-          else
-            echo "Using committed debug.keystore from repo"
-            cp debug.keystore ~/.android/debug.keystore
-          fi
+          cp debug.keystore ~/.android/debug.keystore
+          cp debug.keystore /tmp/FitnessApp/debug.keystore
+          cat > /tmp/FitnessApp/build.json << 'EOF'
+          {
+            "android": {
+              "debug": {
+                "keystore": "debug.keystore",
+                "storePassword": "android",
+                "alias": "androiddebugkey",
+                "password": "android",
+                "keystoreType": "jks"
+              }
+            }
+          }
+          EOF
 
       - name: Inline JS libraries into HTML
         # Bundles React + ReactDOM + Recharts with esbuild into a single IIFE that
