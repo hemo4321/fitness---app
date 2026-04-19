@@ -183,7 +183,8 @@ const daysSince = dateStr => {
   return Math.floor((new Date() - new Date(dateStr + 'T00:00:00')) / 86400000);
 };
 const genId = () => Math.random().toString(36).substr(2, 9);
-const todayStr = () => new Date().toISOString().split('T')[0];
+const dateStr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const todayStr = () => dateStr(new Date());
 const fmtDate = d => {
   const locale = (localStorage.getItem('fit_lang') || 'ar') === 'ar' ? 'ar-SA' : 'en-US';
   try {
@@ -374,8 +375,9 @@ function Dashboard({
   const remaining = fmt(PROFILE.dailyCalories - caloriesIn + burned, 1);
   const net = fmt(caloriesIn - burned, 1);
   const over = caloriesIn > PROFILE.dailyCalories;
-  const [newWeight, setNewWeight] = useState('');
   const todayW = weightLog.find(w => w.date === todayStr());
+  const [newWeight, setNewWeight] = useState(todayW ? String(todayW.weight) : '');
+  useEffect(() => { setNewWeight(todayW ? String(todayW.weight) : ''); }, [todayW?.weight]);
   const lastW = weightLog[weightLog.length - 1];
   const currentWeight = todayW?.weight || lastW?.weight || PROFILE.startWeight;
   const lostSoFar = +(PROFILE.startWeight - currentWeight).toFixed(1);
@@ -803,12 +805,14 @@ function DateBar({
   const today = todayStr();
   const isToday = selectedDate === today;
   const shift = days => {
-    const d = new Date(selectedDate + 'T00:00:00');
-    d.setDate(d.getDate() + days);
-    const next = d.toISOString().split('T')[0];
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + days);
+    const next = dateStr(date);
     if (next <= today) setSelectedDate(next);
   };
-  const label = isToday ? (ar ? 'اليوم' : 'Today') : selectedDate === new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ? (ar ? 'أمس' : 'Yesterday') : fmtDate(selectedDate);
+  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dateStr(d); })();
+  const label = isToday ? (ar ? 'اليوم' : 'Today') : selectedDate === yesterday ? (ar ? 'أمس' : 'Yesterday') : fmtDate(selectedDate);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -2528,7 +2532,7 @@ function Progress({
   }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (n - 1 - i));
-    return d.toISOString().split('T')[0];
+    return dateStr(d);
   });
   const dates = getDates(range);
   const calData = dates.map(d => ({
@@ -4964,7 +4968,7 @@ function MuscleMap({
   const trainedInRange = group => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - range);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
+    const cutoffStr = dateStr(cutoff);
     return Object.keys(logs).some(date => date >= cutoffStr && (logs[date]?.workouts || []).some(w => w.type === 'resistance' && getExs(group).includes(w.exercise)));
   };
   const statusColor = days => {
