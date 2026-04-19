@@ -378,6 +378,17 @@ function Dashboard({
   const todayW = weightLog.find(w => w.date === todayStr());
   const [newWeight, setNewWeight] = useState(todayW ? String(todayW.weight) : '');
   useEffect(() => { setNewWeight(todayW ? String(todayW.weight) : ''); }, [todayW?.weight]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [editingWDate, setEditingWDate] = useState(null);
+  const [editingWVal, setEditingWVal] = useState('');
+  const deleteWeightEntry = date => saveWeightLog(weightLog.filter(w => w.date !== date).sort((a,b)=>a.date.localeCompare(b.date)));
+  const startEditWeight = (date, val) => { setEditingWDate(date); setEditingWVal(String(val)); };
+  const saveEditWeight = () => {
+    const val = parseFloat(editingWVal);
+    if (!val || val < 30 || val > 300) return;
+    saveWeightLog(weightLog.map(w => w.date === editingWDate ? { ...w, weight: val } : w).sort((a,b)=>a.date.localeCompare(b.date)));
+    setEditingWDate(null);
+  };
   const lastW = weightLog[weightLog.length - 1];
   const currentWeight = todayW?.weight || lastW?.weight || PROFILE.startWeight;
   const lostSoFar = +(PROFILE.startWeight - currentWeight).toFixed(1);
@@ -722,6 +733,61 @@ function Dashboard({
       fontWeight: 400
     }
   }, s.u)))))), /*#__PURE__*/React.createElement("div", {
+    style: { background: '#0E151A', borderRadius: 20, padding: 16, marginBottom: 12, border: '1px solid #1C2730' }
+  },
+    /*#__PURE__*/React.createElement("button", {
+      onClick: () => setShowHistory(h => !h),
+      style: { width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }
+    },
+      /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: '#E8F0F2' } },
+        ar ? `📋 سجل الوزن (${weightLog.length})` : `📋 Weight History (${weightLog.length})`),
+      /*#__PURE__*/React.createElement("span", { style: { fontSize: 16, color: '#3D5560' } }, showHistory ? '▲' : '▼')
+    ),
+    showHistory && weightLog.length === 0 && /*#__PURE__*/React.createElement("div", {
+      style: { textAlign: 'center', color: '#3D5560', fontSize: 12, marginTop: 12 }
+    }, ar ? 'لا توجد تسجيلات بعد' : 'No entries yet'),
+    showHistory && weightLog.length > 0 && /*#__PURE__*/React.createElement("div", { style: { marginTop: 12 } },
+      [...weightLog].reverse().map(w => /*#__PURE__*/React.createElement("div", {
+        key: w.date,
+        style: { borderBottom: '1px solid #1C2730', padding: '8px 0', display: 'flex', alignItems: 'center', gap: 8 }
+      },
+        editingWDate === w.date
+          ? /*#__PURE__*/React.createElement(React.Fragment, null,
+              /*#__PURE__*/React.createElement("input", {
+                type: 'number', value: editingWVal,
+                onChange: e => setEditingWVal(e.target.value),
+                onKeyDown: e => { if (e.key === 'Enter') saveEditWeight(); if (e.key === 'Escape') setEditingWDate(null); },
+                autoFocus: true,
+                style: { flex: 1, background: '#141D24', border: '1px solid #00E5A0', borderRadius: 8, padding: '6px 10px', color: '#E8F0F2', fontSize: 13, outline: 'none' }
+              }),
+              /*#__PURE__*/React.createElement("button", {
+                onClick: saveEditWeight,
+                style: { background: '#00E5A0', color: '#080C0E', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer' }
+              }, ar ? '✓ حفظ' : '✓ Save'),
+              /*#__PURE__*/React.createElement("button", {
+                onClick: () => setEditingWDate(null),
+                style: { background: '#1C2730', color: '#E8F0F2', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }
+              }, ar ? 'إلغاء' : 'Cancel')
+            )
+          : /*#__PURE__*/React.createElement(React.Fragment, null,
+              /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
+                /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: '#E8F0F2' } }, fmtDate(w.date)),
+                /*#__PURE__*/React.createElement("div", { style: { fontSize: 10, color: '#3D5560' } }, w.date)
+              ),
+              /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: '#00E5A0', minWidth: 60, textAlign: 'center' } },
+                w.weight, /*#__PURE__*/React.createElement("span", { style: { fontSize: 10, fontWeight: 400 } }, ' kg')),
+              /*#__PURE__*/React.createElement("button", {
+                onClick: () => startEditWeight(w.date, w.weight),
+                style: { background: '#1C2D3A', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+              }, '✏️'),
+              /*#__PURE__*/React.createElement("button", {
+                onClick: () => deleteWeightEntry(w.date),
+                style: { background: '#2A1A1A', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+              }, '🗑️')
+            )
+      ))
+    )
+  ), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#0E151A',
       borderRadius: 16,
