@@ -383,6 +383,184 @@ COMPANIES = {
 
 COMPANY_ORDER = ["الراجحي", "الإنماء", "STC", "سال", "المواساة", "بدجت", "اكسترا", "المتقدمة", "بنيان ريت"]
 
+# ─── ANALYST CONSENSUS (Investing.com / Bloomberg / Argaam — May 2026) ─────────
+# named[] = individual broker targets where name could be identified
+ANALYST_CONSENSUS = {
+    "الراجحي": {
+        "avg": 113.5, "high": 126.0, "low": 99.4, "count": 8,
+        "rating": "شراء", "source_date": "مايو 2026",
+        "named": [
+            {"house": "الجزيرة كابيتال",      "target": 102.0, "rec": "زيادة المراكز (OW)"},
+            {"house": "مورغان ستانلي",         "target": 94.5,  "rec": "محايد (Neutral)"},
+            {"house": "إجماع (8 محللين)",      "target": 113.5, "rec": "شراء (Buy)"},
+            {"house": "الأعلى (High)",          "target": 126.0, "rec": "شراء قوي"},
+            {"house": "الأدنى (Low)",           "target": 99.4,  "rec": "شراء"},
+        ]
+    },
+    "الإنماء": {
+        "avg": 27.6, "high": 41.0, "low": 25.0, "count": 8,
+        "rating": "شراء", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع (8 محللين)",      "target": 27.6,  "rec": "شراء (Buy)"},
+            {"house": "الأعلى (High)",          "target": 41.0,  "rec": "شراء قوي"},
+            {"house": "الأدنى (Low)",           "target": 25.0,  "rec": "محايد"},
+        ]
+    },
+    "STC": {
+        "avg": 47.7, "high": 55.0, "low": 41.1, "count": 8,
+        "rating": "شراء", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع (8 محللين)",      "target": 47.7,  "rec": "شراء (Buy)"},
+            {"house": "الأعلى (High)",          "target": 55.0,  "rec": "شراء قوي"},
+            {"house": "الأدنى (Low)",           "target": 41.1,  "rec": "محايد"},
+        ]
+    },
+    "سال": {
+        "avg": 178.4, "high": 196.1, "low": 165.0, "count": None,
+        "rating": "محايد", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع المحللين",         "target": 178.4, "rec": "محايد (Neutral)"},
+            {"house": "الأعلى (High)",          "target": 196.1, "rec": "شراء"},
+            {"house": "الأدنى (Low)",           "target": 165.0, "rec": "محايد"},
+        ]
+    },
+    "المواساة": {
+        "avg": 91.6, "high": 125.0, "low": 75.5, "count": 5,
+        "rating": "شراء", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع (5+ محللين)",     "target": 91.6,  "rec": "شراء (Buy)"},
+            {"house": "الأعلى (High)",          "target": 125.0, "rec": "شراء قوي"},
+            {"house": "الأدنى (Low)",           "target": 75.5,  "rec": "محايد"},
+        ]
+    },
+    "بدجت": {
+        "avg": 90.2, "high": 100.0, "low": 80.0, "count": 8,
+        "rating": "⚠ شراء قوي (قبل Q1 2026)", "source_date": "⚠ سابق لنتائج Q1 2026",
+        "named": [
+            {"house": "⚠ إجماع (8) — قبل انهيار Q1", "target": 90.2, "rec": "شراء قوي — يستوجب مراجعة"},
+            {"house": "الأعلى (High) — قبل Q1",       "target": 100.0,"rec": "شراء قوي"},
+            {"house": "الأدنى (Low) — قبل Q1",        "target": 80.0, "rec": "شراء"},
+        ]
+    },
+    "اكسترا": {
+        "avg": 111.7, "high": 140.0, "low": 93.0, "count": 8,
+        "rating": "شراء قوي", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع (8 محللين)",      "target": 111.7, "rec": "شراء قوي (Strong Buy)"},
+            {"house": "الأعلى (High)",          "target": 140.0, "rec": "شراء قوي"},
+            {"house": "الأدنى (Low)",           "target": 93.0,  "rec": "شراء"},
+        ]
+    },
+    "المتقدمة": {
+        "avg": 38.8, "high": 50.0, "low": 31.1, "count": 8,
+        "rating": "محايد", "source_date": "مايو 2026",
+        "named": [
+            {"house": "إجماع (8 محللين)",      "target": 38.8,  "rec": "محايد (Hold)"},
+            {"house": "الأعلى (High)",          "target": 50.0,  "rec": "شراء — عند التعافي"},
+            {"house": "الأدنى (Low)",           "target": 31.1,  "rec": "بيع / تخفيض"},
+        ]
+    },
+    "بنيان ريت": {
+        "avg": None, "high": None, "low": None, "count": None,
+        "rating": "غير متاح", "source_date": "غير متاح",
+        "named": [
+            {"house": "لا تغطية موثقة من بيوت خبرة", "target": None, "rec": "—"},
+        ]
+    },
+}
+
+# ─── EXTRA METRICS FOR ADVANCED VALUATION ─────────────────────────────────────
+# DCF assumptions per company: wacc, fcf_reinvestment_rate, st_growth, lt_growth
+DCF_PARAMS = {
+    "الراجحي":   {"wacc": 0.105, "reinv": 0.15, "g_st": 0.08, "g_lt": 0.03, "years": 5, "use_dps": True},
+    "الإنماء":   {"wacc": 0.105, "reinv": 0.15, "g_st": 0.10, "g_lt": 0.03, "years": 5, "use_dps": True},
+    "STC":       {"wacc": 0.095, "reinv": 0.35, "g_st": 0.06, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "سال":       {"wacc": 0.110, "reinv": 0.25, "g_st": 0.12, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "المواساة":  {"wacc": 0.100, "reinv": 0.20, "g_st": 0.06, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "بدجت":      {"wacc": 0.115, "reinv": 0.40, "g_st": 0.07, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "اكسترا":    {"wacc": 0.115, "reinv": 0.15, "g_st": 0.10, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "المتقدمة":  {"wacc": 0.130, "reinv": 0.30, "g_st": 0.05, "g_lt": 0.03, "years": 5, "use_dps": False},
+    "بنيان ريت": {"wacc": 0.085, "reinv": 0.05, "g_st": 0.04, "g_lt": 0.03, "years": 5, "use_dps": False},
+}
+
+# EV/EBITDA sector benchmarks (x)
+EV_EBITDA_BENCH = {
+    "الراجحي": None, "الإنماء": None,   # Banks → N/A
+    "STC": 8.0, "سال": 12.0, "المواساة": 14.0,
+    "بدجت": 8.0, "اكسترا": 10.0, "المتقدمة": 8.0,
+    "بنيان ريت": None,  # REIT → use FFO
+}
+
+def compute_dcf(company_data, params):
+    """Simple 5-year DCF. For banks uses DPS stream (DDM variant)."""
+    shares = company_data["shares_m"]
+    wacc = params["wacc"]
+    g_st = params["g_st"]
+    g_lt = params["g_lt"]
+    reinv = params["reinv"]
+    years = params["years"]
+
+    if company_data["profits_m"].get(2024, 0) <= 0:
+        return None  # Losses — DCF unreliable
+
+    if params["use_dps"]:
+        # DDM variant for banks: use latest DPS as base
+        annual = get_annual_divs(company_data)
+        base = annual.get(2024) or annual.get(2023)
+        if not base:
+            return None
+    else:
+        ocf = company_data["op_cashflow_m"].get(2024, 0)
+        base_total = ocf * (1 - reinv)
+        base = base_total / shares  # per share
+
+    pv_sum = 0.0
+    fcf = base
+    for t in range(1, years + 1):
+        fcf *= (1 + g_st)
+        pv_sum += fcf / (1 + wacc) ** t
+
+    # Terminal value (Gordon)
+    fcf_terminal = base * (1 + g_st) ** years * (1 + g_lt)
+    terminal_pv = (fcf_terminal / (wacc - g_lt)) / (1 + wacc) ** years
+    return round(pv_sum + terminal_pv, 1)
+
+def compute_ev_ebitda_fv(company_data, bench):
+    """EV/EBITDA fair value: EBITDA * sector_bench / shares."""
+    if bench is None:
+        return None
+    ocf = company_data["op_cashflow_m"].get(2024, 0)
+    ebitda = ocf * 1.12  # rough EBITDA ≈ OCF / (1 - D&A effect)
+    shares = company_data["shares_m"]
+    if ebitda <= 0 or shares <= 0:
+        return None
+    return round(ebitda * bench / shares, 1)
+
+def compute_peg(company_data):
+    """PEG = P/E ÷ 3-yr EPS CAGR %."""
+    pe = company_data.get("pe")
+    if not pe:
+        return None
+    profits = company_data["profits_m"]
+    p_start = profits.get(2021)
+    p_end = profits.get(2024)
+    if not p_start or not p_end or p_start <= 0 or p_end <= 0:
+        return None
+    cagr = (p_end / p_start) ** (1/3) - 1
+    if cagr <= 0:
+        return None
+    return round(pe / (cagr * 100), 2)
+
+def compute_ps(company_data):
+    """Price/Sales ratio."""
+    price = company_data["price_sar"]
+    shares = company_data["shares_m"]
+    rev = company_data["revenues_m"].get(2024)
+    if not rev or rev <= 0:
+        return None
+    market_cap = price * shares
+    return round(market_cap / rev, 1)
+
 def get_annual_divs(company_data):
     """Compute annual dividend totals from the divs list."""
     annual = {}
@@ -395,6 +573,266 @@ def get_annual_divs(company_data):
         if year and dps is not None:
             annual[year] = annual.get(year, 0) + dps
     return annual
+
+
+# ─── METHODOLOGY SHEET ────────────────────────────────────────────────────────
+def write_methodology_sheet(wb):
+    ws = wb.create_sheet("📚 منهجية التقييم")
+    ws.sheet_view.rightToLeft = True
+
+    ws.merge_cells("A1:G1")
+    c = ws["A1"]
+    c.value = "دليل أدوات التقييم — ما تقيسه كل أداة، الصيغة، وأنسب الشركات لها"
+    c.font = Font(name='Calibri', size=13, bold=True, color=C_WHITE)
+    c.fill = fill(C_DARK_NAVY)
+    c.alignment = center()
+    ws.row_dimensions[1].height = 32
+
+    cols = ["الأداة", "الصيغة", "ما تقيسه", "الأنسب لنوع الشركات", "المحدودية", "Benchmark السعودي", "الشركات المُستخدمة معها"]
+    widths = [22, 30, 38, 34, 36, 28, 36]
+    for i, (h, w) in enumerate(zip(cols, widths), 1):
+        c = ws.cell(row=2, column=i, value=h)
+        c.font = hdr_font(10)
+        c.fill = fill(C_SUB_HEADER)
+        c.alignment = center()
+        c.border = make_border()
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.row_dimensions[2].height = 30
+
+    METHODS = [
+        {
+            "name": "P/E — نسبة السعر إلى الأرباح",
+            "formula": "سعر السهم ÷ ربح السهم (EPS)",
+            "measures": "كم يدفع المستثمر مقابل كل ريال من الأرباح — مقياس الغلاء/الرخص النسبي",
+            "best_for": "✅ شركات ناضجة ذات أرباح مستقرة وقابلة للتنبؤ",
+            "limits": "❌ لا يعمل مع الخسائر | يتأثر بالبنود غير المتكررة | يتجاهل هيكل رأس المال",
+            "benchmark": "TASI: متوسط 15-18x | بنوك: 12-16x | تجزئة: 14-20x",
+            "used_for": "الراجحي، الإنماء، المواساة، بدجت، اكسترا",
+            "color": "EBF5FB",
+        },
+        {
+            "name": "P/B — السعر إلى القيمة الدفترية",
+            "formula": "سعر السهم ÷ (حقوق الملكية ÷ عدد الأسهم)",
+            "measures": "هل يدفع السوق علاوة على صافي أصول الشركة؟ — مقارنة بالقيمة المحاسبية",
+            "best_for": "✅ البنوك والشركات المالية والعقارية حيث الأصول الملموسة هي المحرك",
+            "limits": "❌ يتجاهل الأصول غير الملموسة (العلامة التجارية) | يُضلل في الصناعات كثيفة المعرفة",
+            "benchmark": "بنوك سعودية: 2-4x | REITs: 0.9-1.2x | صناعة: 1.5-3x",
+            "used_for": "الراجحي، الإنماء، بنيان ريت، المتقدمة",
+            "color": "E8F8F5",
+        },
+        {
+            "name": "DDM — نموذج خصم التوزيعات (Gordon Growth)",
+            "formula": "DPS₁ ÷ (WACC − g)  حيث g = معدل نمو التوزيعات",
+            "measures": "القيمة الحالية لتيار التوزيعات المستقبلي — يعكس القيمة للمستثمر الباحث عن الدخل",
+            "best_for": "✅ شركات ذات سياسة توزيع ثابتة ومستدامة وأرباح مستقرة",
+            "limits": "❌ لا ينطبق على الشركات غير الموزعة | حساس جداً لافتراض g | يهمل الاحتفاظ بالأرباح",
+            "benchmark": "WACC: 9-11% | g: 3-5% | تعطي قيمة أعلى مع خفض الفائدة",
+            "used_for": "الراجحي، الإنماء، المواساة، اكسترا، بنيان ريت",
+            "color": "FEF9E7",
+        },
+        {
+            "name": "DCF — خصم التدفقات النقدية الحرة",
+            "formula": "Σ [FCF_t/(1+WACC)^t] + Terminal Value/(1+WACC)^n\nFCF = التدفق التشغيلي × (1 − معدل الاستثمار)",
+            "measures": "القيمة الجوهرية المطلقة بناءً على التدفقات النقدية الفعلية المتوقعة — الأشمل نظرياً",
+            "best_for": "✅ جميع الشركات المولدة للتدفقات | الأمثل للشركات ذات النمو العالي",
+            "limits": "❌ حساس جداً للافتراضات (WACC، g، CAPEX) | لا يصلح للخسائر | أرقامه أقل موثوقية للمبتدئين",
+            "benchmark": "WACC: بنوك 10.5% | اتصالات 9.5% | تجزئة 11.5% | بتروكيماويات 13% | g طويل: 3%",
+            "used_for": "STC، سال، المواساة، بدجت، اكسترا، بنيان ريت (FFO-based)",
+            "color": "F9EBEA",
+        },
+        {
+            "name": "EV/EBITDA — قيمة المنشأة إلى EBITDA",
+            "formula": "EV ÷ EBITDA  حيث EV = القيمة السوقية + الديون − النقد\nEBITDA = أرباح قبل الفوائد والضرائب والاستهلاك",
+            "measures": "التقييم مستقلاً عن هيكل رأس المال والسياسة الضريبية والاستهلاك — مقارنة دولية",
+            "best_for": "✅ شركات التشغيل بديون عالية (تأجير، اتصالات) | المقارنات القطاعية الدولية",
+            "limits": "❌ لا يصلح للبنوك | يتطلب بيانات تفصيلية عن الديون | يهمل فرص النمو",
+            "benchmark": "اتصالات: 7-10x | لوجستيات: 10-14x | رعاية صحية: 12-16x | تجزئة: 8-12x",
+            "used_for": "STC، سال، المواساة، بدجت، اكسترا، المتقدمة",
+            "color": "F5EEF8",
+        },
+        {
+            "name": "PEG — نسبة النمو إلى P/E",
+            "formula": "P/E ÷ معدل نمو EPS السنوي (%)\nمثال: P/E=15 ونمو=20% → PEG=0.75",
+            "measures": "هل P/E المرتفع مبرر بمعدل النمو؟ — يُعادل قيمة الشركات بمختلف مستويات النمو",
+            "best_for": "✅ شركات النمو العالي | مقارنة شركتين بـP/E مختلف | تقييم الجزء النمو في المحفظة",
+            "limits": "❌ يعتمد على دقة تقديرات النمو | لا يصلح مع الخسائر | يُضلل مع النمو المؤقت",
+            "benchmark": "PEG < 1x = جذاب جداً | 1-1.5x = معقول | > 2x = مكلف | < 0.5x = فرصة نادرة",
+            "used_for": "الإنماء، سال، المواساة، بدجت، اكسترا",
+            "color": "EAFAF1",
+        },
+        {
+            "name": "P/S — السعر إلى الإيرادات",
+            "formula": "القيمة السوقية الكلية ÷ إجمالي الإيرادات السنوية",
+            "measures": "مضاعف المبيعات — مفيد عند غياب الأرباح أو تشويهها ببنود استثنائية",
+            "best_for": "✅ شركات النمو في مرحلة مبكرة | شركات ذات أرباح متقلبة | مقارنة قطاع التجزئة",
+            "limits": "❌ يتجاهل كلياً الربحية والهامش | شركة بمبيعات عالية وخسائر تبدو رخيصة زيفاً",
+            "benchmark": "تجزئة إلكترونيات: 0.5-2x | رعاية صحية: 2-5x | اتصالات: 1-3x | لوجستيات: 3-8x",
+            "used_for": "اكسترا، سال، المتقدمة (خسائر P/E)",
+            "color": "FEF5E7",
+        },
+        {
+            "name": "P/FFO — السعر إلى تدفق العمليات (REITs فقط)",
+            "formula": "سعر الوحدة ÷ FFO للوحدة\nFFO = صافي الدخل + الاستهلاك − مكاسب بيع الأصول",
+            "measures": "الأداة الصحيحة لتقييم REITs — يستبعد الاستهلاك الذي يُضخم الخسارة المحاسبية للعقارات",
+            "best_for": "✅ صناديق الاستثمار العقاري (REITs) حصراً | يعكس القدرة الفعلية على التوزيع",
+            "limits": "❌ لا ينطبق على غير REITs | يتفاوت تعريف FFO بين الشركات",
+            "benchmark": "REITs السعودية: 12-18x | REITs الأمريكية: 15-22x | عائد توزيع ≥ 5%",
+            "used_for": "بنيان ريت (4340) حصراً",
+            "color": "E8EAF6",
+        },
+    ]
+
+    for r, m in enumerate(METHODS, 3):
+        bg = m["color"]
+        row_data = [m["name"], m["formula"], m["measures"], m["best_for"],
+                    m["limits"], m["benchmark"], m["used_for"]]
+        for col, val in enumerate(row_data, 1):
+            c = ws.cell(row=r, column=col, value=val)
+            c.fill = fill(bg)
+            c.border = make_border()
+            c.alignment = Alignment(horizontal='right', vertical='center', wrap_text=True)
+            bold = col == 1
+            c.font = Font(name='Calibri', size=10, bold=bold, color="1A1A2E")
+        ws.row_dimensions[r].height = 58
+
+    # Summary row
+    sr = len(METHODS) + 3
+    ws.merge_cells(f"A{sr}:G{sr}")
+    c = ws[f"A{sr}"]
+    c.value = ("⚖ مبدأ التقييم: لا توجد أداة مثالية واحدة. الجمع بين 3+ طرق يُعطي نطاقاً للقيمة العادلة أكثر موثوقية."
+               " | عندما تتقارب 3 طرق مختلفة على نفس المستوى السعري — تكون الثقة عالية في ذلك التقدير.")
+    c.font = Font(name='Calibri', size=10, bold=True, color=C_WHITE)
+    c.fill = fill(C_DARK_NAVY)
+    c.alignment = Alignment(horizontal='right', vertical='center', wrap_text=True)
+    ws.row_dimensions[sr].height = 36
+
+
+# ─── ANALYST HOUSE FORECASTS SHEET ───────────────────────────────────────────
+def write_analyst_sheet(wb, companies, analyst_data):
+    ws = wb.create_sheet("🏦 تقييمات المحللين")
+    ws.sheet_view.rightToLeft = True
+
+    ws.merge_cells("A1:G1")
+    c = ws["A1"]
+    c.value = ("تقييمات بيوت الخبرة والإجماع لـ 9 شركات  |  المصدر: Investing.com · Bloomberg · Argaam · الجزيرة كابيتال  |  مايو 2026")
+    c.font = Font(name='Calibri', size=12, bold=True, color=C_WHITE)
+    c.fill = fill(C_DARK_NAVY)
+    c.alignment = center()
+    ws.row_dimensions[1].height = 28
+
+    ws.merge_cells("A2:G2")
+    c = ws["A2"]
+    c.value = ("⚠ ملاحظة: أسعار بيوت الخبرة المسماة محدودة الإتاحة للعموم — البيانات المُتحقق منها تعتمد على إجماع Investing.com/Bloomberg."
+               " | ⚠ أهداف بدجت مُحتسبة قبل نتائج Q1 2026 المخيبة للآمال.")
+    c.font = Font(name='Calibri', size=9, italic=True, color="7D6608")
+    c.fill = fill("FEF9E7")
+    c.alignment = Alignment(horizontal='right', wrap_text=True, vertical='center')
+    ws.row_dimensions[2].height = 32
+
+    hdrs = ["الشركة", "الرمز", "السعر الحالي\n(ريال)", "بيت الخبرة / المصدر",
+            "السعر المستهدف\n(ريال)", "التوصية", "Upside%"]
+    widths = [18, 9, 16, 38, 18, 36, 14]
+    for i, (h, w) in enumerate(zip(hdrs, widths), 1):
+        c = ws.cell(row=3, column=i, value=h)
+        c.font = hdr_font(10)
+        c.fill = fill(C_SUB_HEADER)
+        c.alignment = center()
+        c.border = make_border()
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.row_dimensions[3].height = 32
+
+    row = 4
+    SECTOR_COLORS = {
+        "الراجحي": "D6EAF8", "الإنماء": "D6EAF8", "STC": "E8DAEF",
+        "سال": "D5F5E3", "المواساة": "FADBD8", "بدجت": "FDEBD0",
+        "اكسترا": "D5F5E3", "المتقدمة": "FDFEFE", "بنيان ريت": "EAF2FF",
+    }
+
+    for name in COMPANY_ORDER:
+        d = companies[name]
+        ac = analyst_data.get(name, {})
+        named_list = ac.get("named", [])
+        price = d["price_sar"]
+        ticker = d["ticker"]
+        bg = SECTOR_COLORS.get(name, "F2F3F4")
+
+        # Consensus summary row (merged company name)
+        start_row = row
+        for entry in named_list:
+            target = entry.get("target")
+            rec = entry.get("rec", "—")
+            house = entry.get("house", "—")
+
+            upside_str = "—"
+            upside_color = "000000"
+            if target:
+                upside = (target - price) / price * 100
+                upside_str = f"{upside:+.1f}%"
+                upside_color = C_POSITIVE if upside > 5 else (C_NEGATIVE if upside < -5 else C_WARNING)
+
+            # Company & ticker only on first row
+            if row == start_row:
+                c = ws.cell(row=row, column=1, value=name)
+                c.font = Font(name='Calibri', size=10, bold=True, color="1A1A2E")
+                c.fill = fill(bg); c.alignment = center(); c.border = make_border()
+                c = ws.cell(row=row, column=2, value=ticker)
+                c.font = Font(name='Calibri', size=9, color="555555")
+                c.fill = fill(bg); c.alignment = center(); c.border = make_border()
+                c = ws.cell(row=row, column=3, value=price)
+                c.font = Font(name='Calibri', size=10, bold=True, color=C_DARK_NAVY)
+                c.fill = fill(bg); c.alignment = center(); c.number_format = '#,##0.00'
+                c.border = make_border()
+            else:
+                for col in [1, 2, 3]:
+                    c = ws.cell(row=row, column=col, value="")
+                    c.fill = fill(bg); c.border = make_border()
+
+            c = ws.cell(row=row, column=4, value=house)
+            c.font = Font(name='Calibri', size=10, color="1A1A2E")
+            c.fill = fill(bg); c.alignment = right_align(); c.border = make_border()
+
+            c = ws.cell(row=row, column=5, value=target if target else "—")
+            c.font = Font(name='Calibri', size=11, bold=True,
+                         color=C_POSITIVE if target and target > price else (C_NEGATIVE if target and target < price else "555555"))
+            c.fill = fill(bg); c.alignment = center()
+            c.number_format = '#,##0.00'; c.border = make_border()
+
+            c = ws.cell(row=row, column=6, value=rec)
+            c.font = Font(name='Calibri', size=9, color="1A1A2E")
+            c.fill = fill(bg); c.alignment = center(); c.border = make_border()
+
+            c = ws.cell(row=row, column=7, value=upside_str)
+            c.font = Font(name='Calibri', size=10, bold=True, color=upside_color)
+            c.fill = fill(bg); c.alignment = center(); c.border = make_border()
+
+            ws.row_dimensions[row].height = 20
+            row += 1
+
+        # Consensus summary bar
+        avg = ac.get("avg")
+        low = ac.get("low")
+        high = ac.get("high")
+        count = ac.get("count")
+        rating = ac.get("rating", "—")
+        src = ac.get("source_date", "—")
+        summary = (f"الإجماع: متوسط {avg} | نطاق {low}–{high} | {count or '?'} محللين | {rating} | {src}" if avg
+                   else "لا يوجد إجماع موثق")
+        ws.merge_cells(f"A{row}:G{row}")
+        c = ws[f"A{row}"]
+        c.value = summary
+        c.font = Font(name='Calibri', size=9, italic=True, color=C_WHITE)
+        c.fill = fill(C_SUB_HEADER)
+        c.alignment = Alignment(horizontal='right', vertical='center')
+        ws.row_dimensions[row].height = 16
+        row += 1
+
+    # Upside legend
+    ws.merge_cells(f"A{row+1}:G{row+1}")
+    c = ws[f"A{row+1}"]
+    c.value = "🟢 Upside > +5%  =  فرصة رأسمالية   |   🟡 بين ±5%  =  تقييم عادل   |   🔴 Downside > -5%  =  مكلف أو بلغ هدفه"
+    c.font = Font(name='Calibri', size=9, bold=True, color=C_DARK_NAVY)
+    c.fill = fill("F8F9FA"); c.alignment = Alignment(horizontal='right')
+    ws.row_dimensions[row+1].height = 18
 
 
 def write_overview_sheet(wb, companies):
@@ -730,45 +1168,76 @@ def write_valuation_sheet(wb, companies):
     ws = wb.create_sheet("🎯 التقييم والقيمة العادلة")
     ws.sheet_view.rightToLeft = True
 
-    ws.merge_cells("A1:J1")
+    ws.merge_cells("A1:N1")
     c = ws["A1"]
-    c.value = "مصفوفة التقييم والقيمة العادلة لكل شركة — 3 طرق تقييم + توصيات المحللين"
+    c.value = "مصفوفة التقييم الشاملة — 7 أدوات تقييم + إجماع المحللين + هامش الأمان  (انظر ورقة منهجية التقييم للشرح)"
     c.font = hdr_font(12)
     c.fill = fill(C_DARK_NAVY)
     c.alignment = center()
     ws.row_dimensions[1].height = 28
 
-    headers = ["الشركة", "السعر\nالحالي", "P/E", "P/B",
-               "عائد\nتوزيع%",
-               "قيمة عادلة\n(P/E)", "قيمة عادلة\n(DDM)",
-               "قيمة عادلة\n(P/B)", "متوسط\nالمحللين",
-               "هامش الأمان\n%"]
+    # Method legend row
+    ws.merge_cells("A2:N2")
+    c = ws["A2"]
+    c.value = ("🟦 P/E  🟩 P/B  🟨 DDM  🟥 DCF  🟪 EV/EBITDA  🔶 P/S  🔷 PEG  |  "
+               "✅ أخضر = فوق السعر الحالي (هدف أعلى)   🔴 أحمر = دون السعر الحالي")
+    c.font = Font(name='Calibri', size=9, italic=True, color="2C3E50")
+    c.fill = fill("EAF4FB")
+    c.alignment = Alignment(horizontal='right', vertical='center')
+    ws.row_dimensions[2].height = 20
 
-    for col, h in enumerate(headers, 1):
-        c = ws.cell(row=2, column=col, value=h)
+    headers = [
+        "الشركة", "السعر\nالحالي",
+        "P/E\n(نسبة)", "P/B\n(نسبة)", "عائد\nالتوزيع%", "PEG\n(نمو/P/E)", "P/S\n(الإيرادات)",
+        "قيمة عادلة\nP/E",  "قيمة عادلة\nDDM",
+        "قيمة عادلة\nP/B",  "قيمة عادلة\nDCF",
+        "قيمة عادلة\nEV/EBITDA",
+        "إجماع\nالمحللين",
+        "هامش الأمان\n(متوسط 5 طرق)%",
+    ]
+    col_widths = [16, 10, 9, 9, 10, 9, 9, 13, 13, 13, 13, 14, 13, 16]
+    HEADER_COLORS = [
+        C_DARK_NAVY, C_DARK_NAVY,
+        "154360", "154360", "154360", "1A5276", "1A5276",
+        "145A32", "145A32", "145A32", "7B241C", "6C3483",
+        "1B4F72", C_GOLD,
+    ]
+
+    for col, (h, hc, w) in enumerate(zip(headers, HEADER_COLORS, col_widths), 1):
+        c = ws.cell(row=3, column=col, value=h)
         c.font = hdr_font(9)
-        c.fill = fill(C_DARK_NAVY)
+        c.fill = fill(hc)
         c.alignment = center()
         c.border = make_border()
-    ws.row_dimensions[2].height = 32
+        ws.column_dimensions[get_column_letter(col)].width = w
+    ws.row_dimensions[3].height = 36
 
-    for r, name in enumerate(COMPANY_ORDER, 3):
+    ROW_COLORS = ["EBF5FB", "E8F8F5", "F9EBEA", "EAFAF1", "FDFEFE",
+                  "FEF9E7", "EAFAF1", "F5EEF8", "EAF2FF"]
+
+    for r_idx, name in enumerate(COMPANY_ORDER):
         d = companies[name]
+        r = r_idx + 4
         price = d["price_sar"]
+        bg = ROW_COLORS[r_idx % len(ROW_COLORS)]
+
         fv = d.get("fair_value", {})
-        pe_fv = fv.get("pe_based")
+        pe_fv  = fv.get("pe_based")
         ddm_fv = fv.get("ddm")
-        pb_fv = fv.get("pb_based")
-        analyst_avg = d.get("analysts", {}).get("avg")
+        pb_fv  = fv.get("pb_based")
 
-        # Average fair value
-        valid_fvs = [x for x in [pe_fv, ddm_fv, pb_fv] if x]
-        avg_fv = sum(valid_fvs) / len(valid_fvs) if valid_fvs else None
-        margin = ((avg_fv - price) / price * 100) if (avg_fv and price) else None
+        dcf_fv   = compute_dcf(d, DCF_PARAMS[name])
+        ev_fv    = compute_ev_ebitda_fv(d, EV_EBITDA_BENCH.get(name))
+        analyst_avg = ANALYST_CONSENSUS.get(name, {}).get("avg")
+        peg_val  = compute_peg(d)
+        ps_val   = compute_ps(d)
 
-        bg = C_LIGHT_GRAY
+        # Weighted average of 5 non-analyst methods
+        valids = [x for x in [pe_fv, ddm_fv, pb_fv, dcf_fv, ev_fv] if x]
+        avg_fv = round(sum(valids) / len(valids), 1) if valids else None
+        margin = round((avg_fv - price) / price * 100, 1) if avg_fv else None
 
-        def wval(col, val, fmt=None, clr="000000", bold=False):
+        def wv(col, val, fmt=None, clr="1A1A2E", bold=False):
             c = ws.cell(row=r, column=col, value=val)
             c.font = Font(name='Calibri', size=10, bold=bold, color=clr)
             c.fill = fill(bg)
@@ -777,49 +1246,68 @@ def write_valuation_sheet(wb, companies):
             if fmt:
                 c.number_format = fmt
 
-        wval(1, name, bold=True)
-        wval(2, price, '#,##0.00')
-        pe_v = d.get("pe")
-        wval(3, pe_v if pe_v else "خسارة")
-        wval(4, d.get("pb"), '#,##0.0')
-        wval(5, d.get("div_yield_pct"), '#,##0.0')
-
-        for col, fv_val in [(6, pe_fv), (7, ddm_fv), (8, pb_fv)]:
-            if fv_val:
-                clr = C_POSITIVE if fv_val > price else C_NEGATIVE
-                wval(col, fv_val, '#,##0.0', clr, True)
+        def fv_cell(col, val):
+            if val is None:
+                wv(col, "—", clr="888888")
             else:
-                wval(col, "—")
+                clr = C_POSITIVE if val > price else C_NEGATIVE
+                wv(col, val, '#,##0.0', clr, True)
+
+        wv(1, name, bold=True)
+        wv(2, price, '#,##0.00', C_DARK_NAVY, True)
+
+        pe_v = d.get("pe")
+        wv(3, pe_v if pe_v else "خسارة", clr="555555" if not pe_v else "1A1A2E")
+        wv(4, d.get("pb"), '#,##0.1')
+        wv(5, d.get("div_yield_pct"), '#,##0.0')
+
+        if peg_val:
+            peg_clr = C_POSITIVE if peg_val < 1.0 else (C_WARNING if peg_val < 2.0 else C_NEGATIVE)
+            wv(6, peg_val, '#,##0.00', peg_clr, True)
+        else:
+            wv(6, "—", clr="888888")
+
+        if ps_val:
+            wv(7, ps_val, '#,##0.1')
+        else:
+            wv(7, "—", clr="888888")
+
+        fv_cell(8, pe_fv)
+        fv_cell(9, ddm_fv)
+        fv_cell(10, pb_fv)
+        fv_cell(11, dcf_fv)
+        fv_cell(12, ev_fv)
 
         if analyst_avg:
             clr = C_POSITIVE if analyst_avg > price else C_NEGATIVE
-            wval(9, analyst_avg, '#,##0.0', clr, True)
+            wv(13, analyst_avg, '#,##0.0', clr, True)
         else:
-            wval(9, "—")
+            wv(13, "—", clr="888888")
 
-        if margin:
+        if margin is not None:
             margin_str = f"{margin:+.1f}%"
-            clr = C_POSITIVE if margin > 10 else (C_WARNING if margin > 0 else C_NEGATIVE)
-            wval(10, margin_str, None, clr, True)
+            m_clr = C_POSITIVE if margin > 10 else (C_WARNING if margin > 0 else C_NEGATIVE)
+            wv(14, margin_str, None, m_clr, True)
         else:
-            wval(10, "—")
+            wv(14, "—", clr="888888")
 
-        ws.row_dimensions[r].height = 20
+        ws.row_dimensions[r].height = 22
 
-    note_row = 3 + len(COMPANY_ORDER) + 1
-    ws.merge_cells(f"A{note_row}:J{note_row}")
+    # Notes
+    note_row = 4 + len(COMPANY_ORDER) + 1
+    ws.merge_cells(f"A{note_row}:N{note_row}")
     c = ws[f"A{note_row}"]
-    c.value = ("طرق التقييم: (1) P/E مبني على متوسط قطاعي × EPS المتوقع  "
-               "(2) DDM = نموذج خصم التوزيعات (معدل خصم 10%)  "
-               "(3) P/B = متوسط القطاع × القيمة الدفترية للسهم  "
-               "| هامش الأمان = (متوسط القيمة العادلة - السعر الحالي) / السعر الحالي")
-    c.font = Font(name='Calibri', size=9, italic=True, color="555555")
+    c.value = (
+        "منهجية: P/E = متوسط P/E قطاعي × EPS 2024  |  P/B = متوسط P/B قطاعي × القيمة الدفترية  |  "
+        "DDM = DPS₁/(WACC−g)  |  DCF = Σ FCF/(1+WACC)^t + Terminal (5 سنوات، g_terminal=3%)  |  "
+        "EV/EBITDA = EBITDA × Benchmark القطاعي ÷ الأسهم  |  "
+        "PEG = P/E ÷ CAGR%  |  هامش الأمان = (متوسط 5 طرق − السعر) ÷ السعر  |  "
+        "⚠ DCF وEV/EBITDA تقديرات مبنية على OCF كـProxy — راجع ورقة منهجية التقييم للتفاصيل"
+    )
+    c.font = Font(name='Calibri', size=8, italic=True, color="555555")
     c.fill = fill("F8F9FA")
     c.alignment = Alignment(horizontal='right', wrap_text=True, vertical='center')
-    ws.row_dimensions[note_row].height = 35
-
-    for i, w in enumerate([16, 10, 8, 8, 10, 12, 12, 12, 12, 14], 1):
-        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.row_dimensions[note_row].height = 42
 
 
 def write_portfolio_sheet(wb, companies):
@@ -1040,10 +1528,12 @@ def generate_excel(output_path):
     # Remove default sheet
     wb.remove(wb.active)
 
+    write_methodology_sheet(wb)
     write_overview_sheet(wb, COMPANIES)
     write_dividend_sheet(wb, COMPANIES)
     write_financials_sheet(wb, COMPANIES)
     write_valuation_sheet(wb, COMPANIES)
+    write_analyst_sheet(wb, COMPANIES, ANALYST_CONSENSUS)
     write_portfolio_sheet(wb, COMPANIES)
     write_company_sheets(wb, COMPANIES)
 
