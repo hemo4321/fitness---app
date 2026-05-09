@@ -363,7 +363,7 @@ function buildLivePricesSheet_(ss) {
 
   // Price formulas (GOOGLEFINANCE with fallback to last known price)
   const priceFormulas   = COMPANIES.map(c => [
-    `=IFERROR(GOOGLEFINANCE("TADAWUL:${c.ticker}","closeyest"),${c.price})`
+    `=IFERROR(GOOGLEFINANCE("TADAWUL:${c.ticker}","price"),${c.price})`
   ]);
   const high52Formulas  = COMPANIES.map(c => [
     `=IFERROR(GOOGLEFINANCE("TADAWUL:${c.ticker}","high52"),${c.price})`
