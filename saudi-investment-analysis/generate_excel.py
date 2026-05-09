@@ -995,8 +995,8 @@ def write_overview_sheet(wb, companies):
     ws = wb.create_sheet("📊 نظرة عامة")
     ws.sheet_view.rightToLeft = True
 
-    # Title
-    ws.merge_cells("A1:N1")
+    # Title — 16 columns A-P
+    ws.merge_cells("A1:P1")
     c = ws["A1"]
     c.value = "دراسة استثمارية - المحفظة السعودية  |  مصدر البيانات: تداول · أرقام · مباشر  |  مايو 2026"
     c.font = Font(name='Calibri', size=14, bold=True, color=C_WHITE)
@@ -1005,21 +1005,30 @@ def write_overview_sheet(wb, companies):
     ws.row_dimensions[1].height = 30
 
     # Legend row
-    ws.merge_cells("A2:N2")
+    ws.merge_cells("A2:P2")
     c = ws["A2"]
-    c.value = "التصنيف: 🟢 Value = قيمة   🔵 Growth = نمو   🟡 Blend = مزيج      ⚠ = ملاحظة تحقق"
+    c.value = "التصنيف: 🟢 Value = قيمة   🔵 Growth = نمو   🟡 Blend = مزيج      ⚠ = ملاحظة تحقق   |   الأعمدة J-O تحتوي صيغ Excel حية"
     c.font = Font(name='Calibri', size=9, italic=True, color="555555")
     c.alignment = center()
 
-    # Headers
+    # Headers (16 columns A-P)
     headers = [
-        "الشركة", "الرمز", "القطاع", "التصنيف",
-        "السعر\n(ريال)", "م.ربحية\n(P/E)", "م.دفتري\n(P/B)",
-        "عائد\nتوزيع%", "ROE%",
-        "ربح 2024\n(م.ريال)", "EPS\n2024",
-        "توزيع/سهم\n2024",
-        "نسبة توزيع\n2024%",
-        "التوصية",
+        "الشركة",           # A
+        "الرمز",            # B
+        "القطاع",           # C
+        "التصنيف",          # D
+        "السعر\n(ريال)",    # E
+        "الأسهم\n(م.)",     # F
+        "ربح 2024\n(م.)",   # G
+        "حقوق الملكية\n(م.)", # H
+        "DPS\n2024",        # I
+        "EPS\n2024",        # J  ← formula
+        "م.ربحية\n(P/E)",   # K  ← formula
+        "م.دفتري\n(P/B)",   # L  ← formula
+        "ROE%",             # M  ← formula
+        "عائد توزيع%",      # N  ← formula
+        "نسبة التوزيع%",    # O  ← formula
+        "التوصية",          # P
     ]
     row = 3
     for col, h in enumerate(headers, 1):
@@ -1030,9 +1039,7 @@ def write_overview_sheet(wb, companies):
         c.border = make_border()
     ws.row_dimensions[row].height = 38
 
-    # Data rows
-    CLASS_COLOR = {"Value": C_VALUE[:-2] if len(C_VALUE) > 6 else C_VALUE,
-                   "Growth": "FFF3CD", "Blend": "D6EAF8"}
+    # Data rows — start at row 4
     RECOM_COLOR = {"تراكم بقوة": C_POSITIVE, "تراكم": "1A6B30",
                    "احتفاظ / تراكم عند الضعف": C_NEUTRAL,
                    "احتفاظ للدخل": C_NEUTRAL,
@@ -1042,13 +1049,13 @@ def write_overview_sheet(wb, companies):
 
     for r, name in enumerate(COMPANY_ORDER, 4):
         d = companies[name]
+
+        # Raw values for columns A-I
         shares = d["shares_m"]
         profit_2024 = d["profits_m"].get(2024, 0)
-        eps_2024 = profit_2024 / shares if shares and profit_2024 else None
-
+        equity_2024 = d["equity_m"].get(2024, 0)
         annual_divs = get_annual_divs(d)
         dps_2024 = annual_divs.get(2024, 0)
-        payout_2024 = (dps_2024 / eps_2024 * 100) if (eps_2024 and eps_2024 > 0 and dps_2024) else None
 
         cl_bg = {"Value": "F0FFF0", "Growth": "FFF8E1", "Blend": "EAF2FF"}.get(d["classification"], C_WHITE)
         row_bg = cl_bg
@@ -1063,28 +1070,70 @@ def write_overview_sheet(wb, companies):
                 cell.number_format = fmt
             return cell
 
-        wc(1, name, bold=True)
-        wc(2, d["ticker"])
-        wc(3, d["sector"])
-
+        # Raw data columns A-I
         cl_map = {"Value": "🟢 Value", "Growth": "🔵 Growth", "Blend": "🟡 Blend"}
-        wc(4, cl_map.get(d["classification"], d["classification"]))
+        wc(1, name, bold=True)                                          # A الشركة
+        wc(2, d["ticker"])                                              # B الرمز
+        wc(3, d["sector"])                                              # C القطاع
+        wc(4, cl_map.get(d["classification"], d["classification"]))     # D التصنيف
+        wc(5, d["price_sar"], '#,##0.00')                               # E السعر
+        wc(6, shares, '#,##0')                                          # F الأسهم
+        wc(7, profit_2024, '#,##0')                                     # G ربح 2024
+        wc(8, equity_2024, '#,##0')                                     # H حقوق الملكية
+        wc(9, dps_2024 if dps_2024 else 0, '#,##0.00')                 # I DPS 2024
 
-        wc(5, d["price_sar"], '#,##0.00')
-        pe_val = d.get("pe")
-        wc(6, pe_val if pe_val else "خسارة", '#,##0.0' if pe_val else None)
-        wc(7, d.get("pb"), '#,##0.00')
-        wc(8, d.get("div_yield_pct"), '0.0%' if False else '#,##0.0')
-        roe = d.get("roe_pct")
-        wc(9, roe if roe else "-", '#,##0.0' if roe else None)
-        wc(10, profit_2024, '#,##0')
-        wc(11, round(eps_2024, 2) if eps_2024 else "-", '#,##0.00' if eps_2024 else None)
-        wc(12, dps_2024 if dps_2024 else "-", '#,##0.00' if dps_2024 else None)
-        payout_str = f"{payout_2024:.1f}%" if payout_2024 else ("-" if profit_2024 < 0 else "N/A")
-        wc(13, payout_str)
+        # Formula columns J-O
+        # J: EPS = G/F
+        c_eps = ws.cell(row=r, column=10, value=f"=IFERROR(G{r}/F{r},0)")
+        c_eps.number_format = '#,##0.00'
+        c_eps.font = Font(name='Calibri', size=10, color="000000")
+        c_eps.fill = fill(row_bg)
+        c_eps.alignment = center()
+        c_eps.border = make_border()
 
+        # K: P/E = E/J
+        c_pe = ws.cell(row=r, column=11, value=f'=IFERROR(E{r}/J{r},"N/A")')
+        c_pe.number_format = '#,##0.1'
+        c_pe.font = Font(name='Calibri', size=10, color="000000")
+        c_pe.fill = fill(row_bg)
+        c_pe.alignment = center()
+        c_pe.border = make_border()
+
+        # L: P/B = E*F/H
+        c_pb = ws.cell(row=r, column=12, value=f'=IFERROR(E{r}*F{r}/H{r},"N/A")')
+        c_pb.number_format = '#,##0.2'
+        c_pb.font = Font(name='Calibri', size=10, color="000000")
+        c_pb.fill = fill(row_bg)
+        c_pb.alignment = center()
+        c_pb.border = make_border()
+
+        # M: ROE% = G/H*100
+        c_roe = ws.cell(row=r, column=13, value=f'=IFERROR(G{r}/H{r}*100,"N/A")')
+        c_roe.number_format = '#,##0.1'
+        c_roe.font = Font(name='Calibri', size=10, color="000000")
+        c_roe.fill = fill(row_bg)
+        c_roe.alignment = center()
+        c_roe.border = make_border()
+
+        # N: عائد توزيع% = I/E*100
+        c_yield = ws.cell(row=r, column=14, value=f"=IFERROR(I{r}/E{r}*100,0)")
+        c_yield.number_format = '#,##0.1'
+        c_yield.font = Font(name='Calibri', size=10, color="000000")
+        c_yield.fill = fill(row_bg)
+        c_yield.alignment = center()
+        c_yield.border = make_border()
+
+        # O: نسبة التوزيع% = I/J*100
+        c_payout = ws.cell(row=r, column=15, value=f'=IFERROR(I{r}/J{r}*100,"N/A")')
+        c_payout.number_format = '#,##0.1'
+        c_payout.font = Font(name='Calibri', size=10, color="000000")
+        c_payout.fill = fill(row_bg)
+        c_payout.alignment = center()
+        c_payout.border = make_border()
+
+        # P: التوصية (colored)
         rec = d.get("recommendation", "")
-        c_rec = ws.cell(row=r, column=14, value=rec)
+        c_rec = ws.cell(row=r, column=16, value=rec)
         rec_color = RECOM_COLOR.get(rec, C_NEUTRAL)
         c_rec.font = Font(name='Calibri', size=10, bold=True, color=C_WHITE)
         c_rec.fill = fill(rec_color)
@@ -1094,7 +1143,7 @@ def write_overview_sheet(wb, companies):
 
     # Source note
     note_row = 4 + len(COMPANY_ORDER) + 1
-    ws.merge_cells(f"A{note_row}:N{note_row}")
+    ws.merge_cells(f"A{note_row}:P{note_row}")
     c = ws[f"A{note_row}"]
     c.value = ("⚠ تنبيهات: (1) الراجحي: منح سهم لكل سهمين في H2 2025 يُعدل EPS/DPS لاحقاً. "
                "(2) المتقدمة: خسارة 2024، مستثناة من P/E. "
@@ -1106,8 +1155,11 @@ def write_overview_sheet(wb, companies):
     c.alignment = Alignment(horizontal='right', wrap_text=True, vertical='center')
     ws.row_dimensions[note_row].height = 40
 
-    # Column widths
-    col_widths = [16, 8, 14, 14, 10, 10, 10, 10, 8, 14, 10, 14, 12, 22]
+    # Glossary
+    write_glossary(ws, note_row + 2, GLOSS_OVERVIEW, 16)
+
+    # Column widths (16 columns A-P)
+    col_widths = [16, 7, 12, 12, 9, 9, 12, 14, 10, 9, 9, 9, 8, 10, 11, 22]
     for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
@@ -1161,27 +1213,36 @@ def write_dividend_sheet(wb, companies):
 
             if dps is not None and net_profit and net_profit > 0 and total_m:
                 payout = total_m / net_profit * 100
-                payout_str = f"{payout:.1f}%"
                 payout_color = C_POSITIVE if payout <= 80 else (C_WARNING if payout <= 100 else C_NEGATIVE)
             else:
-                payout_str = "—"
+                payout = None
                 payout_color = C_NEUTRAL
 
             row_data = [period, pct_str, dps if dps is not None else "—",
                         total_m if total_m else "—",
                         net_profit if net_profit else "—",
-                        payout_str,
+                        None,  # placeholder — col 6 written separately as formula
                         note if note else ""]
 
             bg = C_LIGHT_GREEN if (dps and dps > 0) else C_LIGHT_RED if dps == 0 else C_LIGHT_GRAY
             for col, val in enumerate(row_data, 1):
+                if col == 6:
+                    continue  # written separately below
                 c = ws.cell(row=current_row, column=col, value=val)
                 c.font = body_font(9)
                 c.fill = fill(bg)
                 c.border = make_border("DDDDDD")
                 c.alignment = center() if col > 1 else left_align()
-                if col == 6 and payout_str not in ["—", "N/A"]:
-                    c.font = Font(name='Calibri', size=9, bold=True, color=payout_color)
+
+            # Column 6: payout ratio as Excel formula referencing D (total_m) and E (net_profit)
+            c = ws.cell(row=current_row, column=6,
+                        value=f'=IFERROR(D{current_row}/E{current_row},"—")')
+            c.number_format = '0.0%'
+            c.font = Font(name='Calibri', size=9, bold=True, color=payout_color)
+            c.fill = fill(bg)
+            c.alignment = center()
+            c.border = make_border("DDDDDD")
+
             ws.row_dimensions[current_row].height = 18
             current_row += 1
 
@@ -1205,6 +1266,9 @@ def write_dividend_sheet(wb, companies):
     ws.column_dimensions["E"].width = 24
     ws.column_dimensions["F"].width = 16
     ws.column_dimensions["G"].width = 32
+
+    # Glossary
+    write_glossary(ws, current_row + 1, GLOSS_DIVIDENDS, 7)
 
 
 def write_financials_sheet(wb, companies):
@@ -1283,32 +1347,38 @@ def write_financials_sheet(wb, companies):
                 c.border = make_border("DDDDDD")
                 c.number_format = '#,##0'
 
-            # CAGR
+            # CAGR — Excel formula referencing B (2021) and E (2024) columns
+            # columns: A=label, B=2021, C=2022, D=2023, E=2024, F=CAGR, G=YoY
             v0, v3 = metric_data.get(2021), metric_data.get(2024)
             if v0 and v3 and v0 > 0 and v3 > 0:
                 cagr = ((v3 / v0) ** (1/3) - 1) * 100
-                c_cagr = ws.cell(row=current_row, column=cagr_col, value=f"{cagr:.1f}%")
-                c_cagr.font = Font(name='Calibri', size=9, bold=True,
-                                   color=(C_POSITIVE if cagr >= 5 else (C_WARNING if cagr >= 0 else C_NEGATIVE)))
+                cagr_color = C_POSITIVE if cagr >= 5 else (C_WARNING if cagr >= 0 else C_NEGATIVE)
             else:
-                ws.cell(row=current_row, column=cagr_col, value="N/A")
-            ws.cell(row=current_row, column=cagr_col).fill = fill(bg)
-            ws.cell(row=current_row, column=cagr_col).alignment = center()
-            ws.cell(row=current_row, column=cagr_col).border = make_border("DDDDDD")
+                cagr = None
+                cagr_color = "888888"
+            c_cagr = ws.cell(row=current_row, column=cagr_col,
+                             value=f'=IFERROR((E{current_row}/B{current_row})^(1/3)-1,"N/A")')
+            c_cagr.number_format = '0.0%'
+            c_cagr.font = Font(name='Calibri', size=9, bold=True, color=cagr_color)
+            c_cagr.fill = fill(bg)
+            c_cagr.alignment = center()
+            c_cagr.border = make_border("DDDDDD")
 
-            # YoY growth
+            # YoY growth — Excel formula referencing D (2023) and E (2024) columns
             v23, v24 = metric_data.get(2023), metric_data.get(2024)
             if v23 and v24 and v23 != 0:
                 yoy = (v24 - v23) / abs(v23) * 100
-                yoy_str = f"{yoy:+.1f}%"
-                c_yoy = ws.cell(row=current_row, column=growth_col, value=yoy_str)
-                c_yoy.font = Font(name='Calibri', size=9, bold=True,
-                                  color=(C_POSITIVE if yoy >= 0 else C_NEGATIVE))
+                yoy_color = C_POSITIVE if yoy >= 0 else C_NEGATIVE
             else:
-                ws.cell(row=current_row, column=growth_col, value="N/A")
-            ws.cell(row=current_row, column=growth_col).fill = fill(bg)
-            ws.cell(row=current_row, column=growth_col).alignment = center()
-            ws.cell(row=current_row, column=growth_col).border = make_border("DDDDDD")
+                yoy = None
+                yoy_color = "888888"
+            c_yoy = ws.cell(row=current_row, column=growth_col,
+                            value=f'=IFERROR((E{current_row}-D{current_row})/ABS(D{current_row}),"N/A")')
+            c_yoy.number_format = '0.0%'
+            c_yoy.font = Font(name='Calibri', size=9, bold=True, color=yoy_color)
+            c_yoy.fill = fill(bg)
+            c_yoy.alignment = center()
+            c_yoy.border = make_border("DDDDDD")
 
             ws.row_dimensions[current_row].height = 18
             current_row += 1
