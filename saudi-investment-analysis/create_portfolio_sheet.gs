@@ -145,7 +145,7 @@ const COMPANIES = [
     vision2030: "تحول الطاقة + مبادرة السعودية الخضراء + تنويع البتروكيماويات"
   },
   {
-    name: "بنيان ريت", ticker: "4340", sector: "ريت", classification: "Value",
+    name: "بنيان ريت", ticker: "4347", sector: "ريت", classification: "Value",
     price: 9.25,
     shares_m: 163, capital_m: 1630,
     profits:  {2021: 62,   2022: 68,   2023: 72,   2024: 76},

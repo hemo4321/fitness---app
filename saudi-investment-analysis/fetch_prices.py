@@ -18,7 +18,7 @@
   A6: بدجت         B6: =GOOGLEFINANCE("TADAWUL:4260","closeyest")
   A7: اكسترا       B7: =GOOGLEFINANCE("TADAWUL:4003","closeyest")
   A8: المتقدمة     B8: =GOOGLEFINANCE("TADAWUL:2330","closeyest")
-  A9: بنيان ريت    B9: =GOOGLEFINANCE("TADAWUL:4340","closeyest")
+  A9: بنيان ريت    B9: =GOOGLEFINANCE("TADAWUL:4347","closeyest")
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
@@ -78,7 +78,7 @@ def fetch_via_yfinance() -> dict:
             "بدجت":      "4260.SR",
             "اكسترا":    "4003.SR",
             "المتقدمة":  "2330.SR",
-            "بنيان ريت": "4340.SR",
+            "بنيان ريت": "4347.SR",
         }
         prices = {}
         for company, ticker in tickers_map.items():
