@@ -24,7 +24,7 @@ const COMPANIES = [
     revenues: {2021: 23500, 2022: 30100, 2023: 29800, 2024: 34200},
     ocf:      {2021: 12000, 2022: 16000, 2023: 14500, 2024: 18500},
     equity:   {2021: 62000, 2022: 72000, 2023: 90259, 2024: 100185},
-    dps_2024: 2.71,
+    dps_2024: 2.71,  dps_2025: 2.50,
     pe_sector: 14.0, pb_sector: 2.76, roe: 20.2,
     fair_pe: 83,   fair_ddm: 78,  fair_pb: 90,  analyst_avg: 113.5,
     wacc: 0.105, g_lt: 0.03,
@@ -40,7 +40,7 @@ const COMPANIES = [
     revenues: {2021: 5500,  2022: 7200,  2023: 8700,  2024: 10200},
     ocf:      {2021: 3000,  2022: 4200,  2023: 5500,  2024: 6800},
     equity:   {2021: 18000, 2022: 21000, 2023: 25000, 2024: 29500},
-    dps_2024: 1.20,
+    dps_2024: 1.20,  dps_2025: 1.15,
     pe_sector: 9.4, pb_sector: 1.86, roe: 21.3,
     fair_pe: 35, fair_ddm: 28, fair_pb: 32, analyst_avg: 31,
     wacc: 0.10, g_lt: 0.03,
@@ -56,7 +56,7 @@ const COMPANIES = [
     revenues: {2021: 63000, 2022: 67000, 2023: 71800, 2024: 75893},
     ocf:      {2021: 18000, 2022: 20000, 2023: 22000, 2024: 24500},
     equity:   {2021: 50000, 2022: 52000, 2023: 48000, 2024: 55000},
-    dps_2024: 2.20,
+    dps_2024: 2.20,  dps_2025: 2.20,
     pe_sector: 19.7, pb_sector: 3.82, roe: 26.9,
     fair_pe: 55, fair_ddm: 48, fair_pb: 50, analyst_avg: 48.1,
     wacc: 0.095, g_lt: 0.03,
@@ -72,7 +72,7 @@ const COMPANIES = [
     revenues: {2021: 900, 2022: 1100, 2023: 1452, 2024: 1630},
     ocf:      {2021: 400, 2022: 550, 2023: 680, 2024: 820},
     equity:   {2021: 1200, 2022: 1500, 2023: 1900, 2024: 2300},
-    dps_2024: 4.46,
+    dps_2024: 4.46,  dps_2025: 6.52,
     pe_sector: 20.4, pb_sector: 5.8, roe: 28.7,
     fair_pe: 210, fair_ddm: 175, fair_pb: 190, analyst_avg: 195,
     wacc: 0.11, g_lt: 0.03,
@@ -88,7 +88,7 @@ const COMPANIES = [
     revenues: {2021: 2100, 2022: 2400, 2023: 2650, 2024: 2900},
     ocf:      {2021: 430, 2022: 490, 2023: 520, 2024: 560},
     equity:   {2021: 2800, 2022: 3100, 2023: 3400, 2024: 3700},
-    dps_2024: 2.50,
+    dps_2024: 2.50,  dps_2025: 2.125,
     pe_sector: 26.3, pb_sector: 3.2, roe: 12.2,
     fair_pe: 75, fair_ddm: 62, fair_pb: 65, analyst_avg: 71,
     wacc: 0.09, g_lt: 0.03,
@@ -104,7 +104,7 @@ const COMPANIES = [
     revenues: {2021: 1200, 2022: 1800, 2023: 2200, 2024: 2400},
     ocf:      {2021: 250, 2022: 420, 2023: 500, 2024: 450},
     equity:   {2021: 900, 2022: 1100, 2023: 1350, 2024: 1500},
-    dps_2024: 1.50,
+    dps_2024: 1.50,  dps_2025: 1.25,
     pe_sector: 26.9, pb_sector: 5.05, roe: 18.7,
     fair_pe: 85, fair_ddm: 70, fair_pb: 80, analyst_avg: 90,
     wacc: 0.11, g_lt: 0.03,
@@ -120,7 +120,7 @@ const COMPANIES = [
     revenues: {2021: 5200, 2022: 5800, 2023: 6400, 2024: 6900},
     ocf:      {2021: 480, 2022: 540, 2023: 600, 2024: 660},
     equity:   {2021: 1400, 2022: 1700, 2023: 2000, 2024: 2300},
-    dps_2024: 5.00,
+    dps_2024: 5.00,  dps_2025: 5.00,
     pe_sector: 12.3, pb_sector: 2.83, roe: 23.2,
     fair_pe: 95, fair_ddm: 88, fair_pb: 92, analyst_avg: 100,
     wacc: 0.10, g_lt: 0.03,
@@ -136,7 +136,7 @@ const COMPANIES = [
     revenues: {2021: 1800, 2022: 2300, 2023: 1900, 2024: 1700},
     ocf:      {2021: 380,  2022: 500,  2023: 200,  2024: 150},
     equity:   {2021: 2800, 2022: 3100, 2023: 2800, 2024: 2500},
-    dps_2024: 0,
+    dps_2024: 0,     dps_2025: 0,
     pe_sector: null, pb_sector: 1.7, roe: -4.8,
     fair_pe: null, fair_ddm: null, fair_pb: 35, analyst_avg: 38,
     wacc: 0.13, g_lt: 0.03,
@@ -152,7 +152,7 @@ const COMPANIES = [
     revenues: {2021: 95,   2022: 102,  2023: 108,  2024: 115},
     ocf:      {2021: 68,   2022: 74,   2023: 80,   2024: 85},
     equity:   {2021: 1250, 2022: 1280, 2023: 1300, 2024: 1320},
-    dps_2024: 0.45,
+    dps_2024: 0.45,  dps_2025: 0.77,
     pe_sector: 19.8, pb_sector: 1.14, roe: 5.8,
     fair_pe: 11.5, fair_ddm: 10.2, fair_pb: 10.8, analyst_avg: 11.2,
     wacc: 0.085, g_lt: 0.02,
@@ -870,53 +870,58 @@ function buildDividendsSheet_(ss) {
   deleteSheetIfExists_(ss, "التوزيعات");
   const sheet = ss.insertSheet("التوزيعات");
 
-  setSheetTitle_(sheet, "سجل التوزيعات التاريخية 2021-2024 (ريال سعودي)", 6, COLORS.headerDark);
+  setSheetTitle_(sheet, "سجل التوزيعات التاريخية 2021-2025 (ريال سعودي)", 6, COLORS.headerDark);
 
   const headers = ["الشركة", "السنة", "DPS (ر.س)", "إجمالي التوزيعات (م.)", "صافي الربح (م.)", "نسبة التوزيع%"];
   sheet.getRange(2, 1, 1, 6).setValues([headers]);
   formatHeaderRange_(sheet.getRange(2, 1, 1, 6), true);
 
-  // DPS historical estimates (derived from 2024 data; earlier years approximated)
-  // We have dps_2024; for prior years we'll use profit-proportional estimates
   const dpsHistorical = {
-    "1120": {2021: 1.75, 2022: 2.10, 2023: 2.40, 2024: 2.71},
-    "1150": {2021: 0.60, 2022: 0.80, 2023: 1.00, 2024: 1.20},
-    "7010": {2021: 1.80, 2022: 2.00, 2023: 2.00, 2024: 2.20},
-    "4263": {2021: 2.50, 2022: 3.20, 2023: 3.80, 2024: 4.46},
-    "4002": {2021: 1.80, 2022: 2.00, 2023: 2.25, 2024: 2.50},
-    "4260": {2021: 0.00, 2022: 0.75, 2023: 1.20, 2024: 1.50},
-    "4003": {2021: 2.50, 2022: 3.00, 2023: 4.00, 2024: 5.00},
-    "2330": {2021: 1.25, 2022: 1.50, 2023: 0.00, 2024: 0.00},
-    "4340": {2021: 0.35, 2022: 0.38, 2023: 0.40, 2024: 0.45}
+    "1120": {2021: 1.75, 2022: 2.10, 2023: 2.40, 2024: 2.71, 2025: 2.50},
+    "1150": {2021: 0.60, 2022: 0.80, 2023: 1.00, 2024: 1.20, 2025: 1.15},
+    "7010": {2021: 1.80, 2022: 2.00, 2023: 2.00, 2024: 2.20, 2025: 2.20},
+    "4263": {2021: 2.50, 2022: 3.20, 2023: 3.80, 2024: 4.46, 2025: 6.52},
+    "4002": {2021: 1.80, 2022: 2.00, 2023: 2.25, 2024: 2.50, 2025: 2.125},
+    "4260": {2021: 0.00, 2022: 0.75, 2023: 1.20, 2024: 1.50, 2025: 1.25},
+    "4003": {2021: 2.50, 2022: 3.00, 2023: 4.00, 2024: 5.00, 2025: 5.00},
+    "2330": {2021: 1.25, 2022: 1.50, 2023: 0.00, 2024: 0.00, 2025: 0.00},
+    "4347": {2021: 0.35, 2022: 0.38, 2023: 0.40, 2024: 0.45, 2025: 0.77}
   };
 
   let currentRow = 3;
-  const years = [2021, 2022, 2023, 2024];
+  const years = [2021, 2022, 2023, 2024, 2025];
 
   COMPANIES.forEach((c, idx) => {
     const companyStartRow = currentRow;
     years.forEach(yr => {
-      const r = currentRow;
+      const r   = currentRow;
       const dps = (dpsHistorical[c.ticker] && dpsHistorical[c.ticker][yr]) || 0;
       const totalDiv = dps * c.shares_m;
-      const profit   = c.profits[yr];
+      const profit   = c.profits[yr];  // undefined for 2025
 
       sheet.getRange(r, 1, 1, 5).setValues([[
-        yr === 2021 ? c.name : "",   // Only show name on first row of company
+        yr === 2021 ? c.name : "",
         yr,
         dps,
         totalDiv,
-        profit
+        profit !== undefined ? profit : "—"
       ]]);
 
-      // Payout% formula
-      sheet.getRange(r, 6).setFormula(`=IFERROR(D${r}/E${r},"—")`);
+      // Payout% — skip if no profit data (2025)
+      if (profit !== undefined && profit > 0) {
+        sheet.getRange(r, 6).setFormula(`=IFERROR(D${r}/E${r},"—")`);
+      } else {
+        sheet.getRange(r, 6).setValue("—");
+      }
 
-      // Background
       const bg = idx % 2 === 0 ? COLORS.rowAlt : COLORS.rowWhite;
       sheet.getRange(r, 1, 1, 6).setBackground(bg);
 
-      // Red profit if negative
+      // Bold 2025 row to highlight it
+      if (yr === 2025) {
+        sheet.getRange(r, 1, 1, 6).setFontWeight("bold");
+      }
+
       if (profit < 0) {
         sheet.getRange(r, 5).setFontColor(COLORS.negative);
       }
@@ -924,7 +929,6 @@ function buildDividendsSheet_(ss) {
       currentRow++;
     });
 
-    // Bold company name in first row of group
     sheet.getRange(companyStartRow, 1).setFontWeight("bold");
   });
 
