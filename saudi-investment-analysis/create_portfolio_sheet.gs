@@ -1091,15 +1091,32 @@ function buildSaudiPortfolioSheet() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // Build all sheets in order
-    // (Sheets are ordered: Live Prices first, so Overview can reference it)
+    // Guard: script must be bound to a spreadsheet (not standalone)
+    if (!ss) {
+      throw new Error(
+        "السكريبت غير مرتبط بـ Spreadsheet.\n" +
+        "افتح Google Sheets → الإضافات (Extensions) → Apps Script\n" +
+        "ثم شغّل السكريبت من هناك."
+      );
+    }
+
+    Logger.log("▶ بدء بناء المحفظة — " + ss.getName());
+
+    Logger.log("1/7 أسعار حية...");
     const livePricesSheet  = buildLivePricesSheet_(ss);
+    Logger.log("2/7 نظرة عامة...");
     const overviewSheet    = buildOverviewSheet_(ss);
+    Logger.log("3/7 القوائم المالية...");
     const financialsSheet  = buildFinancialsSheet_(ss);
+    Logger.log("4/7 التقييم...");
     const valuationSheet   = buildValuationSheet_(ss);
+    Logger.log("5/7 التوزيعات...");
     const dividendsSheet   = buildDividendsSheet_(ss);
+    Logger.log("6/7 المحفظة...");
     const portfolioSheet   = buildPortfolioSheet_(ss);
+    Logger.log("7/7 منهجية التقييم...");
     const methodologySheet = buildMethodologySheet_(ss);
+    Logger.log("✓ جميع الأوراق أُنشئت");
 
     // Re-order sheets: Live Prices first
     const sheetOrder = [
