@@ -462,7 +462,6 @@ function buildOverviewSheet_(ss) {
 
   // --- Freeze ---
   sheet.setFrozenRows(3);
-  sheet.setFrozenColumns(1);
 
   // --- Borders ---
   borderRange_(sheet.getRange(3, 1, 10, 16));
