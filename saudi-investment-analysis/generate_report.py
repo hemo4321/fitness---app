@@ -8,7 +8,7 @@ from datetime import datetime
 COMPANIES_REPORT = {
     "الراجحي": {
         "ticker": "1120", "sector": "مصرفي إسلامي", "classification": "Blend",
-        "price": 69.10, "market_cap_b": 276.4, "shares_m": 4000,
+        "price": 66.60, "market_cap_b": 399.6, "shares_m": 4000,
         "pe": 14.0, "pb": 2.76, "div_yield": 3.9, "roe": 20.2,
         "profits": {"2021": 14979, "2022": 17151, "2023": 16621, "2024": 19722},
         "revenue": {"2021": 23500, "2022": 30100, "2023": 29800, "2024": 34200},
@@ -32,7 +32,7 @@ COMPANIES_REPORT = {
     },
     "الإنماء": {
         "ticker": "1150", "sector": "مصرفي إسلامي", "classification": "Growth",
-        "price": 27.50, "market_cap_b": 54.8, "shares_m": 1992,
+        "price": 23.53, "market_cap_b": 46.9, "shares_m": 1992,
         "pe": 9.4, "pb": 1.86, "div_yield": 4.4, "roe": 21.3,
         "profits": {"2021": 2714, "2022": 3599, "2023": 4839, "2024": 5832},
         "revenue": {"2021": 5500, "2022": 7200, "2023": 8700, "2024": 10200},
@@ -55,7 +55,7 @@ COMPANIES_REPORT = {
     },
     "STC": {
         "ticker": "7010", "sector": "اتصالات", "classification": "Blend",
-        "price": 42.00, "market_cap_b": 210.0, "shares_m": 5000,
+        "price": 43.54, "market_cap_b": 217.7, "shares_m": 5000,
         "pe": 14.2, "pb": 3.82, "div_yield": 5.2, "roe": 26.9,
         "profits": {"2021": 11100, "2022": 12200, "2023": 13300, "2024": 24689},
         "revenue": {"2021": 63000, "2022": 67000, "2023": 71800, "2024": 75893},
@@ -79,7 +79,7 @@ COMPANIES_REPORT = {
     },
     "سال": {
         "ticker": "4263", "sector": "خدمات لوجستية جوية", "classification": "Growth",
-        "price": 185.0, "market_cap_b": 14.8, "shares_m": 80,
+        "price": 164.10, "market_cap_b": 13.1, "shares_m": 80,
         "pe": 22.4, "pb": 6.4, "div_yield": 3.9, "roe": 30.5,
         "profits": {"2021": 320, "2022": 450, "2023": 511, "2024": 661},
         "revenue": {"2021": 900, "2022": 1100, "2023": 1452, "2024": 1630},
@@ -103,7 +103,7 @@ COMPANIES_REPORT = {
     },
     "المواساة": {
         "ticker": "4002", "sector": "رعاية صحية", "classification": "Value",
-        "price": 67.00, "market_cap_b": 13.4, "shares_m": 200,
+        "price": 59.10, "market_cap_b": 11.8, "shares_m": 200,
         "pe": 20.7, "pb": 3.35, "div_yield": 3.0, "roe": 17.3,
         "profits": {"2021": 520, "2022": 680, "2023": 658, "2024": 646},
         "revenue": {"2021": 2050, "2022": 2400, "2023": 2706, "2024": 2879},
@@ -127,7 +127,7 @@ COMPANIES_REPORT = {
     },
     "بدجت": {
         "ticker": "4260", "sector": "تأجير سيارات", "classification": "Growth",
-        "price": 38.00, "market_cap_b": 3.8, "shares_m": 100,
+        "price": 75.90, "market_cap_b": 7.6, "shares_m": 100,
         "pe": 12.2, "pb": 2.0, "div_yield": 3.8, "roe": 17.4,
         "profits": {"2021": 185, "2022": 240, "2023": 277, "2024": 312},
         "revenue": {"2021": 1200, "2022": 1500, "2023": 1750, "2024": 1980},
@@ -156,7 +156,7 @@ COMPANIES_REPORT = {
     },
     "اكسترا": {
         "ticker": "4003", "sector": "تجزئة إلكترونيات", "classification": "Value",
-        "price": 95.00, "market_cap_b": 7.6, "shares_m": 80,
+        "price": 81.90, "market_cap_b": 6.6, "shares_m": 80,
         "pe": 14.4, "pb": 4.0, "div_yield": 5.3, "roe": 30.1,
         "profits": {"2021": 280, "2022": 340, "2023": 390, "2024": 534},
         "revenue": {"2021": 4500, "2022": 5200, "2023": 5800, "2024": 6781},
@@ -180,7 +180,7 @@ COMPANIES_REPORT = {
     },
     "المتقدمة": {
         "ticker": "2330", "sector": "بتروكيماويات", "classification": "Blend",
-        "price": 48.00, "market_cap_b": 6.0, "shares_m": 125,
+        "price": 30.00, "market_cap_b": 3.8, "shares_m": 125,
         "pe": None, "pb": 3.0, "div_yield": 0.0, "roe": None,
         "profits": {"2021": 380, "2022": 320, "2023": 85, "2024": -259},
         "revenue": {"2021": 2100, "2022": 2400, "2023": 1900, "2024": 1700},
@@ -209,7 +209,7 @@ COMPANIES_REPORT = {
     },
     "بنيان ريت": {
         "ticker": "4340", "sector": "صندوق عقاري REIT", "classification": "Value",
-        "price": 10.20, "market_cap_b": 1.66, "shares_m": 163,
+        "price": 9.25, "market_cap_b": 1.51, "shares_m": 163,
         "pe": 14.1, "pb": 1.03, "div_yield": 7.5, "roe": 7.3,
         "profits": {"2021": 85, "2022": 95, "2023": 105, "2024": 118},
         "revenue": {"2021": 140, "2022": 155, "2023": 170, "2024": 190},

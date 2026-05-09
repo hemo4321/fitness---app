@@ -60,8 +60,8 @@ COMPANIES = {
         "classification": "Blend",
         "shares_m": 4000,
         "capital_m": 40000,
-        "price_sar": 69.10,
-        "note_capital": "⚠ منح سهم لكل سهمين في H2 2025 → سترتفع الأسهم إلى 6,000M",
+        "price_sar": 66.60,
+        "note_capital": "✅ سعر مُعدَّل بعد المنح (1 سهم / 2) → الأسهم ارتفعت من 4B إلى 6B",
         "profits_m": {2021: 14979, 2022: 17151, 2023: 16621, 2024: 19722},
         "revenues_m": {2021: 23500, 2022: 30100, 2023: 29800, 2024: 34200},
         "op_cashflow_m": {2021: 12000, 2022: 16000, 2023: 14500, 2024: 18500},
@@ -99,7 +99,7 @@ COMPANIES = {
         "classification": "Growth",
         "shares_m": 1992,
         "capital_m": 19922,
-        "price_sar": 27.50,
+        "price_sar": 23.53,
         "note_capital": "تحول إلى توزيعات ربعية منذ 2023",
         "profits_m": {2021: 2714, 2022: 3599, 2023: 4839, 2024: 5832},
         "revenues_m": {2021: 5500, 2022: 7200, 2023: 8700, 2024: 10200},
@@ -138,7 +138,7 @@ COMPANIES = {
         "classification": "Blend",
         "shares_m": 5000,
         "capital_m": 50000,
-        "price_sar": 42.00,
+        "price_sar": 43.54,
         "note_capital": "⚠ ربح 2024 (24.7B) يشمل بيع TAWAL (13.97B غير متكرر) → الربح الجاري ≈ 10.7B ريال",
         "profits_m": {2021: 11100, 2022: 12200, 2023: 13300, 2024: 24689},
         "revenues_m": {2021: 63000, 2022: 67000, 2023: 71800, 2024: 75893},
@@ -181,7 +181,7 @@ COMPANIES = {
         "classification": "Growth",
         "shares_m": 80,
         "capital_m": 800,
-        "price_sar": 185.00,
+        "price_sar": 164.10,
         "note_capital": "IPO حديث (2022) - بيانات تاريخية محدودة | ✅ إيرادات 2024: 1.63B ريال (تحقق)",
         "profits_m": {2021: 320, 2022: 450, 2023: 511, 2024: 661},
         "revenues_m": {2021: 900, 2022: 1100, 2023: 1452, 2024: 1630},
@@ -214,7 +214,7 @@ COMPANIES = {
         "classification": "Value",
         "shares_m": 200,
         "capital_m": 2000,
-        "price_sar": 67.00,
+        "price_sar": 59.10,
         "note_capital": "توزيع سنوي ثابت منذ الإدراج",
         "profits_m": {2021: 520, 2022: 680, 2023: 658, 2024: 646},
         "revenues_m": {2021: 2050, 2022: 2400, 2023: 2706, 2024: 2879},
@@ -247,7 +247,7 @@ COMPANIES = {
         "classification": "Growth",
         "shares_m": 100,
         "capital_m": 1000,
-        "price_sar": 38.00,
+        "price_sar": 75.90,
         "note_capital": "⚠ انخفاض أرباح Q1 2026 بنسبة 58% - يستوجب مراقبة",
         "profits_m": {2021: 185, 2022: 240, 2023: 277, 2024: 312},
         "revenues_m": {2021: 1200, 2022: 1500, 2023: 1750, 2024: 1980},
@@ -282,7 +282,7 @@ COMPANIES = {
         "classification": "Value",
         "shares_m": 80,
         "capital_m": 800,
-        "price_sar": 95.00,
+        "price_sar": 81.90,
         "note_capital": "✅ توزيع استثنائي أغسطس 2024: 5 ريال/سهم من الاحتياطيات | ربح FY2024: 534.5M ريال",
         "profits_m": {2021: 280, 2022: 340, 2023: 390, 2024: 534},
         "revenues_m": {2021: 4500, 2022: 5200, 2023: 5800, 2024: 6781},
@@ -319,7 +319,7 @@ COMPANIES = {
         "classification": "Blend",
         "shares_m": 125,
         "capital_m": 1250,
-        "price_sar": 48.00,
+        "price_sar": 30.00,
         "note_capital": "⚠ لا توزيعات 2023-2024 بسبب الخسارة | العودة للربحية Q1 2025",
         "profits_m": {2021: 380, 2022: 320, 2023: 85, 2024: -259},
         "revenues_m": {2021: 2100, 2022: 2400, 2023: 1900, 2024: 1700},
@@ -351,7 +351,7 @@ COMPANIES = {
         "classification": "Value",
         "shares_m": 163,
         "capital_m": 1630,
-        "price_sar": 10.20,
+        "price_sar": 9.25,
         "note_capital": "توزيع نصف سنوي إلزامي ≥90% من الدخل الصافي",
         "profits_m": {2021: 85, 2022: 95, 2023: 105, 2024: 118},
         "revenues_m": {2021: 140, 2022: 155, 2023: 170, 2024: 190},
@@ -594,7 +594,8 @@ def write_methodology_sheet(wb):
         c = ws.cell(row=2, column=i, value=h)
         c.font = hdr_font(10)
         c.fill = fill(C_SUB_HEADER)
-        c.alignment = center()
+        c.alignment = Alignment(horizontal='center', vertical='center',
+                                wrap_text=True, readingOrder=2)
         c.border = make_border()
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.row_dimensions[2].height = 30
@@ -690,7 +691,8 @@ def write_methodology_sheet(wb):
             c = ws.cell(row=r, column=col, value=val)
             c.fill = fill(bg)
             c.border = make_border()
-            c.alignment = Alignment(horizontal='right', vertical='center', wrap_text=True)
+            c.alignment = Alignment(horizontal='right', vertical='center',
+                                    wrap_text=True, readingOrder=2)
             bold = col == 1
             c.font = Font(name='Calibri', size=10, bold=bold, color="1A1A2E")
         ws.row_dimensions[r].height = 58
