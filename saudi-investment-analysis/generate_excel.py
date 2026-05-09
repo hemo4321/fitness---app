@@ -2,6 +2,8 @@
 Saudi Investment Portfolio Analysis - Excel Generator
 Generates comprehensive Excel workbook with 9 Saudi companies analysis
 Data sourced from: Saudi Exchange (Tadawul), Argaam, Mubasher (May 2026)
+
+Run `python3 fetch_prices.py` to auto-update prices before generating.
 """
 import openpyxl
 from openpyxl.styles import (
@@ -10,7 +12,25 @@ from openpyxl.styles import (
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, LineChart, Reference
 from openpyxl.chart.series import DataPoint
+import json
 import os
+
+
+def _load_prices_from_file() -> dict:
+    """يحمّل الأسعار من prices.json إذا كان موجوداً ومحدَّثاً."""
+    path = os.path.join(os.path.dirname(__file__), "prices.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        prices = {k: v for k, v in data.items() if not k.startswith("_") and isinstance(v, (int, float))}
+        updated = data.get("_last_updated", "")
+        if prices:
+            print(f"📌 أسعار محمَّلة من prices.json (آخر تحديث: {updated})")
+        return prices
+    except Exception:
+        return {}
+
+_LIVE_PRICES = _load_prices_from_file()
 
 # ─── COLOR PALETTE ────────────────────────────────────────────────────────────
 C_DARK_NAVY   = "1B2A4A"
@@ -382,6 +402,12 @@ COMPANIES = {
 }
 
 COMPANY_ORDER = ["الراجحي", "الإنماء", "STC", "سال", "المواساة", "بدجت", "اكسترا", "المتقدمة", "بنيان ريت"]
+
+# تطبيق الأسعار من prices.json (إن وُجدت) على بيانات الشركات
+if _LIVE_PRICES:
+    for _name, _price in _LIVE_PRICES.items():
+        if _name in COMPANIES and _price > 0:
+            COMPANIES[_name]["price_sar"] = _price
 
 # ─── ANALYST CONSENSUS (Investing.com / Bloomberg / Argaam — May 2026) ─────────
 # named[] = individual broker targets where name could be identified

@@ -3,7 +3,20 @@ Saudi Investment Portfolio - HTML Report Generator
 Generates a comprehensive bilingual analysis report in Arabic
 """
 import os
+import json
 from datetime import datetime
+
+
+def _load_prices() -> dict:
+    path = os.path.join(os.path.dirname(__file__), "prices.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if not k.startswith("_") and isinstance(v, (int, float))}
+    except Exception:
+        return {}
+
+_LIVE_PRICES = _load_prices()
 
 COMPANIES_REPORT = {
     "الراجحي": {
@@ -234,6 +247,15 @@ COMPANIES_REPORT = {
 }
 
 COMPANY_ORDER = ["الراجحي", "الإنماء", "STC", "سال", "المواساة", "بدجت", "اكسترا", "المتقدمة", "بنيان ريت"]
+
+# تطبيق الأسعار من prices.json تلقائياً
+if _LIVE_PRICES:
+    for _name, _price in _LIVE_PRICES.items():
+        if _name in COMPANIES_REPORT and _price > 0:
+            d = COMPANIES_REPORT[_name]
+            d["price"] = _price
+            shares = d.get("shares_m", 1)
+            d["market_cap_b"] = round(_price * shares / 1000, 1)
 
 
 def generate_html(output_path):
