@@ -26,9 +26,14 @@ const COMPANIES = [
     equity:   {2021: 62000, 2022: 72000, 2023: 90259, 2024: 100185},
     dps_2024: 2.71,  dps_2025: 2.50,
     pe_sector: 14.0, pb_sector: 2.76, roe: 20.2,
-    fair_pe: 83,   fair_ddm: 78,  fair_pb: 90,  analyst_avg: 113.5,
+    fair_pe: 83,   fair_ddm: 78,  fair_pb: 90,  analyst_avg: 113,
     wacc: 0.105, g_lt: 0.03,
     recommendation: "تراكم", weight_pct: 18,
+    analyst_recs: [
+      {house: "الجزيرة كابيتال",  rec: "تراكم",   pt: 107.0},
+      {house: "SNB Capital",       rec: "احتفاظ",  pt: 98.6},
+      {house: "FAB Securities",    rec: "تراكم",   pt: 112.0},
+    ],
     key_risks: "متطلبات كفاية رأس المال · تأثير المنح على المعدلات · تنافسية",
     vision2030: "تمويل مشاريع رؤية 2030 + صيرفة إسلامية رقمية"
   },
@@ -42,9 +47,13 @@ const COMPANIES = [
     equity:   {2021: 18000, 2022: 21000, 2023: 25000, 2024: 29500},
     dps_2024: 1.20,  dps_2025: 1.15,
     pe_sector: 9.4, pb_sector: 1.86, roe: 21.3,
-    fair_pe: 35, fair_ddm: 28, fair_pb: 32, analyst_avg: 31,
+    fair_pe: 35, fair_ddm: 28, fair_pb: 32, analyst_avg: 32.4,
     wacc: 0.10, g_lt: 0.03,
     recommendation: "تراكم", weight_pct: 10,
+    analyst_recs: [
+      {house: "الجزيرة كابيتال",     rec: "تراكم", pt: 32.7},
+      {house: "يونايتد سيكيوريتيز", rec: "شراء",   pt: 31.0},
+    ],
     key_risks: "بنك أصغر نسبياً · انكشاف عقاري · سيولة تداول أقل",
     vision2030: "تمويل المشاريع الكبرى + رهن عقاري + SME Lending"
   },
@@ -58,9 +67,13 @@ const COMPANIES = [
     equity:   {2021: 50000, 2022: 52000, 2023: 48000, 2024: 55000},
     dps_2024: 2.20,  dps_2025: 2.20,
     pe_sector: 19.7, pb_sector: 3.82, roe: 26.9,
-    fair_pe: 55, fair_ddm: 48, fair_pb: 50, analyst_avg: 48.1,
+    fair_pe: 55, fair_ddm: 48, fair_pb: 50, analyst_avg: 48,
     wacc: 0.095, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 15,
+    analyst_recs: [
+      {house: "الجزيرة كابيتال", rec: "تراكم", pt: 49.6},
+      {house: "الراجحي المالية", rec: "تراكم", pt: 46.0},
+    ],
     key_risks: "CAPEX مرتفع · منافسة موبايلي/زين · تراجع ARPU",
     vision2030: "البنية الرقمية الوطنية + الحوسبة السحابية الحكومية"
   },
@@ -74,9 +87,13 @@ const COMPANIES = [
     equity:   {2021: 1200, 2022: 1500, 2023: 1900, 2024: 2300},
     dps_2024: 4.46,  dps_2025: 6.52,
     pe_sector: 20.4, pb_sector: 5.8, roe: 28.7,
-    fair_pe: 210, fair_ddm: 175, fair_pb: 190, analyst_avg: 195,
+    fair_pe: 210, fair_ddm: 175, fair_pb: 190, analyst_avg: 107,
     wacc: 0.11, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 7,
+    analyst_recs: [
+      {house: "ANB Capital",           rec: "تراكم",   pt: 119.3},
+      {house: "متوسط 5 محللين", rec: "احتفاظ",  pt: 107.0},
+    ],
     key_risks: "CAPEX مرتفع · ملكية حكومية · منافسة لوجستية",
     vision2030: "نمو قطاع الطيران + مشاريع نيوم + الحرمين"
   },
@@ -90,9 +107,13 @@ const COMPANIES = [
     equity:   {2021: 2800, 2022: 3100, 2023: 3400, 2024: 3700},
     dps_2024: 2.50,  dps_2025: 2.125,
     pe_sector: 26.3, pb_sector: 3.2, roe: 12.2,
-    fair_pe: 75, fair_ddm: 62, fair_pb: 65, analyst_avg: 71,
+    fair_pe: 75, fair_ddm: 62, fair_pb: 65, analyst_avg: 90,
     wacc: 0.09, g_lt: 0.03,
     recommendation: "احتفاظ / تراكم عند الضعف", weight_pct: 10,
+    analyst_recs: [
+      {house: "الجزيرة كابيتال",   rec: "احتفاظ", pt: 86.4},
+      {house: "متوسط 9+ محللين",   rec: "شراء",   pt: 91.0},
+    ],
     key_risks: "تنظيم حكومي للأسعار · كثافة رأسمالية · منافسة المستشفيات الجديدة",
     vision2030: "السياحة الطبية + رفع نسبة السعودة + تحسين جودة الرعاية"
   },
@@ -109,6 +130,10 @@ const COMPANIES = [
     fair_pe: 85, fair_ddm: 70, fair_pb: 80, analyst_avg: 90,
     wacc: 0.11, g_lt: 0.03,
     recommendation: "مراقبة - انتظار توضيح Q1 2026", weight_pct: 0,
+    analyst_recs: [
+      {house: "الجزيرة كابيتال",  rec: "تراكم",    pt: null},
+      {house: "متوسط 8 محللين",   rec: "شراء قوي", pt: 90.2},
+    ],
     key_risks: "تراجع حاد في Q1 2026 · تنافسية عالية · ارتفاع تكاليف الأسطول",
     vision2030: "نمو السياحة + رفع نسبة قيادة المرأة + مشاريع الترفيه"
   },
@@ -122,9 +147,12 @@ const COMPANIES = [
     equity:   {2021: 1400, 2022: 1700, 2023: 2000, 2024: 2300},
     dps_2024: 5.00,  dps_2025: 5.00,
     pe_sector: 12.3, pb_sector: 2.83, roe: 23.2,
-    fair_pe: 95, fair_ddm: 88, fair_pb: 92, analyst_avg: 100,
+    fair_pe: 95, fair_ddm: 88, fair_pb: 92, analyst_avg: 113.8,
     wacc: 0.10, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 12,
+    analyst_recs: [
+      {house: "متوسط 9 محللين", rec: "شراء قوي", pt: 113.8},
+    ],
     key_risks: "منافسة التجارة الإلكترونية · تمركز جغرافي · حساسية للدخل التقديري",
     vision2030: "ارتفاع الإنفاق الاستهلاكي + توسع الطبقة المتوسطة"
   },
@@ -141,6 +169,9 @@ const COMPANIES = [
     fair_pe: null, fair_ddm: null, fair_pb: 35, analyst_avg: 38,
     wacc: 0.13, g_lt: 0.03,
     recommendation: "مضاربة / وزن محدود", weight_pct: 5,
+    analyst_recs: [
+      {house: "متوسط 8+ محللين", rec: "شراء", pt: 38.0},
+    ],
     key_risks: "استمرار الخسائر · أسعار المواد الخام · الطاقة الفائضة عالمياً",
     vision2030: "تحول الطاقة + مبادرة السعودية الخضراء + تنويع البتروكيماويات"
   },
@@ -157,6 +188,7 @@ const COMPANIES = [
     fair_pe: 11.5, fair_ddm: 10.2, fair_pb: 10.8, analyst_avg: 11.2,
     wacc: 0.085, g_lt: 0.02,
     recommendation: "احتفاظ للدخل", weight_pct: 8,
+    analyst_recs: [],
     key_risks: "معدلات الفائدة · جودة الأصول · ركود العقارات التجارية",
     vision2030: "السياحة الداخلية + التوسع التجاري + رخصة الترفيه"
   }
@@ -855,6 +887,61 @@ function buildValuationSheet_(ss) {
     ["برتقالي 0–15%",    "هامش الأمان معقول — التقييم عادل"],
     ["أحمر < 0%",        "هامش أمان سالب — السهم مرتفع نسبياً مقارنة بقيمته العادلة"],
   ]);
+
+  // --- Analyst Recommendations Detail Table ---
+  const analystStartRow = 30;
+  sheet.getRange(analystStartRow, 1, 1, 9).merge()
+       .setValue("توصيات بيوت الخبرة والمحللين الماليين")
+       .setBackground(COLORS.headerDark)
+       .setFontColor(COLORS.white)
+       .setFontWeight("bold")
+       .setFontSize(12)
+       .setHorizontalAlignment("right");
+  sheet.setRowHeight(analystStartRow, 32);
+
+  const aHeaders = ["الشركة", "بيت الخبرة", "التوصية", "السعر المستهدف (ر.س)", "", "", "", "", ""];
+  sheet.getRange(analystStartRow + 1, 1, 1, 4).setValues([aHeaders.slice(0, 4)]);
+  formatHeaderRange_(sheet.getRange(analystStartRow + 1, 1, 1, 4), true);
+
+  let aRow = analystStartRow + 2;
+  COMPANIES.forEach((c, idx) => {
+    const recs = c.analyst_recs || [];
+    if (recs.length === 0) {
+      sheet.getRange(aRow, 1, 1, 4).setValues([[c.name, "—", "لا يوجد تغطية", "—"]]);
+      sheet.getRange(aRow, 1, 1, 4).setBackground(idx % 2 === 0 ? COLORS.rowAlt : COLORS.rowWhite);
+      rtlRange_(sheet.getRange(aRow, 1, 1, 4));
+      aRow++;
+    } else {
+      recs.forEach((r, ri) => {
+        const bg = idx % 2 === 0 ? COLORS.rowAlt : COLORS.rowWhite;
+        sheet.getRange(aRow, 1, 1, 4).setValues([[
+          ri === 0 ? c.name : "",
+          r.house,
+          r.rec,
+          r.pt !== null ? r.pt : "—"
+        ]]);
+        sheet.getRange(aRow, 1, 1, 4).setBackground(bg);
+        rtlRange_(sheet.getRange(aRow, 1));
+        sheet.getRange(aRow, 4).setHorizontalAlignment("center");
+        // Color-code recommendation
+        const recCell = sheet.getRange(aRow, 3);
+        if (r.rec === "تراكم" || r.rec === "شراء" || r.rec === "شراء قوي") {
+          recCell.setFontColor(COLORS.positive);
+        } else if (r.rec === "احتفاظ") {
+          recCell.setFontColor(COLORS.warning);
+        } else if (r.rec === "بيع") {
+          recCell.setFontColor(COLORS.negative);
+        }
+        aRow++;
+      });
+    }
+    // Separator line between companies
+    sheet.getRange(aRow, 1, 1, 4).setBackground("#E0E8F5");
+    aRow++;
+  });
+
+  borderRange_(sheet.getRange(analystStartRow, 1, aRow - analystStartRow, 4));
+  sheet.setColumnWidth(2, 180);  // بيت الخبرة — wider
 
   return sheet;
 }
