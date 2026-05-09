@@ -485,8 +485,8 @@ function buildOverviewSheet_(ss) {
   // --- Header row 3 ---
   const headers = [
     "الشركة", "القطاع", "التصنيف", "الرمز",
-    "السعر (ر.س)", "الأسهم (م.)", "ربح 2024 (م.)", "حقوق المساهمين (م.)",
-    "DPS 2024", "EPS (ر.س)", "P/E", "P/B",
+    "السعر (ر.س)", "الأسهم (م.)", "ربح 2025 (م.)", "حقوق المساهمين (م.)",
+    "DPS 2025", "EPS (ر.س)", "P/E", "P/B",
     "ROE%", "عائد التوزيع%", "نسبة التوزيع%", "التوصية"
   ];
   sheet.getRange(3, 1, 1, 16).setValues([headers]);
@@ -503,7 +503,7 @@ function buildOverviewSheet_(ss) {
     c.shares_m,                    // F: الأسهم
     c.profits[2024],               // G: الربح 2024
     c.equity[2024],                // H: حقوق المساهمين
-    c.dps_2024,                    // I: DPS
+    c.dps_2025,                    // I: DPS 2025
     "",                            // J: EPS - formula
     "",                            // K: P/E - formula
     "",                            // L: P/B - formula
@@ -1041,9 +1041,9 @@ function buildDividendsSheet_(ss) {
 
   // Summary: total 2024 dividends
   const summaryRow = currentRow + 1;
-  const total2024Div = COMPANIES.reduce((sum, c) => sum + c.dps_2024 * c.shares_m, 0);
+  const total2025Div = COMPANIES.reduce((sum, c) => sum + c.dps_2025 * c.shares_m, 0);
   sheet.getRange(summaryRow, 1, 1, 6).merge()
-       .setValue(`إجمالي التوزيعات 2024 للمحفظة: ${Math.round(total2024Div).toLocaleString()} مليون ريال`)
+       .setValue(`إجمالي التوزيعات 2025 للمحفظة: ${Math.round(total2025Div).toLocaleString()} مليون ريال`)
        .setBackground(COLORS.headerMid)
        .setFontColor(COLORS.white)
        .setFontWeight("bold")
