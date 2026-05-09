@@ -1120,26 +1120,26 @@ function buildSaudiPortfolioSheet() {
     // Activate Overview on open
     ss.setActiveSheet(overviewSheet);
 
-    SpreadsheetApp.getUi().alert(
-      "تم بنجاح ✓",
-      "تم إنشاء جميع الأوراق السبع بنجاح:\n\n" +
-      "1. أسعار حية - أسعار GOOGLEFINANCE تتحدث تلقائياً\n" +
-      "2. نظرة عامة - مؤشرات المحفظة الكاملة\n" +
-      "3. القوائم المالية - بيانات 2021-2024 مع CAGR\n" +
-      "4. التقييم - القيم العادلة وهامش الأمان\n" +
-      "5. التوزيعات - سجل التوزيعات التاريخية\n" +
-      "6. المحفظة - تخصيص الأوزان والقيمة السوقية\n" +
-      "7. منهجية التقييم - شرح النماذج المستخدمة\n\n" +
-      "ملاحظة: قد تستغرق أسعار GOOGLEFINANCE بضع ثوانٍ للتحميل.",
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    // Show success — works both from editor and from spreadsheet menu
+    const successMsg =
+      "✓ تم إنشاء الأوراق السبع بنجاح:\n" +
+      "1. أسعار حية  2. نظرة عامة  3. القوائم المالية\n" +
+      "4. التقييم  5. التوزيعات  6. المحفظة  7. منهجية التقييم\n" +
+      "GOOGLEFINANCE تتحدث تلقائياً — ارجع للـ Sheet لترى النتيجة.";
+    try {
+      SpreadsheetApp.getUi().alert("تم بنجاح ✓", successMsg, SpreadsheetApp.getUi().ButtonSet.OK);
+    } catch (_) {
+      Logger.log(successMsg); // fallback when running from editor
+    }
 
   } catch (e) {
-    SpreadsheetApp.getUi().alert(
-      "خطأ ✗",
-      "حدث خطأ أثناء إنشاء الأوراق:\n\n" + e.message + "\n\nStack:\n" + e.stack,
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    const errMsg = "خطأ: " + e.message;
+    try {
+      SpreadsheetApp.getUi().alert("خطأ ✗", errMsg, SpreadsheetApp.getUi().ButtonSet.OK);
+    } catch (_) {
+      Logger.log("ERROR: " + errMsg);
+      throw e; // re-throw so the execution log shows the real error
+    }
   }
 }
 
