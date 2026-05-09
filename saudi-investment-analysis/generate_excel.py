@@ -990,6 +990,14 @@ def write_analyst_sheet(wb, companies, analyst_data):
     c.fill = fill("F8F9FA"); c.alignment = Alignment(horizontal='right')
     ws.row_dimensions[row+1].height = 18
 
+    # Column widths
+    widths = [18, 9, 16, 38, 18, 36, 14]
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    # Glossary
+    write_glossary(ws, ws.max_row + 2, GLOSS_ANALYST, 7)
+
 
 def write_overview_sheet(wb, companies):
     ws = wb.create_sheet("📊 نظرة عامة")
@@ -1389,6 +1397,9 @@ def write_financials_sheet(wb, companies):
     for i in range(2, 8):
         ws.column_dimensions[get_column_letter(i)].width = 14
 
+    # Glossary
+    write_glossary(ws, current_row + 1, GLOSS_FINANCIALS, 7)
+
 
 def write_valuation_sheet(wb, companies):
     ws = wb.create_sheet("🎯 التقييم والقيمة العادلة")
@@ -1535,6 +1546,9 @@ def write_valuation_sheet(wb, companies):
     c.alignment = Alignment(horizontal='right', wrap_text=True, vertical='center')
     ws.row_dimensions[note_row].height = 42
 
+    # Glossary
+    write_glossary(ws, note_row + 2, GLOSS_VALUATION, 14)
+
 
 def write_portfolio_sheet(wb, companies):
     ws = wb.create_sheet("🏦 تكوين المحفظة")
@@ -1624,6 +1638,9 @@ def write_portfolio_sheet(wb, companies):
     ws.column_dimensions["D"].width = 18
     ws.column_dimensions["E"].width = 45
     ws.column_dimensions["F"].width = 18
+
+    # Glossary
+    write_glossary(ws, notes_row + 8, GLOSS_PORTFOLIO, 6)
 
 
 def write_company_sheets(wb, companies):
