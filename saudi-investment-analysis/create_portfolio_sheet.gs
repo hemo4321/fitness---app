@@ -18,7 +18,7 @@
 const COMPANIES = [
   {
     name: "الراجحي", ticker: "1120", sector: "مصرفي", classification: "Blend",
-    price: 69.35,
+    price: 66.50,
     shares_m: 6000, capital_m: 60000,
     profits:  {2021: 14979, 2022: 17151, 2023: 16621, 2024: 19722},
     revenues: {2021: 23500, 2022: 30100, 2023: 29800, 2024: 34200},
@@ -34,7 +34,7 @@ const COMPANIES = [
   },
   {
     name: "الإنماء", ticker: "1150", sector: "مصرفي", classification: "Growth",
-    price: 23.86,
+    price: 23.53,
     shares_m: 1992, capital_m: 19922,
     profits:  {2021: 2714,  2022: 3599,  2023: 4839,  2024: 5832},
     revenues: {2021: 5500,  2022: 7200,  2023: 8700,  2024: 10200},
@@ -50,7 +50,7 @@ const COMPANIES = [
   },
   {
     name: "STC", ticker: "7010", sector: "اتصالات", classification: "Blend",
-    price: 43.54,
+    price: 43.10,
     shares_m: 5000, capital_m: 50000,
     profits:  {2021: 11100, 2022: 12200, 2023: 13300, 2024: 10700},
     revenues: {2021: 63000, 2022: 67000, 2023: 71800, 2024: 75893},
@@ -66,7 +66,7 @@ const COMPANIES = [
   },
   {
     name: "سال", ticker: "4263", sector: "لوجستيات", classification: "Growth",
-    price: 168.00,
+    price: 164.90,
     shares_m: 80, capital_m: 800,
     profits:  {2021: 320, 2022: 450, 2023: 511, 2024: 661},
     revenues: {2021: 900, 2022: 1100, 2023: 1452, 2024: 1630},
@@ -82,7 +82,7 @@ const COMPANIES = [
   },
   {
     name: "المواساة", ticker: "4002", sector: "رعاية صحية", classification: "Value",
-    price: 59.10,
+    price: 66.45,
     shares_m: 200, capital_m: 2000,
     profits:  {2021: 348, 2022: 399, 2023: 426, 2024: 451},
     revenues: {2021: 2100, 2022: 2400, 2023: 2650, 2024: 2900},
@@ -98,7 +98,7 @@ const COMPANIES = [
   },
   {
     name: "بدجت", ticker: "4260", sector: "تأجير سيارات", classification: "Growth",
-    price: 75.90,
+    price: 36.18,
     shares_m: 100, capital_m: 1000,
     profits:  {2021: 180, 2022: 320, 2023: 390, 2024: 280},
     revenues: {2021: 1200, 2022: 1800, 2023: 2200, 2024: 2400},
@@ -114,7 +114,7 @@ const COMPANIES = [
   },
   {
     name: "اكسترا", ticker: "4003", sector: "تجزئة", classification: "Value",
-    price: 81.90,
+    price: 80.10,
     shares_m: 80, capital_m: 800,
     profits:  {2021: 377, 2022: 430, 2023: 489, 2024: 534},
     revenues: {2021: 5200, 2022: 5800, 2023: 6400, 2024: 6900},
@@ -130,7 +130,7 @@ const COMPANIES = [
   },
   {
     name: "المتقدمة", ticker: "2330", sector: "بتروكيماويات", classification: "Blend",
-    price: 34.12,
+    price: 27.22,
     shares_m: 125, capital_m: 1250,
     profits:  {2021: 312,  2022: 430,  2023: -85,  2024: -120},
     revenues: {2021: 1800, 2022: 2300, 2023: 1900, 2024: 1700},
