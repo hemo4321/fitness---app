@@ -408,23 +408,23 @@ function buildOverviewSheet_(ss) {
   ]);
   sheet.getRange(4, 5, 9, 1).setFormulas(priceFormulas);
 
-  // --- Computed formulas J-O ---
-  // Row 4 = first data row
+  // --- Computed formulas J-O (batched to reduce API calls) ---
+  const epsF = [], peF = [], pbF = [], roeF = [], yldF = [], payF = [];
   for (let i = 0; i < 9; i++) {
     const r = 4 + i;
-    // J: EPS = profit / shares
-    sheet.getRange(r, 10).setFormula(`=IFERROR(G${r}/F${r},0)`);
-    // K: P/E = price / EPS
-    sheet.getRange(r, 11).setFormula(`=IFERROR(E${r}/J${r},"N/A")`);
-    // L: P/B = (price × shares) / equity
-    sheet.getRange(r, 12).setFormula(`=IFERROR(E${r}*F${r}/H${r},"N/A")`);
-    // M: ROE = profit / equity × 100
-    sheet.getRange(r, 13).setFormula(`=IFERROR(G${r}/H${r}*100,"N/A")`);
-    // N: Yield = DPS / price × 100
-    sheet.getRange(r, 14).setFormula(`=IFERROR(I${r}/E${r}*100,0)`);
-    // O: Payout = DPS / EPS × 100
-    sheet.getRange(r, 15).setFormula(`=IFERROR(I${r}/J${r}*100,"N/A")`);
+    epsF.push([`=IFERROR(G${r}/F${r},0)`]);
+    peF.push([`=IFERROR(E${r}/J${r},"N/A")`]);
+    pbF.push([`=IFERROR(E${r}*F${r}/H${r},"N/A")`]);
+    roeF.push([`=IFERROR(G${r}/H${r}*100,"N/A")`]);
+    yldF.push([`=IFERROR(I${r}/E${r}*100,0)`]);
+    payF.push([`=IFERROR(I${r}/J${r}*100,"N/A")`]);
   }
+  sheet.getRange(4, 10, 9, 1).setFormulas(epsF);
+  sheet.getRange(4, 11, 9, 1).setFormulas(peF);
+  sheet.getRange(4, 12, 9, 1).setFormulas(pbF);
+  sheet.getRange(4, 13, 9, 1).setFormulas(roeF);
+  sheet.getRange(4, 14, 9, 1).setFormulas(yldF);
+  sheet.getRange(4, 15, 9, 1).setFormulas(payF);
 
   // --- Number formats ---
   sheet.getRange(4, 5, 9, 1).setNumberFormat("0.00");          // Price
@@ -1104,19 +1104,38 @@ function buildSaudiPortfolioSheet() {
 
     Logger.log("1/7 أسعار حية...");
     const livePricesSheet  = buildLivePricesSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 1/7");
+
     Logger.log("2/7 نظرة عامة...");
     const overviewSheet    = buildOverviewSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 2/7");
+
     Logger.log("3/7 القوائم المالية...");
     const financialsSheet  = buildFinancialsSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 3/7");
+
     Logger.log("4/7 التقييم...");
     const valuationSheet   = buildValuationSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 4/7");
+
     Logger.log("5/7 التوزيعات...");
     const dividendsSheet   = buildDividendsSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 5/7");
+
     Logger.log("6/7 المحفظة...");
     const portfolioSheet   = buildPortfolioSheet_(ss);
+    SpreadsheetApp.flush();
+    Logger.log("✓ 6/7");
+
     Logger.log("7/7 منهجية التقييم...");
     const methodologySheet = buildMethodologySheet_(ss);
-    Logger.log("✓ جميع الأوراق أُنشئت");
+    SpreadsheetApp.flush();
+    Logger.log("✓ 7/7 — جميع الأوراق أُنشئت");
 
     // Re-order sheets: Live Prices first
     const sheetOrder = [
