@@ -280,6 +280,67 @@ function borderRange_(range) {
   );
 }
 
+/**
+ * Write a glossary table at the bottom of a sheet.
+ * @param {Sheet} sheet
+ * @param {number} startRow   first row of the glossary (1-indexed)
+ * @param {number} numCols    total columns in the sheet
+ * @param {Array}  terms      array of [term, definition] pairs
+ */
+function writeGlossary_(sheet, startRow, numCols, terms) {
+  const termCols = Math.max(2, Math.round(numCols * 0.28));
+  const defCols  = numCols - termCols;
+
+  // Section header
+  sheet.getRange(startRow, 1, 1, numCols).merge()
+       .setValue("قاموس المصطلحات والاختصارات")
+       .setBackground(COLORS.headerMid)
+       .setFontColor(COLORS.white)
+       .setFontWeight("bold")
+       .setFontSize(11)
+       .setHorizontalAlignment("right");
+  sheet.setRowHeight(startRow, 28);
+
+  // Column headers
+  sheet.getRange(startRow + 1, 1, 1, termCols).merge()
+       .setValue("المصطلح / الاختصار")
+       .setBackground(COLORS.sectionTitle)
+       .setFontColor(COLORS.white)
+       .setFontWeight("bold")
+       .setFontSize(10)
+       .setHorizontalAlignment("center");
+  sheet.getRange(startRow + 1, termCols + 1, 1, defCols).merge()
+       .setValue("الشرح")
+       .setBackground(COLORS.sectionTitle)
+       .setFontColor(COLORS.white)
+       .setFontWeight("bold")
+       .setFontSize(10)
+       .setHorizontalAlignment("right");
+
+  // Term rows
+  terms.forEach(([term, def], idx) => {
+    const r   = startRow + 2 + idx;
+    const bg  = idx % 2 === 0 ? COLORS.rowAlt : COLORS.rowWhite;
+    sheet.getRange(r, 1, 1, termCols).merge()
+         .setValue(term)
+         .setBackground(bg)
+         .setFontWeight("bold")
+         .setFontSize(10)
+         .setHorizontalAlignment("center")
+         .setVerticalAlignment("middle");
+    sheet.getRange(r, termCols + 1, 1, defCols).merge()
+         .setValue(def)
+         .setBackground(bg)
+         .setFontSize(10)
+         .setHorizontalAlignment("right")
+         .setVerticalAlignment("middle")
+         .setWrap(true);
+    sheet.setRowHeight(r, 24);
+  });
+
+  borderRange_(sheet.getRange(startRow, 1, 2 + terms.length, numCols));
+}
+
 // =============================================================================
 // SHEET 1: أسعار حية  (Live Prices)
 // =============================================================================
@@ -349,6 +410,17 @@ function buildLivePricesSheet_(ss) {
        .setHorizontalAlignment("right");
 
   borderRange_(sheet.getRange(2, 1, 10, 6));
+
+  // --- Glossary ---
+  writeGlossary_(sheet, 15, 6, [
+    ["GOOGLEFINANCE",      "دالة Google Sheets تجلب بيانات الأسهم تلقائياً من الأسواق المالية"],
+    ["TADAWUL / تداول",   "السوق المالية السعودية — البورصة الرسمية للمملكة"],
+    ["أعلى 52 أسبوع",    "أعلى سعر وصل إليه السهم خلال آخر 52 أسبوعاً"],
+    ["أدنى 52 أسبوع",    "أدنى سعر وصل إليه السهم خلال آخر 52 أسبوعاً"],
+    ["ر.س",               "ريال سعودي — العملة الوطنية"],
+    ["تأخير 15-20 دقيقة", "أسعار GOOGLEFINANCE مؤخرة بهذا المقدار خلال جلسة التداول المفتوحة"],
+  ]);
+
   return sheet;
 }
 
@@ -479,6 +551,22 @@ function buildOverviewSheet_(ss) {
   sheet.getRange(4, 16, 9, 1).setFontSize(9).setFontStyle("italic").setWrap(true);
   sheet.setRowHeights(4, 9, 28);
 
+  // --- Glossary ---
+  writeGlossary_(sheet, 15, 16, [
+    ["EPS",              "ربح السهم (Earnings Per Share) = صافي الربح ÷ عدد الأسهم"],
+    ["P/E",              "مضاعف الربحية (Price/Earnings) = السعر الحالي ÷ EPS — كلما قلّ كان السهم أرخص نسبياً"],
+    ["P/B",              "مضاعف القيمة الدفترية (Price/Book) = القيمة السوقية ÷ حقوق المساهمين"],
+    ["ROE%",             "العائد على حقوق المساهمين (Return on Equity) = صافي الربح ÷ حقوق المساهمين × 100"],
+    ["DPS",              "توزيع السهم (Dividends Per Share) = إجمالي التوزيعات ÷ عدد الأسهم"],
+    ["عائد التوزيع%",   "Dividend Yield = DPS ÷ السعر الحالي × 100"],
+    ["نسبة التوزيع%",   "Payout Ratio = DPS ÷ EPS × 100 — نسبة الأرباح الموزعة من صافي الربح"],
+    ["م.",               "ملايين ريال سعودي"],
+    ["تراكم",            "توصية: يُنصح بزيادة الحصة في المحفظة — فرصة شراء بسعر جيد"],
+    ["احتفاظ",           "توصية: الحفاظ على الأسهم الحالية دون تغيير"],
+    ["احتفاظ للدخل",    "توصية: الاحتفاظ بهدف التوزيعات الدورية لا للنمو الرأسمالي"],
+    ["تحت المراقبة",    "توصية: مراقبة الأداء قبل اتخاذ أي قرار بالشراء أو البيع"],
+  ]);
+
   return sheet;
 }
 
@@ -595,6 +683,18 @@ function buildFinancialsSheet_(ss) {
        .setHorizontalAlignment("right");
 
   borderRange_(sheet.getRange(2, 1, currentRow - 2, 7));
+
+  // --- Glossary ---
+  writeGlossary_(sheet, currentRow + 3, 7, [
+    ["CAGR",                  "معدل النمو السنوي المركب (Compound Annual Growth Rate) = (قيمة 2024 ÷ قيمة 2021)^(1/3) - 1"],
+    ["YoY",                   "النمو مقارنة بالعام الماضي (Year over Year) = (2024 - 2023) ÷ |2023|"],
+    ["م. ر.س",                "ملايين ريال سعودي"],
+    ["الإيرادات",             "إجمالي المبيعات أو الدخل الناتج من النشاط التشغيلي"],
+    ["صافي الربح",            "الربح بعد خصم جميع التكاليف والضرائب"],
+    ["التدفق النقدي التشغيلي","النقد الفعلي الداخل من العمليات التشغيلية (أكثر موثوقية من الربح المحاسبي)"],
+    ["حقوق المساهمين",        "صافي أصول الشركة = الأصول الكلية − الالتزامات الكلية"],
+  ]);
+
   return sheet;
 }
 
@@ -740,6 +840,22 @@ function buildValuationSheet_(ss) {
        .setHorizontalAlignment("right");
 
   borderRange_(sheet.getRange(3, 1, 10, 9));
+
+  // --- Glossary ---
+  writeGlossary_(sheet, 17, 9, [
+    ["هامش الأمان",      "Margin of Safety = (متوسط القيم العادلة − السعر الحالي) ÷ السعر × 100"],
+    ["P/E قطاعي",        "متوسط مضاعف الربحية السائد في قطاع الشركة يُستخدم لتقدير السعر العادل"],
+    ["قيمة P/E",         "السعر العادل بتطبيق P/E القطاعي على EPS الشركة"],
+    ["قيمة P/B",         "السعر العادل بتطبيق P/B القطاعي على القيمة الدفترية للسهم"],
+    ["DDM",               "نموذج خصم التوزيعات (Dividend Discount Model) — السعر = DPS ÷ (WACC − g)"],
+    ["WACC",              "متوسط التكلفة المرجحة لرأس المال (Weighted Average Cost of Capital)"],
+    ["g",                 "معدل النمو طويل الأجل المتوقع للتوزيعات"],
+    ["قيمة محللين",      "متوسط الأسعار المستهدفة الصادرة عن محللي السوق الماليين"],
+    ["أخضر > 15%",       "هامش الأمان مرتفع — فرصة شراء جيدة"],
+    ["برتقالي 0–15%",    "هامش الأمان معقول — التقييم عادل"],
+    ["أحمر < 0%",        "هامش أمان سالب — السهم مرتفع نسبياً مقارنة بقيمته العادلة"],
+  ]);
+
   return sheet;
 }
 
@@ -841,6 +957,15 @@ function buildDividendsSheet_(ss) {
        .setFontColor(COLORS.white)
        .setFontWeight("bold")
        .setHorizontalAlignment("right");
+
+  // --- Glossary ---
+  writeGlossary_(sheet, summaryRow + 2, 6, [
+    ["DPS",              "توزيع السهم السنوي (Dividends Per Share) = إجمالي التوزيعات ÷ عدد الأسهم"],
+    ["عائد التوزيع%",   "Dividend Yield = DPS ÷ السعر الحالي × 100"],
+    ["نسبة التوزيع%",   "Payout Ratio = DPS ÷ EPS × 100 — نسبة الربح التي توزعها الشركة"],
+    ["إجمالي التوزيعات","DPS × عدد الأسهم = إجمالي المبلغ الموزع على المساهمين (مليون ر.س)"],
+    ["م.",               "ملايين ريال سعودي"],
+  ]);
 
   return sheet;
 }
@@ -961,6 +1086,18 @@ function buildPortfolioSheet_(ss) {
   applyAlternatingRows_(sheet, sectorSummaryRow + 2, sectorRows.length, 1, 3);
   rtlRange_(sheet.getRange(sectorSummaryRow + 2, 1, sectorRows.length, 1));
   sheet.getRange(sectorSummaryRow + 2, 3, sectorRows.length, 1).setNumberFormat("0.0");
+
+  // --- Glossary ---
+  const glossaryStart = sectorSummaryRow + 2 + sectorRows.length + 2;
+  writeGlossary_(sheet, glossaryStart, 7, [
+    ["الوزن المستهدف%",  "النسبة المثالية المقترحة لكل سهم في المحفظة بناءً على التحليل"],
+    ["الوزن الفعلي%",    "نسبة القيمة السوقية الفعلية للسهم من إجمالي قيمة المحفظة"],
+    ["القيمة السوقية",   "السعر الحالي × عدد الأسهم = القيمة الكلية للسهم في السوق"],
+    ["م.",               "ملايين ريال سعودي"],
+    ["Blend",            "تصنيف: سهم يجمع بين النمو والقيمة — لا يغلب عليه طابع محدد"],
+    ["Growth",           "تصنيف: سهم ينمو بمعدلات مرتفعة — عادةً P/E مرتفع"],
+    ["Value",            "تصنيف: سهم يُتداول بأقل من قيمته العادلة — عادةً P/E منخفض"],
+  ]);
 
   return sheet;
 }
