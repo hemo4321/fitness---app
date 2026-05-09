@@ -8,7 +8,7 @@ from datetime import datetime
 COMPANIES_REPORT = {
     "الراجحي": {
         "ticker": "1120", "sector": "مصرفي إسلامي", "classification": "Blend",
-        "price": 66.60, "market_cap_b": 399.6, "shares_m": 4000,
+        "price": 69.35, "market_cap_b": 416.1, "shares_m": 6000,
         "pe": 14.0, "pb": 2.76, "div_yield": 3.9, "roe": 20.2,
         "profits": {"2021": 14979, "2022": 17151, "2023": 16621, "2024": 19722},
         "revenue": {"2021": 23500, "2022": 30100, "2023": 29800, "2024": 34200},
@@ -32,7 +32,7 @@ COMPANIES_REPORT = {
     },
     "الإنماء": {
         "ticker": "1150", "sector": "مصرفي إسلامي", "classification": "Growth",
-        "price": 23.53, "market_cap_b": 46.9, "shares_m": 1992,
+        "price": 23.86, "market_cap_b": 47.5, "shares_m": 1992,
         "pe": 9.4, "pb": 1.86, "div_yield": 4.4, "roe": 21.3,
         "profits": {"2021": 2714, "2022": 3599, "2023": 4839, "2024": 5832},
         "revenue": {"2021": 5500, "2022": 7200, "2023": 8700, "2024": 10200},
@@ -79,7 +79,7 @@ COMPANIES_REPORT = {
     },
     "سال": {
         "ticker": "4263", "sector": "خدمات لوجستية جوية", "classification": "Growth",
-        "price": 164.10, "market_cap_b": 13.1, "shares_m": 80,
+        "price": 168.00, "market_cap_b": 13.4, "shares_m": 80,
         "pe": 22.4, "pb": 6.4, "div_yield": 3.9, "roe": 30.5,
         "profits": {"2021": 320, "2022": 450, "2023": 511, "2024": 661},
         "revenue": {"2021": 900, "2022": 1100, "2023": 1452, "2024": 1630},
@@ -180,7 +180,7 @@ COMPANIES_REPORT = {
     },
     "المتقدمة": {
         "ticker": "2330", "sector": "بتروكيماويات", "classification": "Blend",
-        "price": 30.00, "market_cap_b": 3.8, "shares_m": 125,
+        "price": 34.12, "market_cap_b": 4.3, "shares_m": 125,
         "pe": None, "pb": 3.0, "div_yield": 0.0, "roe": None,
         "profits": {"2021": 380, "2022": 320, "2023": 85, "2024": -259},
         "revenue": {"2021": 2100, "2022": 2400, "2023": 1900, "2024": 1700},
