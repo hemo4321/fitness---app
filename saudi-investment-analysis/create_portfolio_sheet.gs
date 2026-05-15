@@ -26,7 +26,7 @@ const COMPANIES = [
     equity:   {2021: 62000, 2022: 72000, 2023: 90259, 2024: 100185},
     dps_2024: 2.71,  dps_2025: 2.50,
     pe_sector: 14.0, pb_sector: 2.76, roe: 20.2,
-    fair_pe: 83,   fair_ddm: 78,  fair_pb: 90,  analyst_avg: 113,
+    fair_pe: 83,   fair_ddm: 33,  fair_pb: 90,  analyst_avg: 113,
     wacc: 0.105, g_lt: 0.03,
     recommendation: "تراكم", weight_pct: 18,
     analyst_recs: [
@@ -47,7 +47,7 @@ const COMPANIES = [
     equity:   {2021: 18000, 2022: 21000, 2023: 25000, 2024: 29500},
     dps_2024: 1.20,  dps_2025: 1.15,
     pe_sector: 9.4, pb_sector: 1.86, roe: 21.3,
-    fair_pe: 35, fair_ddm: 28, fair_pb: 32, analyst_avg: 32.4,
+    fair_pe: 35, fair_ddm: 16, fair_pb: 32, analyst_avg: 32.4,
     wacc: 0.10, g_lt: 0.03,
     recommendation: "تراكم", weight_pct: 10,
     analyst_recs: [
@@ -67,7 +67,7 @@ const COMPANIES = [
     equity:   {2021: 50000, 2022: 52000, 2023: 48000, 2024: 55000},
     dps_2024: 2.20,  dps_2025: 2.20,
     pe_sector: 19.7, pb_sector: 3.82, roe: 26.9,
-    fair_pe: 55, fair_ddm: 48, fair_pb: 50, analyst_avg: 48,
+    fair_pe: 55, fair_ddm: 34, fair_pb: 50, analyst_avg: 48,
     wacc: 0.095, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 15,
     analyst_recs: [
@@ -87,7 +87,7 @@ const COMPANIES = [
     equity:   {2021: 1200, 2022: 1500, 2023: 1900, 2024: 2300},
     dps_2024: 4.46,  dps_2025: 6.52,
     pe_sector: 20.4, pb_sector: 5.8, roe: 28.7,
-    fair_pe: 210, fair_ddm: 175, fair_pb: 190, analyst_avg: 107,
+    fair_pe: 210, fair_ddm: 82,  fair_pb: 190, analyst_avg: 107,
     wacc: 0.11, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 7,
     analyst_recs: [
@@ -107,7 +107,7 @@ const COMPANIES = [
     equity:   {2021: 2800, 2022: 3100, 2023: 3400, 2024: 3700},
     dps_2024: 2.50,  dps_2025: 2.125,
     pe_sector: 26.3, pb_sector: 3.2, roe: 12.2,
-    fair_pe: 75, fair_ddm: 62, fair_pb: 65, analyst_avg: 90,
+    fair_pe: 75, fair_ddm: 35, fair_pb: 65, analyst_avg: 90,
     wacc: 0.09, g_lt: 0.03,
     recommendation: "احتفاظ / تراكم عند الضعف", weight_pct: 10,
     analyst_recs: [
@@ -127,7 +127,7 @@ const COMPANIES = [
     equity:   {2021: 900, 2022: 1100, 2023: 1350, 2024: 1500},
     dps_2024: 1.50,  dps_2025: 1.25,
     pe_sector: 26.9, pb_sector: 5.05, roe: 18.7,
-    fair_pe: 85, fair_ddm: 70, fair_pb: 80, analyst_avg: 90,
+    fair_pe: 85, fair_ddm: 16, fair_pb: 80, analyst_avg: 90,
     wacc: 0.11, g_lt: 0.03,
     recommendation: "مراقبة - انتظار توضيح Q1 2026", weight_pct: 0,
     analyst_recs: [
@@ -147,7 +147,7 @@ const COMPANIES = [
     equity:   {2021: 1400, 2022: 1700, 2023: 2000, 2024: 2300},
     dps_2024: 5.00,  dps_2025: 5.00,
     pe_sector: 12.3, pb_sector: 2.83, roe: 23.2,
-    fair_pe: 95, fair_ddm: 88, fair_pb: 92, analyst_avg: 113.8,
+    fair_pe: 95, fair_ddm: 71, fair_pb: 92, analyst_avg: 113.8,
     wacc: 0.10, g_lt: 0.03,
     recommendation: "تراكم بقوة", weight_pct: 12,
     analyst_recs: [
@@ -185,7 +185,7 @@ const COMPANIES = [
     equity:   {2021: 1250, 2022: 1280, 2023: 1300, 2024: 1320},
     dps_2024: 0.45,  dps_2025: 0.77,
     pe_sector: 19.8, pb_sector: 1.14, roe: 5.8,
-    fair_pe: 11.5, fair_ddm: 10.2, fair_pb: 10.8, analyst_avg: 11.2,
+    fair_pe: 11.5, fair_ddm: 11.8, fair_pb: 10.8, analyst_avg: 11.2,
     wacc: 0.085, g_lt: 0.02,
     recommendation: "احتفاظ للدخل", weight_pct: 8,
     analyst_recs: [],
@@ -485,7 +485,7 @@ function buildOverviewSheet_(ss) {
   // --- Header row 3 ---
   const headers = [
     "الشركة", "القطاع", "التصنيف", "الرمز",
-    "السعر (ر.س)", "الأسهم (م.)", "ربح 2025 (م.)", "حقوق المساهمين (م.)",
+    "السعر (ر.س)", "الأسهم (م.)", "ربح 2024 (م.)", "حقوق المساهمين (م.)",
     "DPS 2025", "EPS (ر.س)", "P/E", "P/B",
     "ROE%", "عائد التوزيع%", "نسبة التوزيع%", "التوصية"
   ];
