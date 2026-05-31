@@ -1,0 +1,42 @@
+Id,Symbol,Name,Display Symbol,Exchange,Portfolio,Currency,Shares Owned,Cost Per Share,Commission,Transaction Date,Transaction Time,Purchase Exchange Rate,Type,Accounting,Accounting Execution Ids,Notes,OutgoingCashLink
+
+"1","SAR=CASH",,,,"100","SAR",,,,,,,,,,,
+"2","SAR=CASH",,,,"100","SAR","84000","1","0","2026-02-23 GMT+0300","10:00:00",,"Buy",,,,
+"3","SAR=CASH",,,,"100","SAR","5672.64","1","0","2026-02-24 GMT+0300","10:00:00",,"Sell",,,"Purchased 4002.SR - Mouwasat Medical Services Co.",
+"4","SAR=CASH",,,,"100","SAR","78326.86","1","0","2026-02-24 GMT+0300","10:00:00",,"Sell",,,"Purchased 7202.SR - Arabian Internet And Communications Co.",
+"5","SAR=CASH",,,,"100","SAR","72024.64","1","0","2026-03-30 GMT+0300","10:00:00",,"Buy",,,"Sold 7202.SR - Arabian Internet And Communications Co.",
+"6","SAR=CASH",,,,"100","SAR","6901.97","1","0","2026-04-02 GMT+0300","10:00:00",,"Sell",,,"Purchased 7203.SR - Elm Co.",
+"7","SAR=CASH",,,,"100","SAR","7132.38","1","0","2026-04-19 GMT+0300","10:00:00",,"Sell",,,"Purchased 6004.SR - Saudi Airlines Catering Co.",
+"8","SAR=CASH",,,,"100","SAR","3371.85","1","0","2026-04-19 GMT+0300","10:00:00",,"Sell",,,"Purchased 4263.SR - SAL Saudi Logistics Services Co.",
+"9","SAR=CASH",,,,"100","SAR","6571.4","1","0","2026-04-19 GMT+0300","10:00:00",,"Sell",,,"Purchased 4003.SR - United Electronics Co.",
+"10","SAR=CASH",,,,"100","SAR","4303.47","1","0","2026-04-20 GMT+0300","10:00:00",,"Sell",,,"Purchased 4002.SR - Mouwasat Medical Services Co.",
+"11","SAR=CASH",,,,"100","SAR","7067.26","1","0","2026-04-30 GMT+0300","10:00:00",,"Sell",,,"Purchased 4260.SR - Budget Saudi Co.",
+"12","SAR=CASH",,,,"100","SAR","6321.76","1","0","2026-05-10 GMT+0300","10:00:00",,"Sell",,,"Purchased 4260.SR - Budget Saudi Co.",
+"13","SAR=CASH",,,,"100","SAR","3287.71","1","0","2026-05-13 GMT+0300","10:00:00",,"Sell",,,"Purchased 4263.SR - SAL Saudi Logistics Services Co.",
+"14","SAR=CASH",,,,"100","SAR","166.5","1","0","2026-05-14 GMT+0300","10:00:00",,"Buy",,,"Dividends from 4002.SR - Mouwasat Medical Services Co.",
+
+"15","4002.SR","Mouwasat Medical Services Co.","المواساة","SAU","100","SAR",,,,,,,,,,,
+"16","4002.SR","Mouwasat Medical Services Co.","المواساة","SAU","100","SAR","88","64.4618","0","2026-02-24 GMT+0300","10:00:00",,"Buy",,,,
+"17","4002.SR","Mouwasat Medical Services Co.","المواساة","SAU","100","SAR","60","71.7245","0","2026-04-20 GMT+0300","10:00:00",,"Buy",,,,
+"18","4002.SR","Mouwasat Medical Services Co.","المواساة","SAU","100","SAR","166.5","1.125","0","2026-05-14 GMT+0300","10:00:00",,"Dividend","FIFO",,"1.125 (H2-2025)",
+
+"19","7202.SR","Arabian Internet And Communications Co.","سلوشنز","SAU","100","SAR",,,,,,,,,,,
+"20","7202.SR","Arabian Internet And Communications Co.","سلوشنز","SAU","100","SAR","410","191.0411","0","2026-02-24 GMT+0300","10:00:00",,"Buy",,,,
+"21","7202.SR","Arabian Internet And Communications Co.","سلوشنز","SAU","100","SAR","370","194.6612","0","2026-03-30 GMT+0300","10:00:00",,"Sell","Weighted Average",,,
+
+"22","7203.SR","Elm Co.","علم","SAU","100","SAR",,,,,,,,,,,
+"23","7203.SR","Elm Co.","علم","SAU","100","SAR","13","530.9208","0","2026-04-02 GMT+0300","10:00:00",,"Buy",,,,
+
+"24","6004.SR","Saudi Airlines Catering Co.","التموين","SAU","100","SAR",,,,,,,,,,,
+"25","6004.SR","Saudi Airlines Catering Co.","التموين","SAU","100","SAR","100","71.3238","0","2026-04-19 GMT+0300","10:00:00",,"Buy",,,,
+
+"26","4263.SR","SAL Saudi Logistics Services Co.","سال","SAU","100","SAR",,,,,,,,,,,
+"27","4263.SR","SAL Saudi Logistics Services Co.","سال","SAU","100","SAR","20","168.5925","0","2026-04-19 GMT+0300","10:00:00",,"Buy",,,,
+"28","4263.SR","SAL Saudi Logistics Services Co.","سال","SAU","100","SAR","20","164.3855","0","2026-05-13 GMT+0300","10:00:00",,"Buy",,,,
+
+"29","4003.SR","United Electronics Co.","اكسترا","SAU","100","SAR",,,,,,,,,,,
+"30","4003.SR","United Electronics Co.","اكسترا","SAU","100","SAR","80","82.1425","0","2026-04-19 GMT+0300","10:00:00",,"Buy",,,,
+
+"31","4260.SR","Budget Saudi Co.","بدجت","SAU","100","SAR",,,,,,,,,,,
+"32","4260.SR","Budget Saudi Co.","بدجت","SAU","100","SAR","170","41.5721","0","2026-04-30 GMT+0300","10:00:00",,"Buy",,,,
+"33","4260.SR","Budget Saudi Co.","بدجت","SAU","100","SAR","180","35.1209","0","2026-05-10 GMT+0300","10:00:00",,"Buy",,,,
